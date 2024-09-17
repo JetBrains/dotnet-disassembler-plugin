@@ -1,0 +1,96 @@
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
+
+// A small console app to load a specific assembly via ALC and precompile specified methods
+//   "DisasmoLoader4 MyDll.dll MyType MyMethod False"
+
+public class DisasmoLoader
+{
+    public static void Main(string[] args)
+    {
+        PrecompileAllMethodsInType(args);
+    }
+
+    private static void PrecompileAllMethodsInType(string[] args)
+    {
+        string assemblyName = args[0];
+        string typeName = args[1];
+        string methodName = args[2];
+        string unloadable = args[3];
+
+        // Another ugly workaround for mangled names till I figure out a proper solution
+        if (typeName.Contains('_') && typeName.Contains('.'))
+            typeName = typeName.Substring(typeName.LastIndexOf('.') + 1);
+
+        var alc = new AssemblyLoadContext("DisasmoALC", unloadable == "True");
+        Assembly asm = alc.LoadFromAssemblyPath(Path.Combine(Environment.CurrentDirectory, assemblyName));
+        Type fastType = asm.GetType(typeName);
+        if (fastType != null)
+        {
+            PrecompileMethods(fastType, methodName);
+            PrecompileProperties(fastType, methodName);
+            return;
+        }
+
+        foreach (Type type in asm.GetTypes())
+        {
+            // We replace pluses with dots because 'typeName' is a C#'y name of the type
+            // Unfortunately, Roslyn doesn't have a display option to output the runtime name of the type
+            // And we do not want to complicate things by formatting the type's name ourselves
+            // This is the easiest solution to that problem
+            if (type.FullName?.Replace('+', '.').Contains(typeName) == true)
+            {
+                PrecompileMethods(type, methodName);
+                PrecompileProperties(type, methodName);
+            }
+        }
+    }
+
+    private static void PrecompileProperties(Type type, string propertyName)
+    {
+        foreach (PropertyInfo propInfo in type.GetProperties((BindingFlags)60))
+        {
+            if (propInfo.Name == "*" || propInfo.Name == propertyName)
+            {
+                if (propInfo.GetMethod != null)
+                    RuntimeHelpers.PrepareMethod(propInfo.GetMethod.MethodHandle);
+                if (propInfo.SetMethod != null)
+                    RuntimeHelpers.PrepareMethod(propInfo.SetMethod.MethodHandle);
+            }
+        }
+    }
+
+    private static void PrecompileMethods(Type type, string methodName)
+    {
+        foreach (MethodBase method in
+                 type.GetMethods((BindingFlags)60).Concat(
+                     type.GetConstructors((BindingFlags)60).Select(c => (MethodBase)c)))
+        {
+            if (method.IsGenericMethod)
+                continue;
+
+            try
+            {
+                if (method.DeclaringType == type || method.DeclaringType == null)
+                {
+                    if (methodName == "*" || method.Name == methodName)
+                    {
+                        RuntimeHelpers.PrepareMethod(method.MethodHandle);
+                    }
+                    else if (method.Name.Contains(">g__" + methodName))
+                    {
+                        // Special case for local functions
+                        RuntimeHelpers.PrepareMethod(method.MethodHandle);
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+}

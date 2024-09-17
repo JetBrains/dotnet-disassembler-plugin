@@ -1,0 +1,27 @@
+# Build artifacts
+/.intellijPlatform/
+[Bb]in/
+[Oo]bj/
+build
+output
+/packages
+.gradle
+*.tmp
+.nuke
+
+# User-specific files
+*.suo
+*.user
+*.sln.docstates
+*.cache
+*.log
+
+# IDEs
+/.idea/*.iml
+/.idea/*.xml
+/.idea/.idea.*/*.iml
+/.idea/.idea.*/.idea/*.xml
+/.idea/.idea.*/.idea/*.name
+.vs
+_ReSharper*
+_dotTrace*
