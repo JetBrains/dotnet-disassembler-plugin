@@ -21,4 +21,9 @@
     <rdclient.view key="com.jetbrains.rd.ide.model.BeCefToolWindowPanel"
                    implementationClass="com.jetbrains.rider.plugins.jitasmviewer.JitAsmViewerToolWindowPanel" />
   </extensions>
+    <actions>
+        <action id="com.jetbrains.rider.plugins.jitasmviewer.JitAsmProviderAction"
+                class="com.jetbrains.rider.plugins.jitasmviewer.JitAsmProviderAction"
+                text="View JIt codegen for selected method"/>
+    </actions>
 </idea-plugin>

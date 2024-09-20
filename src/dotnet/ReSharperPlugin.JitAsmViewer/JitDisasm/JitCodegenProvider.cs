@@ -37,7 +37,7 @@ public class JitCodegenProvider(IProject project)
 
         cancellationToken.ThrowIfCancellationRequested();
         var tfm = string.IsNullOrWhiteSpace(configuration.OverridenTFM)
-            ? project.TargetFrameworkIds.TakeMax(x => x.Version.Major, 6)
+            ? _project.TargetFrameworkIds.TakeMax(x => x.Version.Major, 6)
             : TargetFrameworkId.Create(configuration.OverridenTFM);
 
         if (tfm.IsNullOrDefault() || !tfm.IsNetCoreApp)
@@ -53,12 +53,12 @@ public class JitCodegenProvider(IProject project)
                 Make sure <TargetFramework>net7.0</TargetFramework> is set in your csproj.
                 """);
 
-        var projectOutputPath = project.GetProperty(new Key("OutputPath")) as string;
+        var projectOutputPath = _project.GetProperty(new Key("OutputPath")) as string;
         var outputDir = string.IsNullOrWhiteSpace(projectOutputPath) ? "bin" : projectOutputPath;
         var resultOutDir = Path.Combine(outputDir,
             "JITDISASM" + (configuration.UseDotnetPublishForReload ? "_published" : ""));
-        var projectPath = project.ProjectFileLocation.FullPath;
-        var currentProjectDirPath = Path.GetDirectoryName(projectPath);
+        var projectFilePath = _project.ProjectFileLocation.FullPath;
+        var projectDirPath = _project.Location.FullPath;
         
         if (configuration.IsNonCustomDotnetAotMode())
         {
@@ -86,7 +86,7 @@ public class JitCodegenProvider(IProject project)
             string dotnetPublishArgs =
                 $"publish {tfmPart} -r win-{configuration.Arch} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
-            publishResult = await ProcessUtils.RunProcess("dotnet", dotnetPublishArgs, null, currentProjectDirPath,
+            publishResult = await ProcessUtils.RunProcess("dotnet", dotnetPublishArgs, null, projectDirPath,
                 cancellationToken: cancellationToken);
         }
         else
@@ -103,7 +103,7 @@ public class JitCodegenProvider(IProject project)
                                      "/p:RuntimeIdentifiers=\"\" " +
                                      "/p:WarningLevel=0 " +
                                      $"/p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" " +
-                                     $"/p:TreatWarningsAsErrors=false \"{projectPath}\"";
+                                     $"/p:TreatWarningsAsErrors=false \"{projectFilePath}\"";
 
             Dictionary<string, string> fasterBuildEnvVars = new Dictionary<string, string>
             {
@@ -118,7 +118,7 @@ public class JitCodegenProvider(IProject project)
             }
 
             publishResult = await ProcessUtils.RunProcess("dotnet", dotnetBuildArgs, fasterBuildEnvVars,
-                currentProjectDirPath,
+                projectDirPath,
                 cancellationToken: cancellationToken);
         }
 
@@ -140,7 +140,7 @@ public class JitCodegenProvider(IProject project)
         {
             var dstFolder = resultOutDir;
             if (!Path.IsPathRooted(dstFolder))
-                dstFolder = Path.Combine(currentProjectDirPath, resultOutDir);
+                dstFolder = Path.Combine(projectDirPath, resultOutDir);
             if (!Directory.Exists(dstFolder))
             {
                 return Result.Fail($"Something went wrong, {dstFolder} doesn't exist after 'dotnet publish -r win-{configuration.Arch} -c Release' step");
@@ -164,7 +164,7 @@ public class JitCodegenProvider(IProject project)
     {
         try
         {
-            var projectPath = project.ProjectFileLocation.FullPath;
+            var projectPath = _project.ProjectFileLocation.FullPath;
             if (string.IsNullOrWhiteSpace(projectPath))
                 return Result.Fail($"{nameof(GetJitCodegenInternal)}: {nameof(projectPath)} is null or empty");
 
@@ -178,7 +178,7 @@ public class JitCodegenProvider(IProject project)
 
             try
             {
-                    var customAsmName = project.GetProperty(new Key("AssemblyName")) as string;
+                    var customAsmName = _project.GetProperty(new Key("AssemblyName")) as string;
                     if (!string.IsNullOrWhiteSpace(customAsmName))
                     {
                         fileName = customAsmName;
@@ -414,7 +414,7 @@ public class JitCodegenProvider(IProject project)
                     $" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
                 var publishResult = await ProcessUtils.RunProcess("dotnet", dotnetPublishArgs, null,
-                    Path.GetDirectoryName(projectPath), cancellationToken: cancellationToken);
+                    project.Location.FullPath, cancellationToken: cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
