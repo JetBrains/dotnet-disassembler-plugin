@@ -1,0 +1,12 @@
+﻿DeclaredElemet: CSharpMethod:Add(int,int)
+; Method TestClass:Add(int,int):int
+G_M000_IG01:                ;; offset=0000H
+
+G_M000_IG02:                ;; offset=0000H
+       8D0411               lea      eax, [rcx+rdx]
+
+G_M000_IG03:                ;; offset=0003H
+       C3                   ret      
+; Total bytes of code: 4
+
+#END#

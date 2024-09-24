@@ -18,5 +18,10 @@ namespace ReSharperPlugin.JitAsmViewer.Tests
     public class ZoneMarker : IRequire<ICodeEditingZone>, IRequire<ILanguageCSharpZone>, IRequire<JitAsmViewerTestEnvironmentZone> { }
 
     [SetUpFixture]
-    public class JitAsmViewerTestsAssembly : ExtensionTestEnvironmentAssembly<JitAsmViewerTestEnvironmentZone> { }
+    public class JitAsmViewerTestsAssembly : JitCodegenExtensionTestEnvironmentAssembly { }
+
+    public abstract class JitCodegenExtensionTestEnvironmentAssembly : ExtensionTestEnvironmentAssembly<JitAsmViewerTestEnvironmentZone>
+    {
+        public override bool IsRunningTestsWithAsyncBehaviorProhibited => true;
+    }
 }

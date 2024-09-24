@@ -56,7 +56,7 @@ public static class JitDisasmTargetUtils
             default:
                 // the whole class
                 target = prefix + ":*";
-                hostType = declaredElement.ToString();
+                hostType = containingType.ShortName;
                 methodName = "*";
                 break;
         }

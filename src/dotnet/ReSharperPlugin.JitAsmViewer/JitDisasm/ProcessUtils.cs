@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Threading;
 using JetBrains.Util;
 using JetBrains.Util.Logging;
 
@@ -13,7 +14,7 @@ public static class ProcessUtils
 {
     private static ILogger ourLogger = Logger.GetLogger(typeof(ProcessUtils));
 
-    public static async Task<ProcessResult> RunProcess(
+    public static async ValueTask<ProcessResult> RunProcess(
         string path, 
         string args = "", 
         Dictionary<string, string> envVars = null, 
@@ -51,7 +52,7 @@ public static class ProcessUtils
             process = Process.Start(processStartInfo);
             cancellationToken.ThrowIfCancellationRequested();
 
-            process.ErrorDataReceived += (sender, e) =>
+            process!.ErrorDataReceived += (sender, e) =>
             {
                 outputLogger?.Invoke(true, e.Data + "\n");
                 logger.AppendLine(e.Data);
@@ -66,7 +67,10 @@ public static class ProcessUtils
             process.BeginErrorReadLine();
 
             cancellationToken.ThrowIfCancellationRequested();
-            await process.WaitForExitAsync(cancellationToken);
+            if (JetDispatcher.CurrentDispatcher.IsAsyncBehaviorProhibited)
+                process.WaitForExit();
+            else
+                await process.WaitForExitAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             return new ProcessResult { Error = loggerForErrors.ToString().Trim('\r', '\n'), Output = logger.ToString().Trim('\r', '\n') };

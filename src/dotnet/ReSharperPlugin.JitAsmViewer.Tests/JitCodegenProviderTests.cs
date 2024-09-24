@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 using JetBrains.DocumentManagers;
 using JetBrains.DocumentModel;
 using JetBrains.Lifetimes;
@@ -33,98 +34,88 @@ public abstract class JitCodegenProviderTests : BaseTestWithExistingSolutionLoad
 {
     private readonly string _solutionName = "JitCodegenProviderTests.sln";
     protected override string RelativeTestDataPath => nameof(JitCodegenProviderTests);
-    protected void DoTest(Func<IPsiSourceFile, int> offset, JitDisasmConfiguration jitDisasmConfiguration, [CallerMemberName] string testFileName = "")
+
+    protected override string GetGoldTestDataPath(string fileName)
+    {
+        return base.GetGoldTestDataPath(fileName);
+    }
+
+    protected void DoCodegenTest(Func<IPsiSourceFile, int> offset, JitDisasmConfiguration jitDisasmConfiguration,
+        [NotNull] [CallerMemberName] string testFileName = "", [NotNull] [CallerMemberName] string testMethodName = "")
     {
         if (string.IsNullOrWhiteSpace(testFileName))
             throw new TestFailureException("Method name is empty");
-        
-        DoTestSolution(_solutionName, PrepareSolutionFlags.COPY_TO_TEMP_FOLDER_ONCE | PrepareSolutionFlags.RESTORE_NUGETS, (_, solution) =>
-        {
-            var testLifetime = new Lifetime();
-            var fileName = testFileName.Replace("Test", "");
-            var testProject = solution.GetProjectByName(nameof(JitCodegenProviderTests));
-            var psiModules = solution.GetComponent<IPsiModules>();
-            var psiServices = solution.GetPsiServices();
 
-            var testCsProjectFile = testProject.GetAllProjectFiles(x => Path.GetFileNameWithoutExtension(x.Name) == fileName).Single();
-            
-            var testPsiSourceFile = psiModules.GetPsiSourceFilesFor(testCsProjectFile).Single();
-
-            var testCsFile = psiServices.Files.GetPsiFiles<KnownLanguage>(testPsiSourceFile, PsiLanguageCategories.All).Single();
-
-            var tokenNode = testCsFile.FindTokenAt(new DocumentOffset(testPsiSourceFile.Document, offset(testPsiSourceFile)));
-            if (tokenNode == null)
-                throw new TestFailureException("Cannot find token under cursor");
-
-            if (!JitDisasmTargetUtils.ValidateTreeNodeForDisasm(tokenNode.Parent) ||
-                tokenNode.Parent is not IDeclaration declaration)
-                throw new TestFailureException("Token's parent is not IDeclaration");
-
-            if (declaration.DeclaredElement is not { } declaredElement)
-                throw new TestFailureException("declaration.DeclaredElement is null");
-
-            var target = JitDisasmTargetUtils.GetTarget(declaredElement);
-            var result = new JitCodegenProvider(testProject).GetJitCodegen(target, jitDisasmConfiguration, testLifetime)
-                .Result;
-
-            if (!result.Succeed)
-                throw new TestFailureException(result.FailMessage);
-            var asmString = result.Value.Result;
-
-            ExecuteWithGold(testPsiSourceFile, sw =>
+        DoTestSolution(_solutionName,
+            PrepareSolutionFlags.COPY_TO_TEMP_FOLDER_ONCE | PrepareSolutionFlags.RESTORE_NUGETS, (_, solution) =>
             {
-                sw.WriteLine("DeclaredElemet: {0}", declaredElement);
-                sw.Write(asmString);
-                sw.WriteLine("#END#");
+                var testLifetime = new Lifetime();
+                var fileName = testFileName.Replace("Test", "");
+                var testProject = solution.GetProjectByName(nameof(JitCodegenProviderTests));
+                var psiModules = solution.GetComponent<IPsiModules>();
+                var psiServices = solution.GetPsiServices();
+
+                var testCsProjectFile = testProject
+                    .GetAllProjectFiles(x => Path.GetFileNameWithoutExtension(x.Name) == fileName).Single();
+
+                var testPsiSourceFile = psiModules.GetPsiSourceFilesFor(testCsProjectFile).Single();
+
+                var testCsFile = psiServices.Files
+                    .GetPsiFiles<KnownLanguage>(testPsiSourceFile, PsiLanguageCategories.All).Single();
+
+                var tokenNode =
+                    testCsFile.FindTokenAt(new DocumentOffset(testPsiSourceFile.Document, offset(testPsiSourceFile)));
+                if (tokenNode == null)
+                    throw new TestFailureException("Cannot find token under cursor");
+
+                if (!JitDisasmTargetUtils.ValidateTreeNodeForDisasm(tokenNode.Parent) ||
+                    tokenNode.Parent is not IDeclaration declaration)
+                    throw new TestFailureException("Token's parent is not IDeclaration");
+
+                if (declaration.DeclaredElement is not { } declaredElement)
+                    throw new TestFailureException("declaration.DeclaredElement is null");
+
+                var target = JitDisasmTargetUtils.GetTarget(declaredElement);
+                var result = new JitCodegenProvider(testProject)
+                    .GetJitCodegen(target, jitDisasmConfiguration, testLifetime)
+                    .Result;
+
+                if (!result.Succeed)
+                    throw new TestFailureException(result.FailMessage);
+                var asmString = result.Value.Result;
+                
+                var goldFileName = Path.GetFileName(testCsProjectFile.Location.FullPath);
+                if(!string.IsNullOrWhiteSpace(testMethodName))
+                    goldFileName = $"{goldFileName}.{testMethodName.Replace("Test", "")}";
+                
+                ExecuteWithGold(goldFileName, sw =>
+                {
+                    sw.WriteLine("DeclaredElemet: {0}", declaredElement);
+                    sw.WriteLine(asmString);
+                    sw.WriteLine("#END#");
+                });
             });
-        });
     }
 }
 
-[TestNet80]
+[TestNet70]
 public class JitCodegenProviderTestsNetCoreTests : JitCodegenProviderTests
 {
-    [Test]
-    public void TestJitCodegen()
+    // Test JitCodegen.cs
+    private void TestJitCodegen(Func<IPsiSourceFile, int> offsetSelector, JitDisasmConfiguration jitDisasmConfiguration, [NotNull] [CallerMemberName] string testMethodName = "")
     {
-        /*var lifetime = new Lifetime();
-        var solution = this.Solution;
-        var textControl = this.OpenTextControl(lifetime);
-        /*var dataContext = textControl.ToDataContext()(lifetime);
-        var elementUnderCaret = dataContext.GetData(PsiDataConstants.SELECTED_TREE_NODES)?.FirstOrDefault();
-        if (elementUnderCaret is not { } selectedItem ||
-            !JitDisasmTargetUtils.ValidateTreeNodeForDisasm(selectedItem.Parent) ||
-            selectedItem.Parent is not IDeclaration declaration)
-            return null;
-
-        var result = (await GetJitCodegenForDeclaration(declaration, lifetime)).Value.Result;*/
-    }
-}
-
-[TestNet80]
-public class TestClass : BaseTestWithTextControl
-{
-    protected override string RelativeTestDataPath => nameof(JitCodegenProviderTests);
-
-    protected override void DoTest(Lifetime lifetime, IProject testProject)
-    {
-        var textControl = OpenTextControl(lifetime);
+        DoCodegenTest(offsetSelector, jitDisasmConfiguration, testMethodName: testMethodName);
     }
 
     [Test]
-    public void TestJitCodegen()
+    public void TestLocalMethod()
     {
-        DoNamedTest2();
-        /*var lifetime = new Lifetime();
-        var solution = this.Solution;
-        var textControl = this.OpenTextControl(lifetime);
-        /*var dataContext = textControl.ToDataContext()(lifetime);
-        var elementUnderCaret = dataContext.GetData(PsiDataConstants.SELECTED_TREE_NODES)?.FirstOrDefault();
-        if (elementUnderCaret is not { } selectedItem ||
-            !JitDisasmTargetUtils.ValidateTreeNodeForDisasm(selectedItem.Parent) ||
-            selectedItem.Parent is not IDeclaration declaration)
-            return null;
-
-        var result = (await GetJitCodegenForDeclaration(declaration, lifetime)).Value.Result;*/
+        TestJitCodegen(x => x.Document.GetText().IndexOf("LocalAdd(int", StringComparison.InvariantCulture), new JitDisasmConfiguration());
+    }
+    
+    [Test]
+    public void TestClass()
+    {
+        TestJitCodegen(x => x.Document.GetText().IndexOf("TestClass", StringComparison.InvariantCulture), new JitDisasmConfiguration());
     }
 }

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using JetBrains.Core;
 
 namespace ReSharperPlugin.JitAsmViewer.JitDisasm;

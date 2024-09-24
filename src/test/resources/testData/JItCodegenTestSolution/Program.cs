@@ -1,12 +1,11 @@
-using System;
-using System.Numerics;
-using Some.Name.Space;
+﻿using System.Numerics;
+using Some.Fucking.Name.Space;
 
 public class TestClass
 {
     static void Main()
     {
-        Console.WriteLine(Some.Name.Space.TestClass<int, TestClass>.Add(1, 5));
+        Console.WriteLine(Some.Fucking.Name.Space.TestClass<int, TestClass>.Add(1, 5));
     }
     
     public static int Add(int a, int b)
@@ -21,23 +20,11 @@ public class TestClass
 
     public TestClass(TestClass<int, TestClass> obj)
     {
-        Console.WriteLine("Constructor is called");
-    }
-    
-    public void MethodWithException()
-    {
-        try
-        {
-            throw new Exception("Test exception");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
+        
     }
 }
 
-namespace Some.Name.Space
+namespace Some.Fucking.Name.Space
 {
     public class TestClass<T, U> where T : INumber<T>
     {
