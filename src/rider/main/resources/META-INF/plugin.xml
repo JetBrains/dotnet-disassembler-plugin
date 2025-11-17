@@ -12,18 +12,30 @@
 ]]>
   </description>
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="CefToolWindow"
-                secondary="true"
+    <!-- ASM Viewer Tool Window -->
+    <toolWindow id="AsmViewer"
+                canCloseContents="false"
+                icon="AllIcons.Actions.ShowCode"
                 anchor="right"
-                factoryClass="com.jetbrains.rider.plugins.jitasmviewer.JitAsmViewerToolWindowFactory"
-                icon="ReSharperIcons.Common.Bulb"/>
+                factoryClass="com.jetbrains.rider.plugins.jitasmviewer.AsmViewerToolWindowFactory"/>
 
-    <rdclient.view key="com.jetbrains.rd.ide.model.BeCefToolWindowPanel"
-                   implementationClass="com.jetbrains.rider.plugins.jitasmviewer.JitAsmViewerToolWindowPanel" />
+    <!-- Register ASM Viewer Protocol Listener -->
+    <rd.solutionExtListener endpoint="IDE Frontend"
+                            listener="com.jetbrains.rider.plugins.jitasmviewer.AsmViewerHost$ProtocolListener"/>
+
+    <!-- Register FUS Statistics Collectors -->
+    <statistics.counterUsagesCollector
+        implementationClass="com.jetbrains.rider.plugins.jitasmviewer.statistics.AsmViewerStatisticsCollector"/>
+    <statistics.counterUsagesCollector
+        implementationClass="com.jetbrains.rider.plugins.jitasmviewer.statistics.AsmViewerConfigurationStatisticsCollector"/>
   </extensions>
     <actions>
-        <action id="com.jetbrains.rider.plugins.jitasmviewer.JitAsmProviderAction"
-                class="com.jetbrains.rider.plugins.jitasmviewer.JitAsmProviderAction"
-                text="View JIt codegen for selected method"/>
+        <!-- Show ASM Viewer Action -->
+        <action id="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction"
+                class="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction"
+                text="ASM Viewer"
+                description="Show ASM code">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>
