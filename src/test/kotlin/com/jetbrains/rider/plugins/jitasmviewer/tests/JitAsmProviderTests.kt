@@ -7,7 +7,7 @@ import org.testng.annotations.Test
 
 @TestEnvironment(sdkVersion = SdkVersion.DOT_NET_8)
 class JitAsmProviderTests: BaseTestWithSolution() {
-    override fun getSolutionDirectoryName(): String = "JItCodegenTestSolution"
+    fun getSolutionDirectoryName(): String = "JItCodegenTestSolution"
 
     @Test
     fun autoAttachChildrenDotNetProjectConfigurationTest() {
