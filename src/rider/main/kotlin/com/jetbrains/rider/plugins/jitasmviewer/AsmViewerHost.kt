@@ -58,6 +58,10 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
         model.isVisible.advise(serviceLifetime) { isVisible ->
             logger.debug("Tool window visibility changed: $isVisible")
             if (isVisible) {
+                logger.debug("Window opened, updating model from editor")
+                updateModelFromEditor()
+            } else {
+                logger.debug("Clearing model data on window hide")
                 model.sourceFilePath.set(null)
                 model.caretOffset.set(null)
                 model.currentContent.set(null)
