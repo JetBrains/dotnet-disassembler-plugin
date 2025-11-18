@@ -18,7 +18,7 @@ public static class JitDisasmTargetUtils
         ITypeElement containingType =
             declaredElement as ITypeElement ?? (declaredElement as ITypeMember)?.ContainingType ?? (declaredElement as ITypeOwnerDeclaration)?.GetContainingTypeElement();
         if (containingType is null)
-            throw new Exception($"ContainingType is null for {declaredElement}");
+            throw new Exception($"Unable to determine containing type for '{declaredElement.ShortName}' (type: {declaredElement.GetType().Name}). Make sure the method is inside a .NET Core/6+ project.");
 
         // match all for nested types
         if (containingType.GetContainingType() is not null)

@@ -4,7 +4,7 @@ using JetBrains.Core;
 
 namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 
-public record JitDisasmConfiguration()
+public record JitDisasmConfiguration
 {
     public string PathToLocalCoreClr { get; init; }
     public bool JitDumpInsteadOfDisasm { get; init; }
@@ -18,22 +18,19 @@ public record JitDisasmConfiguration()
     public bool UseDotnetPublishForReload { get; init; }
     public bool UseDotnetBuildForReload { get; init; }
     public bool RunAppMode { get; init; }
-    public bool PrintInlinees { get; init; }
     public bool UseNoRestoreFlag { get; init; }
-    public bool DisableLightBulb { get; init; }
     public bool UseTieredJit { get; init; }
     public bool UseUnloadableContext { get; init; }
-    public bool UsePGO { get; init; }
+    public bool UsePgo { get; init; }
     public bool Diffable { get; init; }
-    public bool DontGuessTFM { get; init; }
+    public bool DontGuessTfm { get; init; }
     public bool UseCustomRuntime { get; init; }
     public List<string> CustomJits { get; init; }
     public string SelectedCustomJit { get; init; }
-    public string GraphvisDot { get; init; }
     public string OverridenJitDisasm { get; init; }
     public bool FgEnable { get; init; }
-    public string OverridenTFM { get; init; }
-    public string Arch { get; set; } = "x64";
+    public JitDisasmTargetFramework OverridenTfm { get; init; }
+    public string Arch { get; init; } = "x64";
     
     public bool CrossgenIsSelected => SelectedCustomJit?.StartsWith("crossgen") == true;
 
@@ -43,21 +40,21 @@ public record JitDisasmConfiguration()
     public const string Crossgen = "crossgen2.dll (R2R)";
     public const string Ilc = "ilc (NativeAOT)";
 
-    public Result<JitDisasmConfiguration> Validate()
+    public Result<JitDisasmConfiguration, Error> Validate()
     {
         if (CrossgenIsSelected || NativeAotIsSelected)
         {
-            if (UsePGO)
-                return Result.Fail("PGO has no effect on R2R'd/NativeAOT code.");
+            if (UsePgo)
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.PgoNotSupportedForAot));
 
             if (RunAppMode)
-                return Result.Fail("Run mode is not supported for crossgen/NativeAOT");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.RunModeNotSupportedForAot));
 
             if (UseTieredJit)
-                return Result.Fail("TieredJIT has no effect on R2R'd/NativeAOT code.");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.TieredJitNotSupportedForAot));
 
             if (FgEnable)
-                return Result.Fail("Flowgraphs are not tested with crossgen2/NativeAOT yet (in plugin)");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.FlowgraphsNotSupportedForAot));
         }
 
         return Result.Success(this);
@@ -69,7 +66,7 @@ public record JitDisasmConfiguration()
                (SelectedCustomJit == Crossgen || SelectedCustomJit == Ilc);
     }
 
-    public bool IsNonCustomNativeAOTMode()
+    public bool IsNonCustomNativeAotMode()
     {
         return !UseCustomRuntime && SelectedCustomJit == Ilc;
     }

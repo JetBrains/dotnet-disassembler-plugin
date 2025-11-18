@@ -3,8 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Util;
-using JetBrains.Util.Logging;
 
 namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 
@@ -13,11 +11,9 @@ namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 public static class LoaderAppManager
 {
     public static readonly string JitDisasmLoaderName = "JitDisasmLoader";
-    public static ILogger _logger = Logger.GetLogger(typeof(LoaderAppManager));
-    private static async Task<string> GetPathToLoader(string tf, Version addinVersion, CancellationToken ct)
+    private static async Task<string> GetPathToLoaderAsync(string tf, Version addinVersion, CancellationToken ct)
     {
-        ProcessResult dotnetVersion = await ProcessUtils.RunProcess("dotnet", "--version", cancellationToken: ct);
-        _logger.Verbose($"dotnet --version: {dotnetVersion.Output} ({dotnetVersion.Error})");
+        ProcessResult dotnetVersion = await ProcessUtils.RunProcessAsync("dotnet", "--version", cancellationToken: ct);
         string version = dotnetVersion.Output.Trim();
         if (!char.IsDigit(version[0]))
         {
@@ -25,11 +21,10 @@ public static class LoaderAppManager
             version = Guid.NewGuid().ToString("N");
         }
         string folderName = $"{addinVersion}_{tf}_{version}";
-        _logger.Verbose($"LoaderAppManager.GetPathToLoader: {folderName}");
         return Path.Combine(Path.GetTempPath(), JitDisasmLoaderName, folderName);
     }
 
-    public static async Task InitLoaderAndCopyTo(string tf, string dest, Action<string> logger, Version addinVersion, CancellationToken ct)
+    public static async Task InitLoaderAndCopyToAsync(string tf, string dest, Action<string> logger, Version addinVersion, CancellationToken ct)
     {
         if (!Directory.Exists(dest))
             throw new InvalidOperationException($"ERROR: dest dir was not found: {dest}");
@@ -38,7 +33,7 @@ public static class LoaderAppManager
         try
         {
             logger("Getting SDK version...");
-            dir = await GetPathToLoader(tf, addinVersion, ct);
+            dir = await GetPathToLoaderAsync(tf, addinVersion, ct);
         }
         catch (Exception exc)
         {
@@ -82,7 +77,7 @@ public static class LoaderAppManager
 
         ct.ThrowIfCancellationRequested();
 
-        var msg = await ProcessUtils.RunProcess("dotnet", "build -c Release", workingDir: dir, cancellationToken: ct);
+        var msg = await ProcessUtils.RunProcessAsync("dotnet", "build -c Release", workingDir: dir, cancellationToken: ct);
 
         if (!File.Exists(outDll) || !File.Exists(outJson))
             throw new InvalidOperationException($"ERROR: 'dotnet build' did not produce expected binaries ('{outDll}'" +
