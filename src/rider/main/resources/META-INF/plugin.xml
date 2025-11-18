@@ -1,16 +1,49 @@
-<idea-plugin require-restart="true">
+<idea-plugin url="https://github.com/JetBrains/JitAsmViewer" require-restart="true">
   <id>com.jetbrains.rider.plugins.jitasmviewer</id>
-  <name>JitAsmViewer</name>
+  <name>JIT Assembly Viewer</name>
   <version>_PLACEHOLDER_</version>
-  <vendor url="https://project-url">Author</vendor>
+  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
   <idea-version since-build="_PLACEHOLDER_" until-build="_PLACEHOLDER_" />
   <depends>com.intellij.modules.rider</depends>
 
   <description>
 <![CDATA[
-<p>Sample description</p>
+<h2>JIT Assembly Viewer for Rider</h2>
+
+<p><strong>Experimental plugin</strong> that displays JIT-compiled assembly code for C# methods directly in Rider.</p>
+
+<h3>Features</h3>
+<ul>
+  <li>View JIT-compiled assembly for any C# method</li>
+  <li>Configurable JIT optimization settings (tiered compilation, PGO, diffable output)</li>
+  <li>Multiple codegen modes: standard JIT, ReadyToRun (crossgen2), or NativeAOT (ilc)</li>
+  <li>Snapshot and diff view to compare assembly output after code changes</li>
+  <li>Syntax highlighting for assembly code</li>
+</ul>
+
+<h3>How to Use</h3>
+<ol>
+  <li>Place the caret on any C# method in your .NET 6.0+ project</li>
+  <li>Open the JIT Assembly Viewer tool window (View → Tool Windows → ASM Viewer)</li>
+  <li>The plugin will automatically compile and display the JIT assembly for the selected method</li>
+  <li>Configure JIT options via the toolbar to see how different settings affect the generated code</li>
+  <li>Use "Create Snapshot" button to save current assembly, then modify your C# code to see the diff</li>
+</ol>
+
+<h3>Requirements</h3>
+<ul>
+  <li>.NET SDK 6.0 or higher</li>
+  <li>Works only with .NET Core/6+ projects (not .NET Framework)</li>
+</ul>
+
+<h3>Credits</h3>
+<p>This plugin is based on the <a href="https://github.com/EgorBo/Disasmo">Disasmo</a> project by Egor Bogatov.</p>
+
+<h3>Feedback</h3>
+<p>This is an experimental first release. Please report issues and suggestions on <a href="https://github.com/JetBrains/JitAsmViewer/issues">GitHub</a>.</p>
 ]]>
   </description>
+
   <extensions defaultExtensionNs="com.intellij">
     <!-- ASM Viewer Tool Window -->
     <toolWindow id="AsmViewer"
