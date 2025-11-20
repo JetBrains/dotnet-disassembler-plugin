@@ -50,6 +50,7 @@ namespace JetBrains.Rider.Model
     [NotNull] public IViewableProperty<string> CurrentContent => _CurrentContent;
     [NotNull] public IViewableProperty<string> SourceFilePath => _SourceFilePath;
     [NotNull] public IViewableProperty<int?> CaretOffset => _CaretOffset;
+    [NotNull] public IViewableProperty<long?> DocumentModificationStamp => _DocumentModificationStamp;
     [NotNull] public IViewableProperty<string> SnapshotContent => _SnapshotContent;
     [NotNull] public IViewableProperty<bool> HasSnapshot => _HasSnapshot;
     [NotNull] public IViewableProperty<bool> ShowAsmComments => _ShowAsmComments;
@@ -73,6 +74,7 @@ namespace JetBrains.Rider.Model
     [NotNull] private readonly RdProperty<string> _CurrentContent;
     [NotNull] private readonly RdProperty<string> _SourceFilePath;
     [NotNull] private readonly RdProperty<int?> _CaretOffset;
+    [NotNull] private readonly RdProperty<long?> _DocumentModificationStamp;
     [NotNull] private readonly RdProperty<string> _SnapshotContent;
     [NotNull] private readonly RdProperty<bool> _HasSnapshot;
     [NotNull] private readonly RdProperty<bool> _ShowAsmComments;
@@ -97,6 +99,7 @@ namespace JetBrains.Rider.Model
       [NotNull] RdProperty<string> currentContent,
       [NotNull] RdProperty<string> sourceFilePath,
       [NotNull] RdProperty<int?> caretOffset,
+      [NotNull] RdProperty<long?> documentModificationStamp,
       [NotNull] RdProperty<string> snapshotContent,
       [NotNull] RdProperty<bool> hasSnapshot,
       [NotNull] RdProperty<bool> showAsmComments,
@@ -120,6 +123,7 @@ namespace JetBrains.Rider.Model
       if (currentContent == null) throw new ArgumentNullException("currentContent");
       if (sourceFilePath == null) throw new ArgumentNullException("sourceFilePath");
       if (caretOffset == null) throw new ArgumentNullException("caretOffset");
+      if (documentModificationStamp == null) throw new ArgumentNullException("documentModificationStamp");
       if (snapshotContent == null) throw new ArgumentNullException("snapshotContent");
       if (hasSnapshot == null) throw new ArgumentNullException("hasSnapshot");
       if (showAsmComments == null) throw new ArgumentNullException("showAsmComments");
@@ -142,6 +146,7 @@ namespace JetBrains.Rider.Model
       _CurrentContent = currentContent;
       _SourceFilePath = sourceFilePath;
       _CaretOffset = caretOffset;
+      _DocumentModificationStamp = documentModificationStamp;
       _SnapshotContent = snapshotContent;
       _HasSnapshot = hasSnapshot;
       _ShowAsmComments = showAsmComments;
@@ -162,6 +167,7 @@ namespace JetBrains.Rider.Model
       _CurrentContent.OptimizeNested = true;
       _SourceFilePath.OptimizeNested = true;
       _CaretOffset.OptimizeNested = true;
+      _DocumentModificationStamp.OptimizeNested = true;
       _SnapshotContent.OptimizeNested = true;
       _HasSnapshot.OptimizeNested = true;
       _ShowAsmComments.OptimizeNested = true;
@@ -180,6 +186,7 @@ namespace JetBrains.Rider.Model
       _CurrentContent.ValueCanBeNull = true;
       _SourceFilePath.ValueCanBeNull = true;
       _CaretOffset.ValueCanBeNull = true;
+      _DocumentModificationStamp.ValueCanBeNull = true;
       _SnapshotContent.ValueCanBeNull = true;
       _SelectedCustomJit.ValueCanBeNull = true;
       BindableChildren.Add(new KeyValuePair<string, object>("show", _Show));
@@ -190,6 +197,7 @@ namespace JetBrains.Rider.Model
       BindableChildren.Add(new KeyValuePair<string, object>("currentContent", _CurrentContent));
       BindableChildren.Add(new KeyValuePair<string, object>("sourceFilePath", _SourceFilePath));
       BindableChildren.Add(new KeyValuePair<string, object>("caretOffset", _CaretOffset));
+      BindableChildren.Add(new KeyValuePair<string, object>("documentModificationStamp", _DocumentModificationStamp));
       BindableChildren.Add(new KeyValuePair<string, object>("snapshotContent", _SnapshotContent));
       BindableChildren.Add(new KeyValuePair<string, object>("hasSnapshot", _HasSnapshot));
       BindableChildren.Add(new KeyValuePair<string, object>("showAsmComments", _ShowAsmComments));
@@ -215,6 +223,7 @@ namespace JetBrains.Rider.Model
       new RdProperty<string>(ReadStringNullable, WriteStringNullable),
       new RdProperty<string>(ReadStringNullable, WriteStringNullable),
       new RdProperty<int?>(ReadIntNullable, WriteIntNullable),
+      new RdProperty<long?>(ReadLongNullable, WriteLongNullable),
       new RdProperty<string>(ReadStringNullable, WriteStringNullable),
       new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
       new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
@@ -234,11 +243,13 @@ namespace JetBrains.Rider.Model
     
     public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
     public static CtxReadDelegate<int?> ReadIntNullable = JetBrains.Rd.Impl.Serializers.ReadInt.NullableStruct();
+    public static CtxReadDelegate<long?> ReadLongNullable = JetBrains.Rd.Impl.Serializers.ReadLong.NullableStruct();
     
     public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
     public static  CtxWriteDelegate<int?> WriteIntNullable = JetBrains.Rd.Impl.Serializers.WriteInt.NullableStruct();
+    public static  CtxWriteDelegate<long?> WriteLongNullable = JetBrains.Rd.Impl.Serializers.WriteLong.NullableStruct();
     
-    protected override long SerializationHash => 2449962988450385687L;
+    protected override long SerializationHash => 8782978450809573702L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -267,6 +278,7 @@ namespace JetBrains.Rider.Model
         printer.Print("currentContent = "); _CurrentContent.PrintEx(printer); printer.Println();
         printer.Print("sourceFilePath = "); _SourceFilePath.PrintEx(printer); printer.Println();
         printer.Print("caretOffset = "); _CaretOffset.PrintEx(printer); printer.Println();
+        printer.Print("documentModificationStamp = "); _DocumentModificationStamp.PrintEx(printer); printer.Println();
         printer.Print("snapshotContent = "); _SnapshotContent.PrintEx(printer); printer.Println();
         printer.Print("hasSnapshot = "); _HasSnapshot.PrintEx(printer); printer.Println();
         printer.Print("showAsmComments = "); _ShowAsmComments.PrintEx(printer); printer.Println();

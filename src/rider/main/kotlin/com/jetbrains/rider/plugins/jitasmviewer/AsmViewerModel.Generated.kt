@@ -27,6 +27,7 @@ class AsmViewerModel private constructor(
     private val _currentContent: RdProperty<String?>,
     private val _sourceFilePath: RdProperty<String?>,
     private val _caretOffset: RdProperty<Int?>,
+    private val _documentModificationStamp: RdProperty<Long?>,
     private val _snapshotContent: RdProperty<String?>,
     private val _hasSnapshot: RdOptionalProperty<Boolean>,
     private val _showAsmComments: RdOptionalProperty<Boolean>,
@@ -53,8 +54,9 @@ class AsmViewerModel private constructor(
         
         private val __StringNullableSerializer = FrameworkMarshallers.String.nullable()
         private val __IntNullableSerializer = FrameworkMarshallers.Int.nullable()
+        private val __LongNullableSerializer = FrameworkMarshallers.Long.nullable()
         
-        const val serializationHash = 2449962988450385687L
+        const val serializationHash = 8782978450809573702L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -69,6 +71,7 @@ class AsmViewerModel private constructor(
     val currentContent: IProperty<String?> get() = _currentContent
     val sourceFilePath: IProperty<String?> get() = _sourceFilePath
     val caretOffset: IProperty<Int?> get() = _caretOffset
+    val documentModificationStamp: IProperty<Long?> get() = _documentModificationStamp
     val snapshotContent: IProperty<String?> get() = _snapshotContent
     val hasSnapshot: IOptProperty<Boolean> get() = _hasSnapshot
     val showAsmComments: IOptProperty<Boolean> get() = _showAsmComments
@@ -92,6 +95,7 @@ class AsmViewerModel private constructor(
         _currentContent.optimizeNested = true
         _sourceFilePath.optimizeNested = true
         _caretOffset.optimizeNested = true
+        _documentModificationStamp.optimizeNested = true
         _snapshotContent.optimizeNested = true
         _hasSnapshot.optimizeNested = true
         _showAsmComments.optimizeNested = true
@@ -116,6 +120,7 @@ class AsmViewerModel private constructor(
         bindableChildren.add("currentContent" to _currentContent)
         bindableChildren.add("sourceFilePath" to _sourceFilePath)
         bindableChildren.add("caretOffset" to _caretOffset)
+        bindableChildren.add("documentModificationStamp" to _documentModificationStamp)
         bindableChildren.add("snapshotContent" to _snapshotContent)
         bindableChildren.add("hasSnapshot" to _hasSnapshot)
         bindableChildren.add("showAsmComments" to _showAsmComments)
@@ -142,6 +147,7 @@ class AsmViewerModel private constructor(
         RdProperty<String?>(null, __StringNullableSerializer),
         RdProperty<String?>(null, __StringNullableSerializer),
         RdProperty<Int?>(null, __IntNullableSerializer),
+        RdProperty<Long?>(null, __LongNullableSerializer),
         RdProperty<String?>(null, __StringNullableSerializer),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
@@ -171,6 +177,7 @@ class AsmViewerModel private constructor(
             print("currentContent = "); _currentContent.print(printer); println()
             print("sourceFilePath = "); _sourceFilePath.print(printer); println()
             print("caretOffset = "); _caretOffset.print(printer); println()
+            print("documentModificationStamp = "); _documentModificationStamp.print(printer); println()
             print("snapshotContent = "); _snapshotContent.print(printer); println()
             print("hasSnapshot = "); _hasSnapshot.print(printer); println()
             print("showAsmComments = "); _showAsmComments.print(printer); println()
@@ -198,6 +205,7 @@ class AsmViewerModel private constructor(
             _currentContent.deepClonePolymorphic(),
             _sourceFilePath.deepClonePolymorphic(),
             _caretOffset.deepClonePolymorphic(),
+            _documentModificationStamp.deepClonePolymorphic(),
             _snapshotContent.deepClonePolymorphic(),
             _hasSnapshot.deepClonePolymorphic(),
             _showAsmComments.deepClonePolymorphic(),

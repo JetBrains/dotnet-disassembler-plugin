@@ -18,6 +18,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         property("currentContent", string.nullable)
         property("sourceFilePath", string.nullable)
         property("caretOffset", int.nullable)
+        property("documentModificationStamp", long.nullable)
 
         property("snapshotContent", string.nullable)
         property("hasSnapshot", bool)

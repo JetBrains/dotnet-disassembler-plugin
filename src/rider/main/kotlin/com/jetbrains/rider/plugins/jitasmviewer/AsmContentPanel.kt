@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.components.JBScrollPane
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -37,34 +38,34 @@ object AsmContentPanelFactory {
 }
 
 abstract class AsmContentPanel(protected val project: Project) : Disposable {
-    abstract val component: JPanel
-    private var loadingOverlay: JPanel? = null
+    private val loadingPanel = JPanel(GridBagLayout()).apply {
+        isOpaque = true
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+        add(JLabel(AnimatedIcon.Big.INSTANCE), GridBagConstraints())
+    }
+    protected val contentPanel = JPanel(BorderLayout())
+
+    val component: JPanel = JPanel(BorderLayout()).apply {
+        add(contentPanel, BorderLayout.CENTER)
+    }
 
     abstract fun updateContent(current: String, snapshot: String? = null)
 
     fun showLoading() {
-        if (loadingOverlay != null) return
-
-        loadingOverlay = JPanel(GridBagLayout()).apply {
-            isOpaque = true
-            background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-
-            val icon = AnimatedIcon.Big.INSTANCE
-            add(JLabel(icon), GridBagConstraints())
+        contentPanel.isVisible = false
+        if (loadingPanel.parent != component) {
+            component.add(loadingPanel, BorderLayout.CENTER)
         }
-
-        component.add(loadingOverlay!!, BorderLayout.CENTER)
+        loadingPanel.isVisible = true
         component.revalidate()
         component.repaint()
     }
 
     fun hideLoading() {
-        loadingOverlay?.let {
-            component.remove(it)
-            loadingOverlay = null
-            component.revalidate()
-            component.repaint()
-        }
+        loadingPanel.isVisible = false
+        contentPanel.isVisible = true
+        component.revalidate()
+        component.repaint()
     }
 
     protected fun configureAsmEditor(editor: Editor) {
@@ -97,7 +98,6 @@ class SingleContentPanel(
         private val logger = Logger.getInstance(SingleContentPanel::class.java)
     }
 
-    override val component = JPanel(BorderLayout())
     private val editor: Editor
 
     init {
@@ -105,7 +105,8 @@ class SingleContentPanel(
         val document = EditorFactory.getInstance().createDocument(initialContent)
         editor = EditorFactory.getInstance().createEditor(document, project)
         configureAsmEditor(editor)
-        component.add(editor.component, BorderLayout.CENTER)
+        val scrollPane = JBScrollPane(editor.component)
+        contentPanel.add(scrollPane, BorderLayout.CENTER)
     }
 
     override fun updateContent(current: String, snapshot: String?) {
@@ -132,7 +133,6 @@ class DiffContentPanel(
         private val logger = Logger.getInstance(DiffContentPanel::class.java)
     }
 
-    override val component = JPanel(BorderLayout())
     private var diffRequestPanel: DiffRequestPanel? = null
     private val snapshotDoc = EditorFactory.getInstance().createDocument(snapshotContent)
     private val currentDoc = EditorFactory.getInstance().createDocument(currentContent)
@@ -172,14 +172,14 @@ class DiffContentPanel(
                 setRequest(diffRequest)
             }
 
-            component.add(diffRequestPanel!!.component, BorderLayout.CENTER)
+            contentPanel.add(diffRequestPanel!!.component, BorderLayout.CENTER)
 
             scheduleHighlighting()
             logger.debug("Diff view created successfully")
 
         } catch (e: Exception) {
             logger.error("Failed to create diff view", e)
-            component.add(JLabel("Failed to create diff view: ${e.message}"), BorderLayout.CENTER)
+            contentPanel.add(JLabel("Failed to create diff view: ${e.message}"), BorderLayout.CENTER)
         }
     }
 
@@ -211,7 +211,7 @@ class DiffContentPanel(
 
     override fun dispose() {
         diffRequestPanel?.let { panel ->
-            component.remove(panel.component)
+            contentPanel.remove(panel.component)
             diffRequestPanel = null
         }
     }

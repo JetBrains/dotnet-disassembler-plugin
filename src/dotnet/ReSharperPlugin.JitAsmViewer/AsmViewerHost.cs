@@ -123,6 +123,13 @@ public class AsmViewerHost
         else
         {
             var error = result.FailValue;
+
+            if (error.Code == AsmViewerErrorCode.UpdateCancelled)
+            {
+                _logger.Verbose("Update cancelled, keeping current content");
+                return;
+            }
+
             _logger.Warn("Disassembly failed - Code: {0}, Message: {1}", error.Code, error.Message);
 
             _model.UnavailabilityReason.Value = error.Message;

@@ -13,6 +13,7 @@ public static class AsmViewerModelExtensions
 
         Subscribe(model.SourceFilePath);
         Subscribe(model.CaretOffset);
+        Subscribe(model.DocumentModificationStamp);
         Subscribe(model.IsVisible);
 
         Subscribe(model.ShowAsmComments);

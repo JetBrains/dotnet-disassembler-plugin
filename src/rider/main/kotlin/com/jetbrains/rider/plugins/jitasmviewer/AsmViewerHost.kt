@@ -93,6 +93,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
         logger.debug("Updating model from editor - file: ${file.path}, offset: ${editor.caretModel.offset}")
         model.sourceFilePath.set(file.path)
         model.caretOffset.set(editor.caretModel.offset)
+        model.documentModificationStamp.set(editor.document.modificationStamp)
     }
 
     private fun isAsmViewerEditor(editor: Editor): Boolean {
