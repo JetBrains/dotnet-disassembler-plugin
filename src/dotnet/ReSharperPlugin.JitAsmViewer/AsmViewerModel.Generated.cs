@@ -44,205 +44,82 @@ namespace JetBrains.Rider.Model
     //public fields
     [NotNull] public void Show() => _Show.Fire();
     [NotNull] public IViewableProperty<bool> IsVisible => _IsVisible;
-    [NotNull] public IViewableProperty<bool> IsLoading => _IsLoading;
-    [NotNull] public IViewableProperty<ErrorInfo> Error => _Error;
-    [NotNull] public IViewableProperty<string> CurrentContent => _CurrentContent;
-    [NotNull] public IViewableProperty<string> SourceFilePath => _SourceFilePath;
-    [NotNull] public IViewableProperty<int?> CaretOffset => _CaretOffset;
-    [NotNull] public IViewableProperty<long?> DocumentModificationStamp => _DocumentModificationStamp;
+    [NotNull] public IViewableProperty<JetBrains.Rider.Model.CaretPosition> CaretPosition => _CaretPosition;
+    [NotNull] public IViewableProperty<JetBrains.Rider.Model.CompilationResult> CompilationResult => _CompilationResult;
     [NotNull] public IViewableProperty<string> SnapshotContent => _SnapshotContent;
-    [NotNull] public IViewableProperty<bool> HasSnapshot => _HasSnapshot;
-    [NotNull] public IViewableProperty<bool> ShowAsmComments => _ShowAsmComments;
-    [NotNull] public IViewableProperty<bool> UseTieredJit => _UseTieredJit;
-    [NotNull] public IViewableProperty<bool> UsePGO => _UsePGO;
-    [NotNull] public IViewableProperty<bool> Diffable => _Diffable;
-    [NotNull] public IViewableProperty<bool> RunAppMode => _RunAppMode;
-    [NotNull] public IViewableProperty<bool> UseNoRestoreFlag => _UseNoRestoreFlag;
-    [NotNull] public IViewableProperty<bool> UseDotnetPublishForReload => _UseDotnetPublishForReload;
-    [NotNull] public IViewableProperty<bool> UseDotnetBuildForReload => _UseDotnetBuildForReload;
-    [NotNull] public IViewableProperty<bool> UseUnloadableContext => _UseUnloadableContext;
-    [NotNull] public IViewableProperty<bool> DontGuessTFM => _DontGuessTFM;
-    [NotNull] public IViewableProperty<string> SelectedCustomJit => _SelectedCustomJit;
+    [NotNull] public IViewableProperty<JitConfiguration> Configuration => _Configuration;
     
     //private fields
     [NotNull] private readonly RdSignal<Unit> _Show;
     [NotNull] private readonly RdProperty<bool> _IsVisible;
-    [NotNull] private readonly RdProperty<bool> _IsLoading;
-    [NotNull] private readonly RdProperty<ErrorInfo> _Error;
-    [NotNull] private readonly RdProperty<string> _CurrentContent;
-    [NotNull] private readonly RdProperty<string> _SourceFilePath;
-    [NotNull] private readonly RdProperty<int?> _CaretOffset;
-    [NotNull] private readonly RdProperty<long?> _DocumentModificationStamp;
+    [NotNull] private readonly RdProperty<JetBrains.Rider.Model.CaretPosition> _CaretPosition;
+    [NotNull] private readonly RdProperty<JetBrains.Rider.Model.CompilationResult> _CompilationResult;
     [NotNull] private readonly RdProperty<string> _SnapshotContent;
-    [NotNull] private readonly RdProperty<bool> _HasSnapshot;
-    [NotNull] private readonly RdProperty<bool> _ShowAsmComments;
-    [NotNull] private readonly RdProperty<bool> _UseTieredJit;
-    [NotNull] private readonly RdProperty<bool> _UsePGO;
-    [NotNull] private readonly RdProperty<bool> _Diffable;
-    [NotNull] private readonly RdProperty<bool> _RunAppMode;
-    [NotNull] private readonly RdProperty<bool> _UseNoRestoreFlag;
-    [NotNull] private readonly RdProperty<bool> _UseDotnetPublishForReload;
-    [NotNull] private readonly RdProperty<bool> _UseDotnetBuildForReload;
-    [NotNull] private readonly RdProperty<bool> _UseUnloadableContext;
-    [NotNull] private readonly RdProperty<bool> _DontGuessTFM;
-    [NotNull] private readonly RdProperty<string> _SelectedCustomJit;
+    [NotNull] private readonly RdProperty<JitConfiguration> _Configuration;
     
     //primary constructor
     private AsmViewerModel(
       [NotNull] RdSignal<Unit> show,
       [NotNull] RdProperty<bool> isVisible,
-      [NotNull] RdProperty<bool> isLoading,
-      [NotNull] RdProperty<ErrorInfo> error,
-      [NotNull] RdProperty<string> currentContent,
-      [NotNull] RdProperty<string> sourceFilePath,
-      [NotNull] RdProperty<int?> caretOffset,
-      [NotNull] RdProperty<long?> documentModificationStamp,
+      [NotNull] RdProperty<JetBrains.Rider.Model.CaretPosition> caretPosition,
+      [NotNull] RdProperty<JetBrains.Rider.Model.CompilationResult> compilationResult,
       [NotNull] RdProperty<string> snapshotContent,
-      [NotNull] RdProperty<bool> hasSnapshot,
-      [NotNull] RdProperty<bool> showAsmComments,
-      [NotNull] RdProperty<bool> useTieredJit,
-      [NotNull] RdProperty<bool> usePGO,
-      [NotNull] RdProperty<bool> diffable,
-      [NotNull] RdProperty<bool> runAppMode,
-      [NotNull] RdProperty<bool> useNoRestoreFlag,
-      [NotNull] RdProperty<bool> useDotnetPublishForReload,
-      [NotNull] RdProperty<bool> useDotnetBuildForReload,
-      [NotNull] RdProperty<bool> useUnloadableContext,
-      [NotNull] RdProperty<bool> dontGuessTFM,
-      [NotNull] RdProperty<string> selectedCustomJit
+      [NotNull] RdProperty<JitConfiguration> configuration
     )
     {
       if (show == null) throw new ArgumentNullException("show");
       if (isVisible == null) throw new ArgumentNullException("isVisible");
-      if (isLoading == null) throw new ArgumentNullException("isLoading");
-      if (error == null) throw new ArgumentNullException("error");
-      if (currentContent == null) throw new ArgumentNullException("currentContent");
-      if (sourceFilePath == null) throw new ArgumentNullException("sourceFilePath");
-      if (caretOffset == null) throw new ArgumentNullException("caretOffset");
-      if (documentModificationStamp == null) throw new ArgumentNullException("documentModificationStamp");
+      if (caretPosition == null) throw new ArgumentNullException("caretPosition");
+      if (compilationResult == null) throw new ArgumentNullException("compilationResult");
       if (snapshotContent == null) throw new ArgumentNullException("snapshotContent");
-      if (hasSnapshot == null) throw new ArgumentNullException("hasSnapshot");
-      if (showAsmComments == null) throw new ArgumentNullException("showAsmComments");
-      if (useTieredJit == null) throw new ArgumentNullException("useTieredJit");
-      if (usePGO == null) throw new ArgumentNullException("usePGO");
-      if (diffable == null) throw new ArgumentNullException("diffable");
-      if (runAppMode == null) throw new ArgumentNullException("runAppMode");
-      if (useNoRestoreFlag == null) throw new ArgumentNullException("useNoRestoreFlag");
-      if (useDotnetPublishForReload == null) throw new ArgumentNullException("useDotnetPublishForReload");
-      if (useDotnetBuildForReload == null) throw new ArgumentNullException("useDotnetBuildForReload");
-      if (useUnloadableContext == null) throw new ArgumentNullException("useUnloadableContext");
-      if (dontGuessTFM == null) throw new ArgumentNullException("dontGuessTFM");
-      if (selectedCustomJit == null) throw new ArgumentNullException("selectedCustomJit");
+      if (configuration == null) throw new ArgumentNullException("configuration");
       
       _Show = show;
       _IsVisible = isVisible;
-      _IsLoading = isLoading;
-      _Error = error;
-      _CurrentContent = currentContent;
-      _SourceFilePath = sourceFilePath;
-      _CaretOffset = caretOffset;
-      _DocumentModificationStamp = documentModificationStamp;
+      _CaretPosition = caretPosition;
+      _CompilationResult = compilationResult;
       _SnapshotContent = snapshotContent;
-      _HasSnapshot = hasSnapshot;
-      _ShowAsmComments = showAsmComments;
-      _UseTieredJit = useTieredJit;
-      _UsePGO = usePGO;
-      _Diffable = diffable;
-      _RunAppMode = runAppMode;
-      _UseNoRestoreFlag = useNoRestoreFlag;
-      _UseDotnetPublishForReload = useDotnetPublishForReload;
-      _UseDotnetBuildForReload = useDotnetBuildForReload;
-      _UseUnloadableContext = useUnloadableContext;
-      _DontGuessTFM = dontGuessTFM;
-      _SelectedCustomJit = selectedCustomJit;
+      _Configuration = configuration;
       _IsVisible.OptimizeNested = true;
-      _IsLoading.OptimizeNested = true;
-      _Error.OptimizeNested = true;
-      _CurrentContent.OptimizeNested = true;
-      _SourceFilePath.OptimizeNested = true;
-      _CaretOffset.OptimizeNested = true;
-      _DocumentModificationStamp.OptimizeNested = true;
+      _CaretPosition.OptimizeNested = true;
+      _CompilationResult.OptimizeNested = true;
       _SnapshotContent.OptimizeNested = true;
-      _HasSnapshot.OptimizeNested = true;
-      _ShowAsmComments.OptimizeNested = true;
-      _UseTieredJit.OptimizeNested = true;
-      _UsePGO.OptimizeNested = true;
-      _Diffable.OptimizeNested = true;
-      _RunAppMode.OptimizeNested = true;
-      _UseNoRestoreFlag.OptimizeNested = true;
-      _UseDotnetPublishForReload.OptimizeNested = true;
-      _UseDotnetBuildForReload.OptimizeNested = true;
-      _UseUnloadableContext.OptimizeNested = true;
-      _DontGuessTFM.OptimizeNested = true;
-      _SelectedCustomJit.OptimizeNested = true;
-      _Error.ValueCanBeNull = true;
-      _CurrentContent.ValueCanBeNull = true;
-      _SourceFilePath.ValueCanBeNull = true;
-      _CaretOffset.ValueCanBeNull = true;
-      _DocumentModificationStamp.ValueCanBeNull = true;
+      _Configuration.OptimizeNested = true;
+      _CaretPosition.ValueCanBeNull = true;
+      _CompilationResult.ValueCanBeNull = true;
       _SnapshotContent.ValueCanBeNull = true;
-      _SelectedCustomJit.ValueCanBeNull = true;
+      _Configuration.ValueCanBeNull = true;
       BindableChildren.Add(new KeyValuePair<string, object>("show", _Show));
       BindableChildren.Add(new KeyValuePair<string, object>("isVisible", _IsVisible));
-      BindableChildren.Add(new KeyValuePair<string, object>("isLoading", _IsLoading));
-      BindableChildren.Add(new KeyValuePair<string, object>("error", _Error));
-      BindableChildren.Add(new KeyValuePair<string, object>("currentContent", _CurrentContent));
-      BindableChildren.Add(new KeyValuePair<string, object>("sourceFilePath", _SourceFilePath));
-      BindableChildren.Add(new KeyValuePair<string, object>("caretOffset", _CaretOffset));
-      BindableChildren.Add(new KeyValuePair<string, object>("documentModificationStamp", _DocumentModificationStamp));
+      BindableChildren.Add(new KeyValuePair<string, object>("caretPosition", _CaretPosition));
+      BindableChildren.Add(new KeyValuePair<string, object>("compilationResult", _CompilationResult));
       BindableChildren.Add(new KeyValuePair<string, object>("snapshotContent", _SnapshotContent));
-      BindableChildren.Add(new KeyValuePair<string, object>("hasSnapshot", _HasSnapshot));
-      BindableChildren.Add(new KeyValuePair<string, object>("showAsmComments", _ShowAsmComments));
-      BindableChildren.Add(new KeyValuePair<string, object>("useTieredJit", _UseTieredJit));
-      BindableChildren.Add(new KeyValuePair<string, object>("usePGO", _UsePGO));
-      BindableChildren.Add(new KeyValuePair<string, object>("diffable", _Diffable));
-      BindableChildren.Add(new KeyValuePair<string, object>("runAppMode", _RunAppMode));
-      BindableChildren.Add(new KeyValuePair<string, object>("useNoRestoreFlag", _UseNoRestoreFlag));
-      BindableChildren.Add(new KeyValuePair<string, object>("useDotnetPublishForReload", _UseDotnetPublishForReload));
-      BindableChildren.Add(new KeyValuePair<string, object>("useDotnetBuildForReload", _UseDotnetBuildForReload));
-      BindableChildren.Add(new KeyValuePair<string, object>("useUnloadableContext", _UseUnloadableContext));
-      BindableChildren.Add(new KeyValuePair<string, object>("dontGuessTFM", _DontGuessTFM));
-      BindableChildren.Add(new KeyValuePair<string, object>("selectedCustomJit", _SelectedCustomJit));
+      BindableChildren.Add(new KeyValuePair<string, object>("configuration", _Configuration));
     }
     //secondary constructor
     internal AsmViewerModel (
     ) : this (
       new RdSignal<Unit>(JetBrains.Rd.Impl.Serializers.ReadVoid, JetBrains.Rd.Impl.Serializers.WriteVoid),
       new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<ErrorInfo>(ReadErrorInfoNullable, WriteErrorInfoNullable),
+      new RdProperty<JetBrains.Rider.Model.CaretPosition>(ReadCaretPositionNullable, WriteCaretPositionNullable),
+      new RdProperty<JetBrains.Rider.Model.CompilationResult>(ReadCompilationResultNullable, WriteCompilationResultNullable),
       new RdProperty<string>(ReadStringNullable, WriteStringNullable),
-      new RdProperty<string>(ReadStringNullable, WriteStringNullable),
-      new RdProperty<int?>(ReadIntNullable, WriteIntNullable),
-      new RdProperty<long?>(ReadLongNullable, WriteLongNullable),
-      new RdProperty<string>(ReadStringNullable, WriteStringNullable),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<string>(ReadStringNullable, WriteStringNullable)
+      new RdProperty<JitConfiguration>(ReadJitConfigurationNullable, WriteJitConfigurationNullable)
     ) {}
     //deconstruct trait
     //statics
     
-    public static CtxReadDelegate<ErrorInfo> ReadErrorInfoNullable = ErrorInfo.Read.NullableClass();
+    public static CtxReadDelegate<JetBrains.Rider.Model.CaretPosition> ReadCaretPositionNullable = JetBrains.Rider.Model.CaretPosition.Read.NullableClass();
+    public static CtxReadDelegate<JetBrains.Rider.Model.CompilationResult> ReadCompilationResultNullable = JetBrains.Rider.Model.CompilationResult.Read.NullableClass();
     public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
-    public static CtxReadDelegate<int?> ReadIntNullable = JetBrains.Rd.Impl.Serializers.ReadInt.NullableStruct();
-    public static CtxReadDelegate<long?> ReadLongNullable = JetBrains.Rd.Impl.Serializers.ReadLong.NullableStruct();
+    public static CtxReadDelegate<JitConfiguration> ReadJitConfigurationNullable = JitConfiguration.Read.NullableClass();
     
-    public static  CtxWriteDelegate<ErrorInfo> WriteErrorInfoNullable = ErrorInfo.Write.NullableClass();
+    public static  CtxWriteDelegate<JetBrains.Rider.Model.CaretPosition> WriteCaretPositionNullable = JetBrains.Rider.Model.CaretPosition.Write.NullableClass();
+    public static  CtxWriteDelegate<JetBrains.Rider.Model.CompilationResult> WriteCompilationResultNullable = JetBrains.Rider.Model.CompilationResult.Write.NullableClass();
     public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
-    public static  CtxWriteDelegate<int?> WriteIntNullable = JetBrains.Rd.Impl.Serializers.WriteInt.NullableStruct();
-    public static  CtxWriteDelegate<long?> WriteLongNullable = JetBrains.Rd.Impl.Serializers.WriteLong.NullableStruct();
+    public static  CtxWriteDelegate<JitConfiguration> WriteJitConfigurationNullable = JitConfiguration.Write.NullableClass();
     
-    protected override long SerializationHash => 6373458409336763366L;
+    protected override long SerializationHash => 7273540225599746111L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -265,25 +142,10 @@ namespace JetBrains.Rider.Model
       using (printer.IndentCookie()) {
         printer.Print("show = "); _Show.PrintEx(printer); printer.Println();
         printer.Print("isVisible = "); _IsVisible.PrintEx(printer); printer.Println();
-        printer.Print("isLoading = "); _IsLoading.PrintEx(printer); printer.Println();
-        printer.Print("error = "); _Error.PrintEx(printer); printer.Println();
-        printer.Print("currentContent = "); _CurrentContent.PrintEx(printer); printer.Println();
-        printer.Print("sourceFilePath = "); _SourceFilePath.PrintEx(printer); printer.Println();
-        printer.Print("caretOffset = "); _CaretOffset.PrintEx(printer); printer.Println();
-        printer.Print("documentModificationStamp = "); _DocumentModificationStamp.PrintEx(printer); printer.Println();
+        printer.Print("caretPosition = "); _CaretPosition.PrintEx(printer); printer.Println();
+        printer.Print("compilationResult = "); _CompilationResult.PrintEx(printer); printer.Println();
         printer.Print("snapshotContent = "); _SnapshotContent.PrintEx(printer); printer.Println();
-        printer.Print("hasSnapshot = "); _HasSnapshot.PrintEx(printer); printer.Println();
-        printer.Print("showAsmComments = "); _ShowAsmComments.PrintEx(printer); printer.Println();
-        printer.Print("useTieredJit = "); _UseTieredJit.PrintEx(printer); printer.Println();
-        printer.Print("usePGO = "); _UsePGO.PrintEx(printer); printer.Println();
-        printer.Print("diffable = "); _Diffable.PrintEx(printer); printer.Println();
-        printer.Print("runAppMode = "); _RunAppMode.PrintEx(printer); printer.Println();
-        printer.Print("useNoRestoreFlag = "); _UseNoRestoreFlag.PrintEx(printer); printer.Println();
-        printer.Print("useDotnetPublishForReload = "); _UseDotnetPublishForReload.PrintEx(printer); printer.Println();
-        printer.Print("useDotnetBuildForReload = "); _UseDotnetBuildForReload.PrintEx(printer); printer.Println();
-        printer.Print("useUnloadableContext = "); _UseUnloadableContext.PrintEx(printer); printer.Println();
-        printer.Print("dontGuessTFM = "); _DontGuessTFM.PrintEx(printer); printer.Println();
-        printer.Print("selectedCustomJit = "); _SelectedCustomJit.PrintEx(printer); printer.Println();
+        printer.Print("configuration = "); _Configuration.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }
@@ -300,6 +162,202 @@ namespace JetBrains.Rider.Model
     public static AsmViewerModel GetAsmViewerModel(this Solution solution)
     {
       return solution.GetOrCreateExtension("asmViewerModel", () => new AsmViewerModel());
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: AsmViewerModel.kt:15</p>
+  /// </summary>
+  public sealed class CaretPosition : IPrintable, IEquatable<CaretPosition>
+  {
+    //fields
+    //public fields
+    [NotNull] public string FilePath {get; private set;}
+    public int Offset {get; private set;}
+    public long DocumentModificationStamp {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public CaretPosition(
+      [NotNull] string filePath,
+      int offset,
+      long documentModificationStamp
+    )
+    {
+      if (filePath == null) throw new ArgumentNullException("filePath");
+      
+      FilePath = filePath;
+      Offset = offset;
+      DocumentModificationStamp = documentModificationStamp;
+    }
+    //secondary constructor
+    //deconstruct trait
+    public void Deconstruct([NotNull] out string filePath, out int offset, out long documentModificationStamp)
+    {
+      filePath = FilePath;
+      offset = Offset;
+      documentModificationStamp = DocumentModificationStamp;
+    }
+    //statics
+    
+    public static CtxReadDelegate<CaretPosition> Read = (ctx, reader) => 
+    {
+      var filePath = reader.ReadString();
+      var offset = reader.ReadInt();
+      var documentModificationStamp = reader.ReadLong();
+      var _result = new CaretPosition(filePath, offset, documentModificationStamp);
+      return _result;
+    };
+    
+    public static CtxWriteDelegate<CaretPosition> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.FilePath);
+      writer.Write(value.Offset);
+      writer.Write(value.DocumentModificationStamp);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((CaretPosition) obj);
+    }
+    public bool Equals(CaretPosition other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return FilePath == other.FilePath && Offset == other.Offset && DocumentModificationStamp == other.DocumentModificationStamp;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + FilePath.GetHashCode();
+        hash = hash * 31 + Offset.GetHashCode();
+        hash = hash * 31 + DocumentModificationStamp.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("CaretPosition (");
+      using (printer.IndentCookie()) {
+        printer.Print("filePath = "); FilePath.PrintEx(printer); printer.Println();
+        printer.Print("offset = "); Offset.PrintEx(printer); printer.Println();
+        printer.Print("documentModificationStamp = "); DocumentModificationStamp.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: AsmViewerModel.kt:21</p>
+  /// </summary>
+  public sealed class CompilationResult : IPrintable, IEquatable<CompilationResult>
+  {
+    //fields
+    //public fields
+    [CanBeNull] public string Content {get; private set;}
+    [CanBeNull] public ErrorInfo Error {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public CompilationResult(
+      [CanBeNull] string content,
+      [CanBeNull] ErrorInfo error
+    )
+    {
+      Content = content;
+      Error = error;
+    }
+    //secondary constructor
+    //deconstruct trait
+    public void Deconstruct([CanBeNull] out string content, [CanBeNull] out ErrorInfo error)
+    {
+      content = Content;
+      error = Error;
+    }
+    //statics
+    
+    public static CtxReadDelegate<CompilationResult> Read = (ctx, reader) => 
+    {
+      var content = ReadStringNullable(ctx, reader);
+      var error = ReadErrorInfoNullable(ctx, reader);
+      var _result = new CompilationResult(content, error);
+      return _result;
+    };
+    public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
+    public static CtxReadDelegate<ErrorInfo> ReadErrorInfoNullable = ErrorInfo.Read.NullableClass();
+    
+    public static CtxWriteDelegate<CompilationResult> Write = (ctx, writer, value) => 
+    {
+      WriteStringNullable(ctx, writer, value.Content);
+      WriteErrorInfoNullable(ctx, writer, value.Error);
+    };
+    public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
+    public static  CtxWriteDelegate<ErrorInfo> WriteErrorInfoNullable = ErrorInfo.Write.NullableClass();
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((CompilationResult) obj);
+    }
+    public bool Equals(CompilationResult other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return Equals(Content, other.Content) && Equals(Error, other.Error);
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + (Content != null ? Content.GetHashCode() : 0);
+        hash = hash * 31 + (Error != null ? Error.GetHashCode() : 0);
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("CompilationResult (");
+      using (printer.IndentCookie()) {
+        printer.Print("content = "); Content.PrintEx(printer); printer.Println();
+        printer.Print("error = "); Error.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
     }
   }
   
@@ -386,6 +444,171 @@ namespace JetBrains.Rider.Model
       using (printer.IndentCookie()) {
         printer.Print("code = "); Code.PrintEx(printer); printer.Println();
         printer.Print("details = "); Details.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: AsmViewerModel.kt:26</p>
+  /// </summary>
+  public sealed class JitConfiguration : IPrintable, IEquatable<JitConfiguration>
+  {
+    //fields
+    //public fields
+    public bool ShowAsmComments {get; private set;}
+    public bool Diffable {get; private set;}
+    public bool UseTieredJit {get; private set;}
+    public bool UsePGO {get; private set;}
+    public bool RunAppMode {get; private set;}
+    public bool UseNoRestoreFlag {get; private set;}
+    public bool UseDotnetPublishForReload {get; private set;}
+    public bool UseDotnetBuildForReload {get; private set;}
+    public bool UseUnloadableContext {get; private set;}
+    public bool DontGuessTFM {get; private set;}
+    [CanBeNull] public string SelectedCustomJit {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public JitConfiguration(
+      bool showAsmComments,
+      bool diffable,
+      bool useTieredJit,
+      bool usePGO,
+      bool runAppMode,
+      bool useNoRestoreFlag,
+      bool useDotnetPublishForReload,
+      bool useDotnetBuildForReload,
+      bool useUnloadableContext,
+      bool dontGuessTFM,
+      [CanBeNull] string selectedCustomJit
+    )
+    {
+      ShowAsmComments = showAsmComments;
+      Diffable = diffable;
+      UseTieredJit = useTieredJit;
+      UsePGO = usePGO;
+      RunAppMode = runAppMode;
+      UseNoRestoreFlag = useNoRestoreFlag;
+      UseDotnetPublishForReload = useDotnetPublishForReload;
+      UseDotnetBuildForReload = useDotnetBuildForReload;
+      UseUnloadableContext = useUnloadableContext;
+      DontGuessTFM = dontGuessTFM;
+      SelectedCustomJit = selectedCustomJit;
+    }
+    //secondary constructor
+    //deconstruct trait
+    public void Deconstruct(out bool showAsmComments, out bool diffable, out bool useTieredJit, out bool usePGO, out bool runAppMode, out bool useNoRestoreFlag, out bool useDotnetPublishForReload, out bool useDotnetBuildForReload, out bool useUnloadableContext, out bool dontGuessTFM, [CanBeNull] out string selectedCustomJit)
+    {
+      showAsmComments = ShowAsmComments;
+      diffable = Diffable;
+      useTieredJit = UseTieredJit;
+      usePGO = UsePGO;
+      runAppMode = RunAppMode;
+      useNoRestoreFlag = UseNoRestoreFlag;
+      useDotnetPublishForReload = UseDotnetPublishForReload;
+      useDotnetBuildForReload = UseDotnetBuildForReload;
+      useUnloadableContext = UseUnloadableContext;
+      dontGuessTFM = DontGuessTFM;
+      selectedCustomJit = SelectedCustomJit;
+    }
+    //statics
+    
+    public static CtxReadDelegate<JitConfiguration> Read = (ctx, reader) => 
+    {
+      var showAsmComments = reader.ReadBool();
+      var diffable = reader.ReadBool();
+      var useTieredJit = reader.ReadBool();
+      var usePGO = reader.ReadBool();
+      var runAppMode = reader.ReadBool();
+      var useNoRestoreFlag = reader.ReadBool();
+      var useDotnetPublishForReload = reader.ReadBool();
+      var useDotnetBuildForReload = reader.ReadBool();
+      var useUnloadableContext = reader.ReadBool();
+      var dontGuessTFM = reader.ReadBool();
+      var selectedCustomJit = ReadStringNullable(ctx, reader);
+      var _result = new JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, useUnloadableContext, dontGuessTFM, selectedCustomJit);
+      return _result;
+    };
+    public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
+    
+    public static CtxWriteDelegate<JitConfiguration> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.ShowAsmComments);
+      writer.Write(value.Diffable);
+      writer.Write(value.UseTieredJit);
+      writer.Write(value.UsePGO);
+      writer.Write(value.RunAppMode);
+      writer.Write(value.UseNoRestoreFlag);
+      writer.Write(value.UseDotnetPublishForReload);
+      writer.Write(value.UseDotnetBuildForReload);
+      writer.Write(value.UseUnloadableContext);
+      writer.Write(value.DontGuessTFM);
+      WriteStringNullable(ctx, writer, value.SelectedCustomJit);
+    };
+    public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((JitConfiguration) obj);
+    }
+    public bool Equals(JitConfiguration other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return ShowAsmComments == other.ShowAsmComments && Diffable == other.Diffable && UseTieredJit == other.UseTieredJit && UsePGO == other.UsePGO && RunAppMode == other.RunAppMode && UseNoRestoreFlag == other.UseNoRestoreFlag && UseDotnetPublishForReload == other.UseDotnetPublishForReload && UseDotnetBuildForReload == other.UseDotnetBuildForReload && UseUnloadableContext == other.UseUnloadableContext && DontGuessTFM == other.DontGuessTFM && Equals(SelectedCustomJit, other.SelectedCustomJit);
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + ShowAsmComments.GetHashCode();
+        hash = hash * 31 + Diffable.GetHashCode();
+        hash = hash * 31 + UseTieredJit.GetHashCode();
+        hash = hash * 31 + UsePGO.GetHashCode();
+        hash = hash * 31 + RunAppMode.GetHashCode();
+        hash = hash * 31 + UseNoRestoreFlag.GetHashCode();
+        hash = hash * 31 + UseDotnetPublishForReload.GetHashCode();
+        hash = hash * 31 + UseDotnetBuildForReload.GetHashCode();
+        hash = hash * 31 + UseUnloadableContext.GetHashCode();
+        hash = hash * 31 + DontGuessTFM.GetHashCode();
+        hash = hash * 31 + (SelectedCustomJit != null ? SelectedCustomJit.GetHashCode() : 0);
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("JitConfiguration (");
+      using (printer.IndentCookie()) {
+        printer.Print("showAsmComments = "); ShowAsmComments.PrintEx(printer); printer.Println();
+        printer.Print("diffable = "); Diffable.PrintEx(printer); printer.Println();
+        printer.Print("useTieredJit = "); UseTieredJit.PrintEx(printer); printer.Println();
+        printer.Print("usePGO = "); UsePGO.PrintEx(printer); printer.Println();
+        printer.Print("runAppMode = "); RunAppMode.PrintEx(printer); printer.Println();
+        printer.Print("useNoRestoreFlag = "); UseNoRestoreFlag.PrintEx(printer); printer.Println();
+        printer.Print("useDotnetPublishForReload = "); UseDotnetPublishForReload.PrintEx(printer); printer.Println();
+        printer.Print("useDotnetBuildForReload = "); UseDotnetBuildForReload.PrintEx(printer); printer.Println();
+        printer.Print("useUnloadableContext = "); UseUnloadableContext.PrintEx(printer); printer.Println();
+        printer.Print("dontGuessTFM = "); DontGuessTFM.PrintEx(printer); printer.Println();
+        printer.Print("selectedCustomJit = "); SelectedCustomJit.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }

@@ -21,25 +21,10 @@ import kotlin.jvm.JvmStatic
 class AsmViewerModel private constructor(
     private val _show: RdSignal<Unit>,
     private val _isVisible: RdOptionalProperty<Boolean>,
-    private val _isLoading: RdOptionalProperty<Boolean>,
-    private val _error: RdProperty<ErrorInfo?>,
-    private val _currentContent: RdProperty<String?>,
-    private val _sourceFilePath: RdProperty<String?>,
-    private val _caretOffset: RdProperty<Int?>,
-    private val _documentModificationStamp: RdProperty<Long?>,
+    private val _caretPosition: RdProperty<CaretPosition?>,
+    private val _compilationResult: RdProperty<CompilationResult?>,
     private val _snapshotContent: RdProperty<String?>,
-    private val _hasSnapshot: RdOptionalProperty<Boolean>,
-    private val _showAsmComments: RdOptionalProperty<Boolean>,
-    private val _useTieredJit: RdOptionalProperty<Boolean>,
-    private val _usePGO: RdOptionalProperty<Boolean>,
-    private val _diffable: RdOptionalProperty<Boolean>,
-    private val _runAppMode: RdOptionalProperty<Boolean>,
-    private val _useNoRestoreFlag: RdOptionalProperty<Boolean>,
-    private val _useDotnetPublishForReload: RdOptionalProperty<Boolean>,
-    private val _useDotnetBuildForReload: RdOptionalProperty<Boolean>,
-    private val _useUnloadableContext: RdOptionalProperty<Boolean>,
-    private val _dontGuessTFM: RdOptionalProperty<Boolean>,
-    private val _selectedCustomJit: RdProperty<String?>
+    private val _configuration: RdProperty<JitConfiguration?>
 ) : RdExtBase() {
     //companion
     
@@ -48,17 +33,20 @@ class AsmViewerModel private constructor(
         override fun registerSerializersCore(serializers: ISerializers)  {
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(564443201465347), classLoader, "com.jetbrains.rd.ide.model.ErrorInfo"))
+            serializers.register(LazyCompanionMarshaller(RdId(2758783625201768569), classLoader, "com.jetbrains.rd.ide.model.CaretPosition"))
+            serializers.register(LazyCompanionMarshaller(RdId(-1052327886214718483), classLoader, "com.jetbrains.rd.ide.model.CompilationResult"))
+            serializers.register(LazyCompanionMarshaller(RdId(3780635925811704340), classLoader, "com.jetbrains.rd.ide.model.JitConfiguration"))
         }
         
         
         
         
-        private val __ErrorInfoNullableSerializer = ErrorInfo.nullable()
+        private val __CaretPositionNullableSerializer = CaretPosition.nullable()
+        private val __CompilationResultNullableSerializer = CompilationResult.nullable()
         private val __StringNullableSerializer = FrameworkMarshallers.String.nullable()
-        private val __IntNullableSerializer = FrameworkMarshallers.Int.nullable()
-        private val __LongNullableSerializer = FrameworkMarshallers.Long.nullable()
+        private val __JitConfigurationNullableSerializer = JitConfiguration.nullable()
         
-        const val serializationHash = 6373458409336763366L
+        const val serializationHash = 7273540225599746111L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -67,72 +55,27 @@ class AsmViewerModel private constructor(
     //fields
     val show: ISource<Unit> get() = _show
     val isVisible: IOptProperty<Boolean> get() = _isVisible
-    val isLoading: IOptProperty<Boolean> get() = _isLoading
-    val error: IProperty<ErrorInfo?> get() = _error
-    val currentContent: IProperty<String?> get() = _currentContent
-    val sourceFilePath: IProperty<String?> get() = _sourceFilePath
-    val caretOffset: IProperty<Int?> get() = _caretOffset
-    val documentModificationStamp: IProperty<Long?> get() = _documentModificationStamp
+    val caretPosition: IProperty<CaretPosition?> get() = _caretPosition
+    val compilationResult: IProperty<CompilationResult?> get() = _compilationResult
     val snapshotContent: IProperty<String?> get() = _snapshotContent
-    val hasSnapshot: IOptProperty<Boolean> get() = _hasSnapshot
-    val showAsmComments: IOptProperty<Boolean> get() = _showAsmComments
-    val useTieredJit: IOptProperty<Boolean> get() = _useTieredJit
-    val usePGO: IOptProperty<Boolean> get() = _usePGO
-    val diffable: IOptProperty<Boolean> get() = _diffable
-    val runAppMode: IOptProperty<Boolean> get() = _runAppMode
-    val useNoRestoreFlag: IOptProperty<Boolean> get() = _useNoRestoreFlag
-    val useDotnetPublishForReload: IOptProperty<Boolean> get() = _useDotnetPublishForReload
-    val useDotnetBuildForReload: IOptProperty<Boolean> get() = _useDotnetBuildForReload
-    val useUnloadableContext: IOptProperty<Boolean> get() = _useUnloadableContext
-    val dontGuessTFM: IOptProperty<Boolean> get() = _dontGuessTFM
-    val selectedCustomJit: IProperty<String?> get() = _selectedCustomJit
+    val configuration: IProperty<JitConfiguration?> get() = _configuration
     //methods
     //initializer
     init {
         _isVisible.optimizeNested = true
-        _isLoading.optimizeNested = true
-        _error.optimizeNested = true
-        _currentContent.optimizeNested = true
-        _sourceFilePath.optimizeNested = true
-        _caretOffset.optimizeNested = true
-        _documentModificationStamp.optimizeNested = true
+        _caretPosition.optimizeNested = true
+        _compilationResult.optimizeNested = true
         _snapshotContent.optimizeNested = true
-        _hasSnapshot.optimizeNested = true
-        _showAsmComments.optimizeNested = true
-        _useTieredJit.optimizeNested = true
-        _usePGO.optimizeNested = true
-        _diffable.optimizeNested = true
-        _runAppMode.optimizeNested = true
-        _useNoRestoreFlag.optimizeNested = true
-        _useDotnetPublishForReload.optimizeNested = true
-        _useDotnetBuildForReload.optimizeNested = true
-        _useUnloadableContext.optimizeNested = true
-        _dontGuessTFM.optimizeNested = true
-        _selectedCustomJit.optimizeNested = true
+        _configuration.optimizeNested = true
     }
     
     init {
         bindableChildren.add("show" to _show)
         bindableChildren.add("isVisible" to _isVisible)
-        bindableChildren.add("isLoading" to _isLoading)
-        bindableChildren.add("error" to _error)
-        bindableChildren.add("currentContent" to _currentContent)
-        bindableChildren.add("sourceFilePath" to _sourceFilePath)
-        bindableChildren.add("caretOffset" to _caretOffset)
-        bindableChildren.add("documentModificationStamp" to _documentModificationStamp)
+        bindableChildren.add("caretPosition" to _caretPosition)
+        bindableChildren.add("compilationResult" to _compilationResult)
         bindableChildren.add("snapshotContent" to _snapshotContent)
-        bindableChildren.add("hasSnapshot" to _hasSnapshot)
-        bindableChildren.add("showAsmComments" to _showAsmComments)
-        bindableChildren.add("useTieredJit" to _useTieredJit)
-        bindableChildren.add("usePGO" to _usePGO)
-        bindableChildren.add("diffable" to _diffable)
-        bindableChildren.add("runAppMode" to _runAppMode)
-        bindableChildren.add("useNoRestoreFlag" to _useNoRestoreFlag)
-        bindableChildren.add("useDotnetPublishForReload" to _useDotnetPublishForReload)
-        bindableChildren.add("useDotnetBuildForReload" to _useDotnetBuildForReload)
-        bindableChildren.add("useUnloadableContext" to _useUnloadableContext)
-        bindableChildren.add("dontGuessTFM" to _dontGuessTFM)
-        bindableChildren.add("selectedCustomJit" to _selectedCustomJit)
+        bindableChildren.add("configuration" to _configuration)
     }
     
     //secondary constructor
@@ -140,25 +83,10 @@ class AsmViewerModel private constructor(
     ) : this(
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdProperty<ErrorInfo?>(null, __ErrorInfoNullableSerializer),
+        RdProperty<CaretPosition?>(null, __CaretPositionNullableSerializer),
+        RdProperty<CompilationResult?>(null, __CompilationResultNullableSerializer),
         RdProperty<String?>(null, __StringNullableSerializer),
-        RdProperty<String?>(null, __StringNullableSerializer),
-        RdProperty<Int?>(null, __IntNullableSerializer),
-        RdProperty<Long?>(null, __LongNullableSerializer),
-        RdProperty<String?>(null, __StringNullableSerializer),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdProperty<String?>(null, __StringNullableSerializer)
+        RdProperty<JitConfiguration?>(null, __JitConfigurationNullableSerializer)
     )
     
     //equals trait
@@ -169,25 +97,10 @@ class AsmViewerModel private constructor(
         printer.indent {
             print("show = "); _show.print(printer); println()
             print("isVisible = "); _isVisible.print(printer); println()
-            print("isLoading = "); _isLoading.print(printer); println()
-            print("error = "); _error.print(printer); println()
-            print("currentContent = "); _currentContent.print(printer); println()
-            print("sourceFilePath = "); _sourceFilePath.print(printer); println()
-            print("caretOffset = "); _caretOffset.print(printer); println()
-            print("documentModificationStamp = "); _documentModificationStamp.print(printer); println()
+            print("caretPosition = "); _caretPosition.print(printer); println()
+            print("compilationResult = "); _compilationResult.print(printer); println()
             print("snapshotContent = "); _snapshotContent.print(printer); println()
-            print("hasSnapshot = "); _hasSnapshot.print(printer); println()
-            print("showAsmComments = "); _showAsmComments.print(printer); println()
-            print("useTieredJit = "); _useTieredJit.print(printer); println()
-            print("usePGO = "); _usePGO.print(printer); println()
-            print("diffable = "); _diffable.print(printer); println()
-            print("runAppMode = "); _runAppMode.print(printer); println()
-            print("useNoRestoreFlag = "); _useNoRestoreFlag.print(printer); println()
-            print("useDotnetPublishForReload = "); _useDotnetPublishForReload.print(printer); println()
-            print("useDotnetBuildForReload = "); _useDotnetBuildForReload.print(printer); println()
-            print("useUnloadableContext = "); _useUnloadableContext.print(printer); println()
-            print("dontGuessTFM = "); _dontGuessTFM.print(printer); println()
-            print("selectedCustomJit = "); _selectedCustomJit.print(printer); println()
+            print("configuration = "); _configuration.print(printer); println()
         }
         printer.print(")")
     }
@@ -196,25 +109,10 @@ class AsmViewerModel private constructor(
         return AsmViewerModel(
             _show.deepClonePolymorphic(),
             _isVisible.deepClonePolymorphic(),
-            _isLoading.deepClonePolymorphic(),
-            _error.deepClonePolymorphic(),
-            _currentContent.deepClonePolymorphic(),
-            _sourceFilePath.deepClonePolymorphic(),
-            _caretOffset.deepClonePolymorphic(),
-            _documentModificationStamp.deepClonePolymorphic(),
+            _caretPosition.deepClonePolymorphic(),
+            _compilationResult.deepClonePolymorphic(),
             _snapshotContent.deepClonePolymorphic(),
-            _hasSnapshot.deepClonePolymorphic(),
-            _showAsmComments.deepClonePolymorphic(),
-            _useTieredJit.deepClonePolymorphic(),
-            _usePGO.deepClonePolymorphic(),
-            _diffable.deepClonePolymorphic(),
-            _runAppMode.deepClonePolymorphic(),
-            _useNoRestoreFlag.deepClonePolymorphic(),
-            _useDotnetPublishForReload.deepClonePolymorphic(),
-            _useDotnetBuildForReload.deepClonePolymorphic(),
-            _useUnloadableContext.deepClonePolymorphic(),
-            _dontGuessTFM.deepClonePolymorphic(),
-            _selectedCustomJit.deepClonePolymorphic()
+            _configuration.deepClonePolymorphic()
         )
     }
     //contexts
@@ -223,6 +121,142 @@ class AsmViewerModel private constructor(
 }
 val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::AsmViewerModel)
 
+
+
+/**
+ * #### Generated from [AsmViewerModel.kt:15]
+ */
+data class CaretPosition (
+    val filePath: String,
+    val offset: Int,
+    val documentModificationStamp: Long
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<CaretPosition> {
+        override val _type: KClass<CaretPosition> = CaretPosition::class
+        override val id: RdId get() = RdId(2758783625201768569)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CaretPosition  {
+            val filePath = buffer.readString()
+            val offset = buffer.readInt()
+            val documentModificationStamp = buffer.readLong()
+            return CaretPosition(filePath, offset, documentModificationStamp)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CaretPosition)  {
+            buffer.writeString(value.filePath)
+            buffer.writeInt(value.offset)
+            buffer.writeLong(value.documentModificationStamp)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as CaretPosition
+        
+        if (filePath != other.filePath) return false
+        if (offset != other.offset) return false
+        if (documentModificationStamp != other.documentModificationStamp) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + filePath.hashCode()
+        __r = __r*31 + offset.hashCode()
+        __r = __r*31 + documentModificationStamp.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("CaretPosition (")
+        printer.indent {
+            print("filePath = "); filePath.print(printer); println()
+            print("offset = "); offset.print(printer); println()
+            print("documentModificationStamp = "); documentModificationStamp.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+    //threading
+}
+
+
+/**
+ * #### Generated from [AsmViewerModel.kt:21]
+ */
+data class CompilationResult (
+    val content: String?,
+    val error: ErrorInfo?
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<CompilationResult> {
+        override val _type: KClass<CompilationResult> = CompilationResult::class
+        override val id: RdId get() = RdId(-1052327886214718483)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CompilationResult  {
+            val content = buffer.readNullable { buffer.readString() }
+            val error = buffer.readNullable { ErrorInfo.read(ctx, buffer) }
+            return CompilationResult(content, error)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CompilationResult)  {
+            buffer.writeNullable(value.content) { buffer.writeString(it) }
+            buffer.writeNullable(value.error) { ErrorInfo.write(ctx, buffer, it) }
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as CompilationResult
+        
+        if (content != other.content) return false
+        if (error != other.error) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + if (content != null) content.hashCode() else 0
+        __r = __r*31 + if (error != null) error.hashCode() else 0
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("CompilationResult (")
+        printer.indent {
+            print("content = "); content.print(printer); println()
+            print("error = "); error.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+    //threading
+}
 
 
 /**
@@ -281,6 +315,125 @@ data class ErrorInfo (
         printer.indent {
             print("code = "); code.print(printer); println()
             print("details = "); details.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+    //threading
+}
+
+
+/**
+ * #### Generated from [AsmViewerModel.kt:26]
+ */
+data class JitConfiguration (
+    val showAsmComments: Boolean,
+    val diffable: Boolean,
+    val useTieredJit: Boolean,
+    val usePGO: Boolean,
+    val runAppMode: Boolean,
+    val useNoRestoreFlag: Boolean,
+    val useDotnetPublishForReload: Boolean,
+    val useDotnetBuildForReload: Boolean,
+    val useUnloadableContext: Boolean,
+    val dontGuessTFM: Boolean,
+    val selectedCustomJit: String?
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<JitConfiguration> {
+        override val _type: KClass<JitConfiguration> = JitConfiguration::class
+        override val id: RdId get() = RdId(3780635925811704340)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): JitConfiguration  {
+            val showAsmComments = buffer.readBool()
+            val diffable = buffer.readBool()
+            val useTieredJit = buffer.readBool()
+            val usePGO = buffer.readBool()
+            val runAppMode = buffer.readBool()
+            val useNoRestoreFlag = buffer.readBool()
+            val useDotnetPublishForReload = buffer.readBool()
+            val useDotnetBuildForReload = buffer.readBool()
+            val useUnloadableContext = buffer.readBool()
+            val dontGuessTFM = buffer.readBool()
+            val selectedCustomJit = buffer.readNullable { buffer.readString() }
+            return JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, useUnloadableContext, dontGuessTFM, selectedCustomJit)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: JitConfiguration)  {
+            buffer.writeBool(value.showAsmComments)
+            buffer.writeBool(value.diffable)
+            buffer.writeBool(value.useTieredJit)
+            buffer.writeBool(value.usePGO)
+            buffer.writeBool(value.runAppMode)
+            buffer.writeBool(value.useNoRestoreFlag)
+            buffer.writeBool(value.useDotnetPublishForReload)
+            buffer.writeBool(value.useDotnetBuildForReload)
+            buffer.writeBool(value.useUnloadableContext)
+            buffer.writeBool(value.dontGuessTFM)
+            buffer.writeNullable(value.selectedCustomJit) { buffer.writeString(it) }
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as JitConfiguration
+        
+        if (showAsmComments != other.showAsmComments) return false
+        if (diffable != other.diffable) return false
+        if (useTieredJit != other.useTieredJit) return false
+        if (usePGO != other.usePGO) return false
+        if (runAppMode != other.runAppMode) return false
+        if (useNoRestoreFlag != other.useNoRestoreFlag) return false
+        if (useDotnetPublishForReload != other.useDotnetPublishForReload) return false
+        if (useDotnetBuildForReload != other.useDotnetBuildForReload) return false
+        if (useUnloadableContext != other.useUnloadableContext) return false
+        if (dontGuessTFM != other.dontGuessTFM) return false
+        if (selectedCustomJit != other.selectedCustomJit) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + showAsmComments.hashCode()
+        __r = __r*31 + diffable.hashCode()
+        __r = __r*31 + useTieredJit.hashCode()
+        __r = __r*31 + usePGO.hashCode()
+        __r = __r*31 + runAppMode.hashCode()
+        __r = __r*31 + useNoRestoreFlag.hashCode()
+        __r = __r*31 + useDotnetPublishForReload.hashCode()
+        __r = __r*31 + useDotnetBuildForReload.hashCode()
+        __r = __r*31 + useUnloadableContext.hashCode()
+        __r = __r*31 + dontGuessTFM.hashCode()
+        __r = __r*31 + if (selectedCustomJit != null) selectedCustomJit.hashCode() else 0
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("JitConfiguration (")
+        printer.indent {
+            print("showAsmComments = "); showAsmComments.print(printer); println()
+            print("diffable = "); diffable.print(printer); println()
+            print("useTieredJit = "); useTieredJit.print(printer); println()
+            print("usePGO = "); usePGO.print(printer); println()
+            print("runAppMode = "); runAppMode.print(printer); println()
+            print("useNoRestoreFlag = "); useNoRestoreFlag.print(printer); println()
+            print("useDotnetPublishForReload = "); useDotnetPublishForReload.print(printer); println()
+            print("useDotnetBuildForReload = "); useDotnetBuildForReload.print(printer); println()
+            print("useUnloadableContext = "); useUnloadableContext.print(printer); println()
+            print("dontGuessTFM = "); dontGuessTFM.print(printer); println()
+            print("selectedCustomJit = "); selectedCustomJit.print(printer); println()
         }
         printer.print(")")
     }

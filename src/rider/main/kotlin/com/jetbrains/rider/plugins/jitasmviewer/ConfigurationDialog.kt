@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.ide.model.AsmViewerModel
+import com.jetbrains.rd.ide.model.JitConfiguration
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.*
@@ -22,9 +23,10 @@ class ConfigurationDialog(
         private val logger = Logger.getInstance(ConfigurationDialog::class.java)
     }
 
-    private val generalPanel = GeneralOptionsPanel(model)
-    private val jitPanel = JitOptionsPanel(model)
-    private val buildPanel = BuildOptionsPanel(model)
+    private val config = model.configuration.value
+    private val generalPanel = GeneralOptionsPanel(config)
+    private val jitPanel = JitOptionsPanel(config)
+    private val buildPanel = BuildOptionsPanel(config)
 
     init {
         logger.debug("Opening configuration dialog")
@@ -58,9 +60,20 @@ class ConfigurationDialog(
 
     override fun doOKAction() {
         logger.debug("Applying configuration changes")
-        generalPanel.applyToModel(model)
-        jitPanel.applyToModel(model)
-        buildPanel.applyToModel(model)
+        val newConfig = JitConfiguration(
+            showAsmComments = generalPanel.showAsmComments,
+            diffable = generalPanel.diffable,
+            useTieredJit = jitPanel.useTieredJit,
+            usePGO = jitPanel.usePGO,
+            runAppMode = buildPanel.runAppMode,
+            useNoRestoreFlag = buildPanel.useNoRestoreFlag,
+            useDotnetPublishForReload = buildPanel.useDotnetPublishForReload,
+            useDotnetBuildForReload = buildPanel.useDotnetBuildForReload,
+            useUnloadableContext = jitPanel.useUnloadableContext,
+            dontGuessTFM = buildPanel.dontGuessTFM,
+            selectedCustomJit = jitPanel.selectedCustomJit
+        )
+        model.configuration.set(newConfig)
         logger.info("Configuration saved successfully")
 
         super.doOKAction()
@@ -76,98 +89,92 @@ class ConfigurationDialog(
         border = JBUI.Borders.empty(5, 0)
     }
 
-    private class GeneralOptionsPanel(model: AsmViewerModel) {
-        private val showAsmComments = JBCheckBox(AsmViewerConfigurationBundle.message("general.show.asm.comments"), model.showAsmComments.valueOrNull ?: true)
-        private val diffable = JBCheckBox(AsmViewerConfigurationBundle.message("general.diffable.output"), model.diffable.valueOrNull ?: false)
+    private class GeneralOptionsPanel(config: JitConfiguration?) {
+        private val showAsmCommentsCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("general.show.asm.comments"), config?.showAsmComments ?: true)
+        private val diffableCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("general.diffable.output"), config?.diffable ?: false)
+
+        val showAsmComments: Boolean get() = showAsmCommentsCheckbox.isSelected
+        val diffable: Boolean get() = diffableCheckbox.isSelected
 
         fun addToForm(formBuilder: FormBuilder) {
             formBuilder
-                .addComponent(showAsmComments)
-                .addComponent(diffable)
-        }
-
-        fun applyToModel(model: AsmViewerModel) {
-            model.showAsmComments.set(showAsmComments.isSelected)
-            model.diffable.set(diffable.isSelected)
+                .addComponent(showAsmCommentsCheckbox)
+                .addComponent(diffableCheckbox)
         }
     }
 
-    private class JitOptionsPanel(model: AsmViewerModel) {
-        private val useTieredJit = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.tiered"), model.useTieredJit.valueOrNull ?: false)
-        private val usePGO = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.pgo"), model.usePGO.valueOrNull ?: false)
-        private val useUnloadableContext = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.unloadable.context"), model.useUnloadableContext.valueOrNull ?: false)
+    private class JitOptionsPanel(config: JitConfiguration?) {
+        private val useTieredJitCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.tiered"), config?.useTieredJit ?: false)
+        private val usePGOCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.pgo"), config?.usePGO ?: false)
+        private val useUnloadableContextCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.unloadable.context"), config?.useUnloadableContext ?: false)
 
         private val jitCompilerCombo = JComboBox(arrayOf("clrjit.dll", "crossgen2.dll (R2R)", "ilc (NativeAOT)")).apply {
-            selectedItem = model.selectedCustomJit.value ?: "clrjit.dll"
+            selectedItem = config?.selectedCustomJit ?: "clrjit.dll"
         }
 
+        val useTieredJit: Boolean get() = useTieredJitCheckbox.isSelected
+        val usePGO: Boolean get() = usePGOCheckbox.isSelected
+        val useUnloadableContext: Boolean get() = useUnloadableContextCheckbox.isSelected
+        val selectedCustomJit: String? get() = jitCompilerCombo.selectedItem?.toString()
+
         init {
-            usePGO.addItemListener { e ->
+            usePGOCheckbox.addItemListener { e ->
                 if (e.stateChange == java.awt.event.ItemEvent.SELECTED) {
-                    useTieredJit.isSelected = true
+                    useTieredJitCheckbox.isSelected = true
                 }
             }
         }
 
         fun addToForm(formBuilder: FormBuilder) {
             formBuilder
-                .addComponent(useTieredJit)
-                .addComponent(usePGO)
-                .addComponent(useUnloadableContext)
+                .addComponent(useTieredJitCheckbox)
+                .addComponent(usePGOCheckbox)
+                .addComponent(useUnloadableContextCheckbox)
                 .addVerticalGap(10)
                 .addLabeledComponent(AsmViewerConfigurationBundle.message("jit.compiler.label"), jitCompilerCombo)
         }
-
-        fun applyToModel(model: AsmViewerModel) {
-            model.useTieredJit.set(useTieredJit.isSelected)
-            model.usePGO.set(usePGO.isSelected)
-            model.useUnloadableContext.set(useUnloadableContext.isSelected)
-            model.selectedCustomJit.set(jitCompilerCombo.selectedItem?.toString())
-        }
     }
 
-    private class BuildOptionsPanel(model: AsmViewerModel) {
-        private val useBuild = JRadioButton(AsmViewerConfigurationBundle.message("build.use.build"), true)
-        private val usePublish = JRadioButton(AsmViewerConfigurationBundle.message("build.use.publish"), model.useDotnetPublishForReload.valueOrNull ?: false)
-        private val noRestore = JBCheckBox(AsmViewerConfigurationBundle.message("build.no.restore"), model.useNoRestoreFlag.valueOrNull ?: false)
+    private class BuildOptionsPanel(config: JitConfiguration?) {
+        private val useBuildRadio = JRadioButton(AsmViewerConfigurationBundle.message("build.use.build"), true)
+        private val usePublishRadio = JRadioButton(AsmViewerConfigurationBundle.message("build.use.publish"), config?.useDotnetPublishForReload ?: false)
+        private val noRestoreCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("build.no.restore"), config?.useNoRestoreFlag ?: false)
 
-        private val runAppMode = JBCheckBox(AsmViewerConfigurationBundle.message("build.run.app.mode"), model.runAppMode.valueOrNull ?: false)
-        private val dontGuessTFM = JBCheckBox(AsmViewerConfigurationBundle.message("build.dont.guess.tfm"), model.dontGuessTFM.valueOrNull ?: false)
+        private val runAppModeCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("build.run.app.mode"), config?.runAppMode ?: false)
+        private val dontGuessTFMCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("build.dont.guess.tfm"), config?.dontGuessTFM ?: false)
+
+        val useDotnetBuildForReload: Boolean get() = useBuildRadio.isSelected
+        val useDotnetPublishForReload: Boolean get() = usePublishRadio.isSelected
+        val useNoRestoreFlag: Boolean get() = noRestoreCheckbox.isSelected && useBuildRadio.isSelected
+        val runAppMode: Boolean get() = runAppModeCheckbox.isSelected
+        val dontGuessTFM: Boolean get() = dontGuessTFMCheckbox.isSelected
 
         init {
             val buttonGroup = ButtonGroup()
-            buttonGroup.add(useBuild)
-            buttonGroup.add(usePublish)
+            buttonGroup.add(useBuildRadio)
+            buttonGroup.add(usePublishRadio)
 
-            if (model.useDotnetPublishForReload.valueOrNull == true) {
-                usePublish.isSelected = true
+            if (config?.useDotnetPublishForReload == true) {
+                usePublishRadio.isSelected = true
             }
 
             val updateNoRestore = {
-                noRestore.isEnabled = useBuild.isSelected
-                if (!noRestore.isEnabled) noRestore.isSelected = false
+                noRestoreCheckbox.isEnabled = useBuildRadio.isSelected
+                if (!noRestoreCheckbox.isEnabled) noRestoreCheckbox.isSelected = false
             }
-            useBuild.addItemListener { updateNoRestore() }
-            usePublish.addItemListener { updateNoRestore() }
+            useBuildRadio.addItemListener { updateNoRestore() }
+            usePublishRadio.addItemListener { updateNoRestore() }
             updateNoRestore()
         }
 
         fun addToForm(formBuilder: FormBuilder) {
             formBuilder
-                .addComponent(useBuild)
-                .addComponent(createIndented(noRestore))
-                .addComponent(usePublish)
+                .addComponent(useBuildRadio)
+                .addComponent(createIndented(noRestoreCheckbox))
+                .addComponent(usePublishRadio)
                 .addVerticalGap(10)
-                .addComponent(runAppMode)
-                .addComponent(dontGuessTFM)
-        }
-
-        fun applyToModel(model: AsmViewerModel) {
-            model.useDotnetBuildForReload.set(useBuild.isSelected)
-            model.useDotnetPublishForReload.set(usePublish.isSelected)
-            model.useNoRestoreFlag.set(noRestore.isSelected && useBuild.isSelected)
-            model.runAppMode.set(runAppMode.isSelected)
-            model.dontGuessTFM.set(dontGuessTFM.isSelected)
+                .addComponent(runAppModeCheckbox)
+                .addComponent(dontGuessTFMCheckbox)
         }
 
         private fun createIndented(component: JComponent) = JPanel(BorderLayout()).apply {

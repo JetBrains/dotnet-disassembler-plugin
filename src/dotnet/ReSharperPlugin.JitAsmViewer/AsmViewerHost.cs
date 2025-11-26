@@ -13,7 +13,7 @@ using Result = JetBrains.Core.Result;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
-[SolutionComponent(Instantiation.ContainerAsyncAnyThreadUnsafe)]
+[SolutionComponent(Instantiation.ContainerAsyncPrimaryThread)]
 public class AsmViewerHost
 {
     private readonly ILogger _logger = Logger.GetLogger(typeof(AsmViewerHost));
@@ -35,14 +35,8 @@ public class AsmViewerHost
         _updateCoordinator = updateCoordinator;
         _usageCollector = usageCollector;
 
-        _threading.ExecuteOrQueueEx(lifetime, "AsmViewer.Initialize", () =>
-        {
-            _logger.Verbose("AsmViewer initialization started");
-            AsmViewerModelInitializer.Initialize(_model);
-            SubscribeToModelChanges(lifetime);
-            SubscribeToStatistics(lifetime);
-            _logger.Info("AsmViewerHost initialized successfully");
-        });
+        SubscribeToModelChanges(lifetime);
+        _logger.Info("AsmViewerHost initialized successfully");
     }
 
     private void RefreshAsmContent(Lifetime lifetime)
@@ -53,25 +47,17 @@ public class AsmViewerHost
             return;
         }
 
-        var sourceFilePath = _model.SourceFilePath.Value;
-        var caretOffset = _model.CaretOffset.Value;
-
-        if (sourceFilePath == null || !caretOffset.HasValue)
+        var caretPosition = _model.CaretPosition.Maybe.ValueOrDefault;
+        if (caretPosition == null)
         {
-            _logger.Verbose("Skipping refresh - no source file or caret offset");
+            _logger.Verbose("Skipping refresh - no caret position");
             return;
         }
 
-        _logger.Info("Refreshing ASM content for file: {0}, offset: {1}", sourceFilePath, caretOffset.Value);
-
-        _threading.ExecuteOrQueueEx(lifetime, "AsmViewer.SetLoading", () =>
-        {
-            _model.IsLoading.Value = true;
-            _model.Error.Value = null;
-        });
+        _logger.Info("Refreshing ASM content for file: {0}, offset: {1}", caretPosition.FilePath, caretPosition.Offset);
 
         _ = _updateCoordinator
-            .CompileWithDebouncingAsync(sourceFilePath, caretOffset.Value)
+            .CompileWithDebouncingAsync(caretPosition)
             .ContinueWith(task =>
             {
                 if (lifetime.IsNotAlive)
@@ -89,7 +75,6 @@ public class AsmViewerHost
                     _threading.ExecuteOrQueueEx(lifetime, "AsmViewer.UpdateModel", () =>
                     {
                         UpdateModel(errorResult);
-                        _model.IsLoading.Value = false;
                     });
                     return;
                 }
@@ -99,7 +84,6 @@ public class AsmViewerHost
                 _threading.ExecuteOrQueueEx(lifetime, "AsmViewer.UpdateModel", () =>
                 {
                     UpdateModel(result);
-                    _model.IsLoading.Value = false;
                 });
             }, lifetime, TaskContinuationOptions.None, TaskScheduler.Default);
     }
@@ -109,8 +93,7 @@ public class AsmViewerHost
         if (result.Succeed)
         {
             _logger.Info("Disassembly succeeded, content length: {0}", result.Value.Length);
-            _model.CurrentContent.Value = result.Value;
-            _model.Error.Value = null;
+            _model.CompilationResult.Value = new CompilationResult(result.Value, null);
 
             _usageCollector.LogDisassemblySucceeded();
         }
@@ -126,7 +109,8 @@ public class AsmViewerHost
 
             _logger.Warn("Disassembly failed - Code: {0}, Details: {1}", error.Code, error.Details);
 
-            _model.Error.Value = new ErrorInfo(error.Code.ToString(), error.Details);
+            var errorInfo = new ErrorInfo(error.Code.ToString(), error.Details);
+            _model.CompilationResult.Value = new CompilationResult(null, errorInfo);
 
             _usageCollector.LogError(error.Code);
         }
@@ -134,23 +118,14 @@ public class AsmViewerHost
     
     private void SubscribeToModelChanges(Lifetime lifetime)
     {
-        _model.AdviseRefreshTriggers(lifetime, () => RefreshAsmContent(lifetime));
-    }
-
-    private void SubscribeToStatistics(Lifetime lifetime)
-    {
-        _model.AdviseRefreshTriggers(lifetime, () =>
+        _model.IsVisible.Advise(lifetime, _ => RefreshAsmContent(lifetime));
+        _model.CaretPosition.Advise(lifetime, _ => RefreshAsmContent(lifetime));
+        _model.Configuration.Advise(lifetime, config =>
         {
-            if (_model.SourceFilePath.Maybe.HasValue)
-            {
-                LogCurrentConfiguration();
-            }
-        });
-    }
+            RefreshAsmContent(lifetime);
 
-    private void LogCurrentConfiguration()
-    {
-        var configuration = JitDisasmConfigurationFactory.Create(_model);
-        _usageCollector.LogConfigurationSaved(configuration);
+            var configuration = JitDisasmConfigurationFactory.Create(config);
+            _usageCollector.LogConfigurationSaved(configuration);
+        });
     }
 }

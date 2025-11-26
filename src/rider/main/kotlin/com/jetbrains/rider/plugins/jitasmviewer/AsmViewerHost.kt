@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createNestedDisposable
 import com.jetbrains.rd.ide.model.AsmViewerModel
+import com.jetbrains.rd.ide.model.CaretPosition
 import com.jetbrains.rd.ide.model.asmViewerModel
 import com.jetbrains.rd.platform.util.idea.LifetimedService
 import com.jetbrains.rd.protocol.SolutionExtListener
@@ -33,6 +34,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
 
     private val model: AsmViewerModel = project.solution.asmViewerModel
     private val ui: AsmViewerHostUi by lazy { AsmViewerHostUi.getInstance(project) }
+    private var isLoading: Boolean = false
 
     init {
         logger.info("AsmViewerHost initialized for project: ${project.name}")
@@ -62,10 +64,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
                 updateModelFromEditor()
             } else {
                 logger.debug("Clearing model data on window hide")
-                model.sourceFilePath.set(null)
-                model.caretOffset.set(null)
-                model.currentContent.set(null)
-                model.error.set(null)
+                model.caretPosition.set(null)
             }
         }
     }
@@ -90,9 +89,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
         val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
 
         logger.debug("Updating model from editor - file: ${file.path}, offset: ${editor.caretModel.offset}")
-        model.sourceFilePath.set(file.path)
-        model.caretOffset.set(editor.caretModel.offset)
-        model.documentModificationStamp.set(editor.document.modificationStamp)
+        model.caretPosition.set(CaretPosition(file.path, editor.caretModel.offset, editor.document.modificationStamp))
     }
 
     private fun isAsmViewerEditor(editor: Editor): Boolean {
@@ -107,43 +104,49 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
             }
         }
 
-        model.isLoading.advise(lifetime) { updateUi() }
-        model.currentContent.advise(lifetime) { updateUi() }
-        model.error.advise(lifetime) { updateUi() }
-        model.hasSnapshot.advise(lifetime) { updateUi() }
+        model.caretPosition.advise(lifetime) {
+            isLoading = true
+            updateUi()
+        }
+        model.configuration.advise(lifetime) {
+            isLoading = true
+            updateUi()
+        }
+        model.compilationResult.advise(lifetime) {
+            isLoading = false
+            updateUi()
+        }
+
         model.snapshotContent.advise(lifetime) { updateUi() }
-        model.sourceFilePath.advise(lifetime) { updateUi() }
-        model.caretOffset.advise(lifetime) { updateUi() }
     }
 
     private fun computeCurrentState(): AsmViewerState {
-        if (model.isLoading.valueOrNull == true) {
+        if (isLoading) {
             logger.debug("Computing state: Loading")
             return AsmViewerState.Loading
         }
 
-        val content = model.currentContent.value
-        if (content != null) {
-            val snapshot = if (model.hasSnapshot.valueOrNull == true) {
-                model.snapshotContent.value
-            } else null
-            logger.debug("Computing state: Content (has snapshot: ${snapshot != null})")
-            return AsmViewerState.Content(content, snapshot)
+        val compilationResult = model.compilationResult.value
+        if (compilationResult != null) {
+            val content = compilationResult.content
+            if (content != null) {
+                val snapshot = model.snapshotContent.value
+                logger.debug("Computing state: Content (has snapshot: ${snapshot != null})")
+                return AsmViewerState.Content(content, snapshot)
+            }
+
+            val error = compilationResult.error
+            if (error != null) {
+                val errorMessage = AsmViewerBundle.errorMessage(error.code, error.details)
+                logger.debug("Computing state: Unavailable - $errorMessage")
+                return AsmViewerState.Unavailable(errorMessage)
+            }
         }
 
-        val hasSourceFile = !model.sourceFilePath.value.isNullOrEmpty()
-        val hasCaretOffset = model.caretOffset.value != null
-
-        if (!hasSourceFile || !hasCaretOffset) {
-            logger.debug("Computing state: WaitingForInput - no source file or caret")
+        val caretPosition = model.caretPosition.value
+        if (caretPosition == null) {
+            logger.debug("Computing state: WaitingForInput - no caret position")
             return AsmViewerState.WaitingForInput
-        }
-
-        val error = model.error.value
-        if (error != null) {
-            val errorMessage = AsmViewerBundle.errorMessage(error.code, error.details)
-            logger.debug("Computing state: Unavailable - $errorMessage")
-            return AsmViewerState.Unavailable(errorMessage)
         }
 
         logger.debug("Computing state: WaitingForInput - default")

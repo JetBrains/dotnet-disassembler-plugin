@@ -25,7 +25,7 @@ public class AsmViewerUpdateCoordinator
     private readonly AsmViewerModel _model;
     private readonly object _lock = new();
 
-    private (string SourceFilePath, string MethodId, long? DocumentStamp) _lastState;
+    private (string SourceFilePath, string MethodId, long DocumentStamp, JitDisasmConfiguration Configuration) _lastState;
     private Result<string, Error>? _lastResult;
 
     public AsmViewerUpdateCoordinator(
@@ -40,17 +40,17 @@ public class AsmViewerUpdateCoordinator
         _model = solution.GetProtocolSolution().GetAsmViewerModel();
     }
 
-    public Task<Result<string, Error>> CompileWithDebouncingAsync(string sourceFilePath, int caretOffset)
+    public Task<Result<string, Error>> CompileWithDebouncingAsync(CaretPosition caretPosition)
     {
         var updateLifetime = _updateLifetimes.Next();
-        return Task.Run(() => UpdateAsmAsync(sourceFilePath, caretOffset, updateLifetime), updateLifetime);
+        return Task.Run(() => UpdateAsmAsync(caretPosition, updateLifetime), updateLifetime);
     }
 
-    private async Task<Result<string, Error>> UpdateAsmAsync(string sourceFilePath, int caretOffset, Lifetime lifetime)
+    private async Task<Result<string, Error>> UpdateAsmAsync(CaretPosition caretPosition, Lifetime lifetime)
     {
         try
         {
-            var declarationResult = _methodLocator.FindDeclarationAt(sourceFilePath, caretOffset);
+            var declarationResult = _methodLocator.FindDeclarationAt(caretPosition.FilePath, caretPosition.Offset);
             if (!declarationResult.Succeed)
                 return Result.FailWithValue(declarationResult.FailValue);
 
@@ -63,7 +63,8 @@ public class AsmViewerUpdateCoordinator
                 return Result.FailWithValue(new Error(AsmViewerErrorCode.InvalidCaretPosition));
 
             var target = JitDisasmTargetUtils.GetTarget(declaredElement);
-            var currentState = (sourceFilePath, target.Target, _model.DocumentModificationStamp.Value);
+            var configuration = JitDisasmConfigurationFactory.Create(_model);
+            var currentState = (caretPosition.FilePath, target.Target, caretPosition.DocumentModificationStamp, configuration);
 
             lock (_lock)
             {
@@ -72,8 +73,6 @@ public class AsmViewerUpdateCoordinator
 
                 _lastState = currentState;
             }
-
-            var configuration = JitDisasmConfigurationFactory.Create(_model);
 
             var compilationResult = await _compilationService.CompileAsync(
                 declaration,

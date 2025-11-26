@@ -12,32 +12,41 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("details", string.nullable)
     }
 
+    private val CaretPosition = structdef {
+        field("filePath", string)
+        field("offset", int)
+        field("documentModificationStamp", long)
+    }
+
+    private val CompilationResult = structdef {
+        field("content", string.nullable)
+        field("error", ErrorInfo.nullable)
+    }
+
+    private val JitConfiguration = structdef {
+        field("showAsmComments", bool)
+        field("diffable", bool)
+        field("useTieredJit", bool)
+        field("usePGO", bool)
+        field("runAppMode", bool)
+        field("useNoRestoreFlag", bool)
+        field("useDotnetPublishForReload", bool)
+        field("useDotnetBuildForReload", bool)
+        field("useUnloadableContext", bool)
+        field("dontGuessTFM", bool)
+        field("selectedCustomJit", string.nullable)
+    }
+
     init {
         sink("show", void)
 
         property("isVisible", bool)
-        property("isLoading", bool)
 
-        property("error", ErrorInfo.nullable)
-
-        property("currentContent", string.nullable)
-        property("sourceFilePath", string.nullable)
-        property("caretOffset", int.nullable)
-        property("documentModificationStamp", long.nullable)
+        property("caretPosition", CaretPosition.nullable)
+        property("compilationResult", CompilationResult.nullable)
 
         property("snapshotContent", string.nullable)
-        property("hasSnapshot", bool)
 
-        property("showAsmComments", bool)
-        property("useTieredJit", bool)
-        property("usePGO", bool)
-        property("diffable", bool)
-        property("runAppMode", bool)
-        property("useNoRestoreFlag", bool)
-        property("useDotnetPublishForReload", bool)
-        property("useDotnetBuildForReload", bool)
-        property("useUnloadableContext", bool)
-        property("dontGuessTFM", bool)
-        property("selectedCustomJit", string.nullable)
+        property("configuration", JitConfiguration.nullable)
     }
 }
