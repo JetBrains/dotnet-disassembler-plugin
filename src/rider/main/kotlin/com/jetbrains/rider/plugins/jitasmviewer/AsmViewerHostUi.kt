@@ -71,8 +71,8 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
 
     fun showState(state: AsmViewerState) {
         when (state) {
-            is AsmViewerState.Initializing -> showMessage("Loading...")
-            is AsmViewerState.WaitingForInput -> showMessage("Place the caret on a method, property, or constructor to view JIT assembly code")
+            is AsmViewerState.Initializing -> showMessage(AsmViewerBundle.message("state.loading"))
+            is AsmViewerState.WaitingForInput -> showMessage(AsmViewerBundle.message("state.waiting.for.input"))
             is AsmViewerState.Loading -> showLoading()
             is AsmViewerState.Content -> showContent(state)
             is AsmViewerState.Unavailable -> showMessage(state.reason)
@@ -80,7 +80,7 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
     }
 
     private fun showLoading() {
-        currentContentPanel?.showLoading() ?: showMessage("Loading...")
+        currentContentPanel?.showLoading() ?: showMessage(AsmViewerBundle.message("state.loading"))
     }
 
     private fun showContent(state: AsmViewerState.Content) {

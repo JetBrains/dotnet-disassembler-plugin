@@ -166,7 +166,13 @@ class DiffContentPanel(
             logger.debug("Creating diff view")
             val leftContent = DocumentContentImpl(project, snapshotDoc, PlainTextFileType.INSTANCE)
             val rightContent = DocumentContentImpl(project, currentDoc, PlainTextFileType.INSTANCE)
-            val diffRequest = SimpleDiffRequest("ASM Comparison", leftContent, rightContent, "Snapshot", "Current")
+            val diffRequest = SimpleDiffRequest(
+                AsmViewerBundle.message("diff.title"),
+                leftContent,
+                rightContent,
+                AsmViewerBundle.message("diff.left.title"),
+                AsmViewerBundle.message("diff.right.title")
+            )
 
             diffRequestPanel = DiffManager.getInstance().createRequestPanel(project, this, null).apply {
                 setRequest(diffRequest)
@@ -179,7 +185,7 @@ class DiffContentPanel(
 
         } catch (e: Exception) {
             logger.error("Failed to create diff view", e)
-            contentPanel.add(JLabel("Failed to create diff view: ${e.message}"), BorderLayout.CENTER)
+            contentPanel.add(JLabel(AsmViewerBundle.message("diff.error")), BorderLayout.CENTER)
         }
     }
 

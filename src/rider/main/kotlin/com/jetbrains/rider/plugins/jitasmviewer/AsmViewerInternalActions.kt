@@ -17,8 +17,8 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 
 class CreateSnapshotAction(private val project: Project) : AnAction(
-    "Create Snapshot",
-    "Save current ASM code as snapshot",
+    AsmViewerBundle.messagePointer("action.create.snapshot.text"),
+    AsmViewerBundle.messagePointer("action.create.snapshot.description"),
     AllIcons.Actions.Dump
 ) {
     override fun actionPerformed(e: AnActionEvent) {
@@ -36,8 +36,8 @@ class CreateSnapshotAction(private val project: Project) : AnAction(
 }
 
 class DiffableModeAction(private val project: Project) : ToggleAction(
-    "Diffable Mode",
-    "Toggle diffable output mode",
+    AsmViewerBundle.messagePointer("action.diffable.mode.text"),
+    AsmViewerBundle.messagePointer("action.diffable.mode.description"),
     AllIcons.Actions.Diff
 ) {
     override fun isSelected(e: AnActionEvent): Boolean {
@@ -51,8 +51,8 @@ class DiffableModeAction(private val project: Project) : ToggleAction(
 }
 
 class DeleteSnapshotAction(private val project: Project) : AnAction(
-    "Delete Snapshot",
-    "Remove snapshot and hide comparison",
+    AsmViewerBundle.messagePointer("action.delete.snapshot.text"),
+    AsmViewerBundle.messagePointer("action.delete.snapshot.description"),
     AllIcons.Actions.GC
 ) {
     override fun actionPerformed(e: AnActionEvent) {
@@ -68,8 +68,8 @@ class DeleteSnapshotAction(private val project: Project) : AnAction(
 }
 
 class SettingsAction(private val project: Project) : AnAction(
-    "Configuration",
-    "Configure ASM Viewer options",
+    AsmViewerBundle.messagePointer("action.configuration.text"),
+    AsmViewerBundle.messagePointer("action.configuration.description"),
     AllIcons.General.Settings
 ) {
     override fun actionPerformed(e: AnActionEvent) {

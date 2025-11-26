@@ -23,6 +23,6 @@ class AsmViewerToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun init(toolWindow: ToolWindow) {
-        toolWindow.stripeTitle = "ASM"
+        toolWindow.stripeTitle = AsmViewerBundle.message("toolwindow.stripe.title")
     }
 }

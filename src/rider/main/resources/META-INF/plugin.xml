@@ -62,12 +62,10 @@
     <statistics.counterUsagesCollector
         implementationClass="com.jetbrains.rider.plugins.jitasmviewer.statistics.AsmViewerConfigurationStatisticsCollector"/>
   </extensions>
-    <actions>
+    <actions resource-bundle="messages.AsmViewerBundle">
         <!-- Show ASM Viewer Action -->
         <action id="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction"
-                class="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction"
-                text="ASM Viewer"
-                description="Show ASM code">
+                class="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>
