@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using JetBrains.Application.Parts;
 using JetBrains.Core;
+using JetBrains.Util;
 using JetBrains.Lifetimes;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.Protocol;
@@ -16,6 +17,8 @@ namespace ReSharperPlugin.JitAsmViewer;
 [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
 public class AsmViewerUpdateCoordinator
 {
+    private static readonly ILogger Logger = JetBrains.Util.Logging.Logger.GetLogger(typeof(AsmViewerUpdateCoordinator));
+
     private readonly SequentialLifetimes _updateLifetimes;
     private readonly AsmMethodLocator _methodLocator;
     private readonly AsmCompilationService _compilationService;
@@ -93,6 +96,7 @@ public class AsmViewerUpdateCoordinator
         }
         catch (Exception ex)
         {
+            Logger.LogException(ex);
             return Result.FailWithValue(new Error(AsmViewerErrorCode.UnknownError, ex.Message));
         }
     }

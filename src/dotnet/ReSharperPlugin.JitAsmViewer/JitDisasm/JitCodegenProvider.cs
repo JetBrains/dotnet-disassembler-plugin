@@ -76,7 +76,7 @@ public class JitCodegenProvider(ILogger logger)
                 $"publish {tfmPart} -r win-{configuration.Arch} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
             publishResult = await ProcessUtils.RunProcessAsync("dotnet", dotnetPublishArgs, null, projectDirPath,
-                cancellationToken: cancellationToken);
+                LogProcessOutput, cancellationToken);
         }
         else
         {
@@ -109,15 +109,17 @@ public class JitCodegenProvider(ILogger logger)
             }
 
             publishResult = await ProcessUtils.RunProcessAsync("dotnet", dotnetBuildArgs, fasterBuildEnvVars,
-                projectDirPath,
-                cancellationToken: cancellationToken);
+                projectDirPath, LogProcessOutput, cancellationToken);
         }
 
         File.Delete(tmpProps);
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!string.IsNullOrEmpty(publishResult.Error))
+        if (!publishResult.IsSuccessful)
         {
+            if (publishResult.Exception != null)
+                logger.LogError(publishResult.Exception, "Process execution failed");
+
             var errorCode = configuration.UseDotnetPublishForReload
                 ? AsmViewerErrorCode.DotnetPublishFailed
                 : AsmViewerErrorCode.DotnetBuildFailed;
@@ -147,10 +149,12 @@ public class JitCodegenProvider(ILogger logger)
             }
 
             var copyClrFilesResult = await ProcessUtils.RunProcessAsync("robocopy",
-                $"/e \"{clrCheckedFilesDir}\" \"{dstFolder}", null, cancellationToken: cancellationToken);
+                $"/e \"{clrCheckedFilesDir}\" \"{dstFolder}", null, null, LogProcessOutput, cancellationToken);
 
-            if (!string.IsNullOrEmpty(copyClrFilesResult.Error))
+            if (!copyClrFilesResult.IsSuccessful)
             {
+                if (copyClrFilesResult.Exception != null)
+                    logger.LogError(copyClrFilesResult.Exception, "Process execution failed");
                 return Result.FailWithValue(new Error(AsmViewerErrorCode.CompilationFailed, copyClrFilesResult.Error));
             }
         }
@@ -406,11 +410,11 @@ public class JitCodegenProvider(ILogger logger)
                     $" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
                 var publishResult = await ProcessUtils.RunProcessAsync("dotnet", dotnetPublishArgs, null,
-                    projectContext.ProjectDirectory, cancellationToken: cancellationToken);
+                    projectContext.ProjectDirectory, LogProcessOutput, cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (string.IsNullOrEmpty(publishResult.Error))
+                if (publishResult.IsSuccessful)
                 {
                     if (!File.Exists(tmpJitStdout))
                     {
@@ -437,6 +441,8 @@ public class JitCodegenProvider(ILogger logger)
                 }
                 else
                 {
+                    if (publishResult.Exception != null)
+                        logger.LogError(publishResult.Exception, "Process execution failed");
                     return Result.FailWithValue(new Error(AsmViewerErrorCode.DotnetPublishFailed, publishResult.Error));
                 }
             }
@@ -465,18 +471,21 @@ public class JitCodegenProvider(ILogger logger)
             logger.LogInformation("Executing process: {0} with args: {1}", executable, command.Length > 100 ? command.Substring(0, 100) + "..." : command);
 
             ProcessResult result = await ProcessUtils.RunProcessAsync(
-                executable, command, envVars, dstFolder, cancellationToken: cancellationToken);
+                executable, command, envVars, dstFolder, LogProcessOutput, cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (string.IsNullOrEmpty(result.Error))
+            if (result.IsSuccessful)
             {
                 logger.LogInformation("Process execution succeeded, output length: {0}", result.Output.Length);
-                
+
                 if (configuration.JitDumpInsteadOfDisasm)
                     return Result.Success(new JitCodeGenResult(result.Output));
                 return Result.Success(new JitCodeGenResult(DisassemblyPrettifier.Prettify(result.Output, !configuration.ShowAsmComments && !configuration.RunAppMode)));
             }
+
+            if (result.Exception != null)
+                logger.LogError(result.Exception, "Process execution failed");
 
             return Result.FailWithValue(new Error(AsmViewerErrorCode.CompilationFailed, result.Output + "\nERROR:\n" + result.Error));
 
@@ -548,5 +557,13 @@ public class JitCodegenProvider(ILogger logger)
             logger.LogError(e, "Unexpected error during JIT code generation");
             return Result.FailWithValue(new Error(AsmViewerErrorCode.UnknownError, e.Message));
         }
+    }
+
+    private void LogProcessOutput(bool isError, string message)
+    {
+        if (isError)
+            logger.LogWarning(message);
+        else
+            logger.LogDebug(message);
     }
 }

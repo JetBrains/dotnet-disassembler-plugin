@@ -67,7 +67,11 @@ public static class ProcessUtils
         }
         catch (Exception e)
         {
-            return new ProcessResult { Error = $"RunProcess failed:{e.Message}.\npath={path}\nargs={args}\nworkingdir={workingDir ?? Environment.CurrentDirectory}\n{loggerForErrors}" };
+            return new ProcessResult
+            {
+                Error = $"RunProcess failed:{e.Message}.\npath={path}\nargs={args}\nworkingdir={workingDir ?? Environment.CurrentDirectory}\n{loggerForErrors}",
+                Exception = e
+            };
         }
         finally
         {
@@ -120,4 +124,6 @@ public class ProcessResult
 {
     public string Output { get; set; }
     public string Error { get; set; }
+    public Exception Exception { get; set; }
+    public bool IsSuccessful => Exception == null && string.IsNullOrEmpty(Error);
 }

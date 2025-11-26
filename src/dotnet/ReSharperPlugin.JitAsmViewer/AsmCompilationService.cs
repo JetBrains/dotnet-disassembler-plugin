@@ -11,16 +11,9 @@ using ReSharperPlugin.JitAsmViewer.JitDisasm;
 namespace ReSharperPlugin.JitAsmViewer;
 
 [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
-public class AsmCompilationService
+public class AsmCompilationService(AsmViewerUsageCollector usageCollector)
 {
-    private static readonly ILogger AsmCompilationServiceLogger = JitDisasmLoggerFactory.Create<AsmCompilationService>();
-
-    private readonly AsmViewerUsageCollector _usageCollector;
-
-    public AsmCompilationService(AsmViewerUsageCollector usageCollector)
-    {
-        _usageCollector = usageCollector;
-    }
+    private static readonly ILogger JitCodegenProviderLogger = JitDisasmLoggerFactory.Create<JitCodegenProvider>();
 
     public async Task<Result<string, Error>> CompileAsync(
         IDeclaration declaration,
@@ -36,7 +29,7 @@ public class AsmCompilationService
         var project = declaration.GetProject();
         if (project != null)
         {
-            _usageCollector.LogProjectInfo(project);
+            usageCollector.LogProjectInfo(project);
         }
 
         var target = JitDisasmTargetUtils.GetTarget(currentElement);
@@ -44,7 +37,7 @@ public class AsmCompilationService
             return Result.FailWithValue(new Error(AsmViewerErrorCode.DisassemblyTargetNotFound));
 
         var projectContext = JitDisasmProjectContextFactory.Create(project);
-        var provider = new JitCodegenProvider(AsmCompilationServiceLogger);
+        var provider = new JitCodegenProvider(JitCodegenProviderLogger);
         var result = await provider.GetJitCodegenAsync(target, projectContext, configuration, cancellationToken);
 
         if (!result.Succeed || result.Value == null)
