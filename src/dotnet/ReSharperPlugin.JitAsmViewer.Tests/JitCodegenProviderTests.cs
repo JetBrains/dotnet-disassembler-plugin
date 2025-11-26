@@ -234,7 +234,7 @@ public class JitCodegenProviderTests
         var result = await _jitCodegenProvider.GetJitCodegenAsync(_mainMethodTarget, projectContext, config, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Message}");
+        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.Result);
         Assert.IsNotEmpty(result.Value.Result);
@@ -255,7 +255,7 @@ public class JitCodegenProviderTests
         var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Message}");
+        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.Result);
         Assert.IsNotEmpty(result.Value.Result);
@@ -276,7 +276,7 @@ public class JitCodegenProviderTests
         var result = await _jitCodegenProvider.GetJitCodegenAsync(_valuePropertyTarget, projectContext, config, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Message}");
+        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.Result);
         Assert.IsNotEmpty(result.Value.Result);
@@ -297,7 +297,7 @@ public class JitCodegenProviderTests
         var result = await _jitCodegenProvider.GetJitCodegenAsync(_missingMethodTarget, projectContext, config, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Message}");
+        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.Result);
         Assert.That(result.Value.Result.Length, Is.Zero,

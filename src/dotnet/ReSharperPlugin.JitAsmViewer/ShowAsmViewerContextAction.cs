@@ -12,13 +12,15 @@ using JetBrains.Rider.Model;
 using JetBrains.TextControl;
 using JetBrains.Util;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
+using ReSharperPlugin.JitAsmViewer.Resources;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
 [ContextAction(
     GroupType = typeof(CSharpContextActions),
-    Name = "Show JIT ASM Viewer",
-    Description = "Opens the JIT ASM Viewer window to display JIT-compiled assembly code for the selected method, property, or constructor",
+    ResourceType = typeof(Strings),
+    NameResourceName = nameof(Strings.ShowAsmViewerContextAction_Name),
+    DescriptionResourceName = nameof(Strings.ShowAsmViewerContextAction_Description),
     Priority = -10)]
 public class ShowAsmViewerContextAction : ContextActionBase
 {
@@ -29,7 +31,7 @@ public class ShowAsmViewerContextAction : ContextActionBase
         _dataProvider = dataProvider;
     }
 
-    public override string Text => "Show JIT ASM";
+    public override string Text => Strings.ShowAsmViewerContextAction_Text;
 
     protected override Action<ITextControl> ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
     {

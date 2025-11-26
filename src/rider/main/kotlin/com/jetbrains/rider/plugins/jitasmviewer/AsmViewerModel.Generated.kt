@@ -22,8 +22,7 @@ class AsmViewerModel private constructor(
     private val _show: RdSignal<Unit>,
     private val _isVisible: RdOptionalProperty<Boolean>,
     private val _isLoading: RdOptionalProperty<Boolean>,
-    private val _unavailabilityReason: RdProperty<String?>,
-    private val _errorCode: RdProperty<String?>,
+    private val _error: RdProperty<ErrorInfo?>,
     private val _currentContent: RdProperty<String?>,
     private val _sourceFilePath: RdProperty<String?>,
     private val _caretOffset: RdProperty<Int?>,
@@ -47,16 +46,19 @@ class AsmViewerModel private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
+            val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(564443201465347), classLoader, "com.jetbrains.rd.ide.model.ErrorInfo"))
         }
         
         
         
         
+        private val __ErrorInfoNullableSerializer = ErrorInfo.nullable()
         private val __StringNullableSerializer = FrameworkMarshallers.String.nullable()
         private val __IntNullableSerializer = FrameworkMarshallers.Int.nullable()
         private val __LongNullableSerializer = FrameworkMarshallers.Long.nullable()
         
-        const val serializationHash = 8782978450809573702L
+        const val serializationHash = 6373458409336763366L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -66,8 +68,7 @@ class AsmViewerModel private constructor(
     val show: ISource<Unit> get() = _show
     val isVisible: IOptProperty<Boolean> get() = _isVisible
     val isLoading: IOptProperty<Boolean> get() = _isLoading
-    val unavailabilityReason: IProperty<String?> get() = _unavailabilityReason
-    val errorCode: IProperty<String?> get() = _errorCode
+    val error: IProperty<ErrorInfo?> get() = _error
     val currentContent: IProperty<String?> get() = _currentContent
     val sourceFilePath: IProperty<String?> get() = _sourceFilePath
     val caretOffset: IProperty<Int?> get() = _caretOffset
@@ -90,8 +91,7 @@ class AsmViewerModel private constructor(
     init {
         _isVisible.optimizeNested = true
         _isLoading.optimizeNested = true
-        _unavailabilityReason.optimizeNested = true
-        _errorCode.optimizeNested = true
+        _error.optimizeNested = true
         _currentContent.optimizeNested = true
         _sourceFilePath.optimizeNested = true
         _caretOffset.optimizeNested = true
@@ -115,8 +115,7 @@ class AsmViewerModel private constructor(
         bindableChildren.add("show" to _show)
         bindableChildren.add("isVisible" to _isVisible)
         bindableChildren.add("isLoading" to _isLoading)
-        bindableChildren.add("unavailabilityReason" to _unavailabilityReason)
-        bindableChildren.add("errorCode" to _errorCode)
+        bindableChildren.add("error" to _error)
         bindableChildren.add("currentContent" to _currentContent)
         bindableChildren.add("sourceFilePath" to _sourceFilePath)
         bindableChildren.add("caretOffset" to _caretOffset)
@@ -142,8 +141,7 @@ class AsmViewerModel private constructor(
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdProperty<String?>(null, __StringNullableSerializer),
-        RdProperty<String?>(null, __StringNullableSerializer),
+        RdProperty<ErrorInfo?>(null, __ErrorInfoNullableSerializer),
         RdProperty<String?>(null, __StringNullableSerializer),
         RdProperty<String?>(null, __StringNullableSerializer),
         RdProperty<Int?>(null, __IntNullableSerializer),
@@ -172,8 +170,7 @@ class AsmViewerModel private constructor(
             print("show = "); _show.print(printer); println()
             print("isVisible = "); _isVisible.print(printer); println()
             print("isLoading = "); _isLoading.print(printer); println()
-            print("unavailabilityReason = "); _unavailabilityReason.print(printer); println()
-            print("errorCode = "); _errorCode.print(printer); println()
+            print("error = "); _error.print(printer); println()
             print("currentContent = "); _currentContent.print(printer); println()
             print("sourceFilePath = "); _sourceFilePath.print(printer); println()
             print("caretOffset = "); _caretOffset.print(printer); println()
@@ -200,8 +197,7 @@ class AsmViewerModel private constructor(
             _show.deepClonePolymorphic(),
             _isVisible.deepClonePolymorphic(),
             _isLoading.deepClonePolymorphic(),
-            _unavailabilityReason.deepClonePolymorphic(),
-            _errorCode.deepClonePolymorphic(),
+            _error.deepClonePolymorphic(),
             _currentContent.deepClonePolymorphic(),
             _sourceFilePath.deepClonePolymorphic(),
             _caretOffset.deepClonePolymorphic(),
@@ -227,3 +223,68 @@ class AsmViewerModel private constructor(
 }
 val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::AsmViewerModel)
 
+
+
+/**
+ * #### Generated from [AsmViewerModel.kt:10]
+ */
+data class ErrorInfo (
+    val code: String,
+    val details: String?
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<ErrorInfo> {
+        override val _type: KClass<ErrorInfo> = ErrorInfo::class
+        override val id: RdId get() = RdId(564443201465347)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ErrorInfo  {
+            val code = buffer.readString()
+            val details = buffer.readNullable { buffer.readString() }
+            return ErrorInfo(code, details)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ErrorInfo)  {
+            buffer.writeString(value.code)
+            buffer.writeNullable(value.details) { buffer.writeString(it) }
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as ErrorInfo
+        
+        if (code != other.code) return false
+        if (details != other.details) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + code.hashCode()
+        __r = __r*31 + if (details != null) details.hashCode() else 0
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("ErrorInfo (")
+        printer.indent {
+            print("code = "); code.print(printer); println()
+            print("details = "); details.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+    //threading
+}

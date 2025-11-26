@@ -65,8 +65,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
                 model.sourceFilePath.set(null)
                 model.caretOffset.set(null)
                 model.currentContent.set(null)
-                model.unavailabilityReason.set(null)
-                model.errorCode.set(null)
+                model.error.set(null)
             }
         }
     }
@@ -110,8 +109,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
 
         model.isLoading.advise(lifetime) { updateUi() }
         model.currentContent.advise(lifetime) { updateUi() }
-        model.unavailabilityReason.advise(lifetime) { updateUi() }
-        model.errorCode.advise(lifetime) { updateUi() }
+        model.error.advise(lifetime) { updateUi() }
         model.hasSnapshot.advise(lifetime) { updateUi() }
         model.snapshotContent.advise(lifetime) { updateUi() }
         model.sourceFilePath.advise(lifetime) { updateUi() }
@@ -141,10 +139,11 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
             return AsmViewerState.WaitingForInput
         }
 
-        val reason = model.unavailabilityReason.value
-        if (reason != null) {
-            logger.debug("Computing state: Unavailable - $reason")
-            return AsmViewerState.Unavailable(reason)
+        val error = model.error.value
+        if (error != null) {
+            val errorMessage = AsmViewerBundle.errorMessage(error.code, error.details)
+            logger.debug("Computing state: Unavailable - $errorMessage")
+            return AsmViewerState.Unavailable(errorMessage)
         }
 
         logger.debug("Computing state: WaitingForInput - default")

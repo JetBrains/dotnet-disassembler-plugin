@@ -45,8 +45,7 @@ namespace JetBrains.Rider.Model
     [NotNull] public void Show() => _Show.Fire();
     [NotNull] public IViewableProperty<bool> IsVisible => _IsVisible;
     [NotNull] public IViewableProperty<bool> IsLoading => _IsLoading;
-    [NotNull] public IViewableProperty<string> UnavailabilityReason => _UnavailabilityReason;
-    [NotNull] public IViewableProperty<string> ErrorCode => _ErrorCode;
+    [NotNull] public IViewableProperty<ErrorInfo> Error => _Error;
     [NotNull] public IViewableProperty<string> CurrentContent => _CurrentContent;
     [NotNull] public IViewableProperty<string> SourceFilePath => _SourceFilePath;
     [NotNull] public IViewableProperty<int?> CaretOffset => _CaretOffset;
@@ -69,8 +68,7 @@ namespace JetBrains.Rider.Model
     [NotNull] private readonly RdSignal<Unit> _Show;
     [NotNull] private readonly RdProperty<bool> _IsVisible;
     [NotNull] private readonly RdProperty<bool> _IsLoading;
-    [NotNull] private readonly RdProperty<string> _UnavailabilityReason;
-    [NotNull] private readonly RdProperty<string> _ErrorCode;
+    [NotNull] private readonly RdProperty<ErrorInfo> _Error;
     [NotNull] private readonly RdProperty<string> _CurrentContent;
     [NotNull] private readonly RdProperty<string> _SourceFilePath;
     [NotNull] private readonly RdProperty<int?> _CaretOffset;
@@ -94,8 +92,7 @@ namespace JetBrains.Rider.Model
       [NotNull] RdSignal<Unit> show,
       [NotNull] RdProperty<bool> isVisible,
       [NotNull] RdProperty<bool> isLoading,
-      [NotNull] RdProperty<string> unavailabilityReason,
-      [NotNull] RdProperty<string> errorCode,
+      [NotNull] RdProperty<ErrorInfo> error,
       [NotNull] RdProperty<string> currentContent,
       [NotNull] RdProperty<string> sourceFilePath,
       [NotNull] RdProperty<int?> caretOffset,
@@ -118,8 +115,7 @@ namespace JetBrains.Rider.Model
       if (show == null) throw new ArgumentNullException("show");
       if (isVisible == null) throw new ArgumentNullException("isVisible");
       if (isLoading == null) throw new ArgumentNullException("isLoading");
-      if (unavailabilityReason == null) throw new ArgumentNullException("unavailabilityReason");
-      if (errorCode == null) throw new ArgumentNullException("errorCode");
+      if (error == null) throw new ArgumentNullException("error");
       if (currentContent == null) throw new ArgumentNullException("currentContent");
       if (sourceFilePath == null) throw new ArgumentNullException("sourceFilePath");
       if (caretOffset == null) throw new ArgumentNullException("caretOffset");
@@ -141,8 +137,7 @@ namespace JetBrains.Rider.Model
       _Show = show;
       _IsVisible = isVisible;
       _IsLoading = isLoading;
-      _UnavailabilityReason = unavailabilityReason;
-      _ErrorCode = errorCode;
+      _Error = error;
       _CurrentContent = currentContent;
       _SourceFilePath = sourceFilePath;
       _CaretOffset = caretOffset;
@@ -162,8 +157,7 @@ namespace JetBrains.Rider.Model
       _SelectedCustomJit = selectedCustomJit;
       _IsVisible.OptimizeNested = true;
       _IsLoading.OptimizeNested = true;
-      _UnavailabilityReason.OptimizeNested = true;
-      _ErrorCode.OptimizeNested = true;
+      _Error.OptimizeNested = true;
       _CurrentContent.OptimizeNested = true;
       _SourceFilePath.OptimizeNested = true;
       _CaretOffset.OptimizeNested = true;
@@ -181,8 +175,7 @@ namespace JetBrains.Rider.Model
       _UseUnloadableContext.OptimizeNested = true;
       _DontGuessTFM.OptimizeNested = true;
       _SelectedCustomJit.OptimizeNested = true;
-      _UnavailabilityReason.ValueCanBeNull = true;
-      _ErrorCode.ValueCanBeNull = true;
+      _Error.ValueCanBeNull = true;
       _CurrentContent.ValueCanBeNull = true;
       _SourceFilePath.ValueCanBeNull = true;
       _CaretOffset.ValueCanBeNull = true;
@@ -192,8 +185,7 @@ namespace JetBrains.Rider.Model
       BindableChildren.Add(new KeyValuePair<string, object>("show", _Show));
       BindableChildren.Add(new KeyValuePair<string, object>("isVisible", _IsVisible));
       BindableChildren.Add(new KeyValuePair<string, object>("isLoading", _IsLoading));
-      BindableChildren.Add(new KeyValuePair<string, object>("unavailabilityReason", _UnavailabilityReason));
-      BindableChildren.Add(new KeyValuePair<string, object>("errorCode", _ErrorCode));
+      BindableChildren.Add(new KeyValuePair<string, object>("error", _Error));
       BindableChildren.Add(new KeyValuePair<string, object>("currentContent", _CurrentContent));
       BindableChildren.Add(new KeyValuePair<string, object>("sourceFilePath", _SourceFilePath));
       BindableChildren.Add(new KeyValuePair<string, object>("caretOffset", _CaretOffset));
@@ -218,8 +210,7 @@ namespace JetBrains.Rider.Model
       new RdSignal<Unit>(JetBrains.Rd.Impl.Serializers.ReadVoid, JetBrains.Rd.Impl.Serializers.WriteVoid),
       new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
       new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdProperty<string>(ReadStringNullable, WriteStringNullable),
-      new RdProperty<string>(ReadStringNullable, WriteStringNullable),
+      new RdProperty<ErrorInfo>(ReadErrorInfoNullable, WriteErrorInfoNullable),
       new RdProperty<string>(ReadStringNullable, WriteStringNullable),
       new RdProperty<string>(ReadStringNullable, WriteStringNullable),
       new RdProperty<int?>(ReadIntNullable, WriteIntNullable),
@@ -241,15 +232,17 @@ namespace JetBrains.Rider.Model
     //deconstruct trait
     //statics
     
+    public static CtxReadDelegate<ErrorInfo> ReadErrorInfoNullable = ErrorInfo.Read.NullableClass();
     public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
     public static CtxReadDelegate<int?> ReadIntNullable = JetBrains.Rd.Impl.Serializers.ReadInt.NullableStruct();
     public static CtxReadDelegate<long?> ReadLongNullable = JetBrains.Rd.Impl.Serializers.ReadLong.NullableStruct();
     
+    public static  CtxWriteDelegate<ErrorInfo> WriteErrorInfoNullable = ErrorInfo.Write.NullableClass();
     public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
     public static  CtxWriteDelegate<int?> WriteIntNullable = JetBrains.Rd.Impl.Serializers.WriteInt.NullableStruct();
     public static  CtxWriteDelegate<long?> WriteLongNullable = JetBrains.Rd.Impl.Serializers.WriteLong.NullableStruct();
     
-    protected override long SerializationHash => 8782978450809573702L;
+    protected override long SerializationHash => 6373458409336763366L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -273,8 +266,7 @@ namespace JetBrains.Rider.Model
         printer.Print("show = "); _Show.PrintEx(printer); printer.Println();
         printer.Print("isVisible = "); _IsVisible.PrintEx(printer); printer.Println();
         printer.Print("isLoading = "); _IsLoading.PrintEx(printer); printer.Println();
-        printer.Print("unavailabilityReason = "); _UnavailabilityReason.PrintEx(printer); printer.Println();
-        printer.Print("errorCode = "); _ErrorCode.PrintEx(printer); printer.Println();
+        printer.Print("error = "); _Error.PrintEx(printer); printer.Println();
         printer.Print("currentContent = "); _CurrentContent.PrintEx(printer); printer.Println();
         printer.Print("sourceFilePath = "); _SourceFilePath.PrintEx(printer); printer.Println();
         printer.Print("caretOffset = "); _CaretOffset.PrintEx(printer); printer.Println();
@@ -308,6 +300,101 @@ namespace JetBrains.Rider.Model
     public static AsmViewerModel GetAsmViewerModel(this Solution solution)
     {
       return solution.GetOrCreateExtension("asmViewerModel", () => new AsmViewerModel());
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: AsmViewerModel.kt:10</p>
+  /// </summary>
+  public sealed class ErrorInfo : IPrintable, IEquatable<ErrorInfo>
+  {
+    //fields
+    //public fields
+    [NotNull] public string Code {get; private set;}
+    [CanBeNull] public string Details {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public ErrorInfo(
+      [NotNull] string code,
+      [CanBeNull] string details
+    )
+    {
+      if (code == null) throw new ArgumentNullException("code");
+      
+      Code = code;
+      Details = details;
+    }
+    //secondary constructor
+    //deconstruct trait
+    public void Deconstruct([NotNull] out string code, [CanBeNull] out string details)
+    {
+      code = Code;
+      details = Details;
+    }
+    //statics
+    
+    public static CtxReadDelegate<ErrorInfo> Read = (ctx, reader) => 
+    {
+      var code = reader.ReadString();
+      var details = ReadStringNullable(ctx, reader);
+      var _result = new ErrorInfo(code, details);
+      return _result;
+    };
+    public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
+    
+    public static CtxWriteDelegate<ErrorInfo> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.Code);
+      WriteStringNullable(ctx, writer, value.Details);
+    };
+    public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((ErrorInfo) obj);
+    }
+    public bool Equals(ErrorInfo other)
+    {
+      if (ReferenceEquals(null, other)) return false;
+      if (ReferenceEquals(this, other)) return true;
+      return Code == other.Code && Equals(Details, other.Details);
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + Code.GetHashCode();
+        hash = hash * 31 + (Details != null ? Details.GetHashCode() : 0);
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("ErrorInfo (");
+      using (printer.IndentCookie()) {
+        printer.Print("code = "); Code.PrintEx(printer); printer.Println();
+        printer.Print("details = "); Details.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
     }
   }
 }

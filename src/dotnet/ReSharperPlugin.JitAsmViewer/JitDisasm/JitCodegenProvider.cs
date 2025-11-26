@@ -170,7 +170,7 @@ public class JitCodegenProvider(ILogger logger)
         {
             var projectPath = projectContext.ProjectFilePath;
             if (string.IsNullOrWhiteSpace(projectPath))
-                return Result.FailWithValue(new Error(AsmViewerErrorCode.CompilationFailed, "Project path is null or empty"));
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.ProjectPathNotFound));
 
             string dstFolder = destFolder;
             if (!Path.IsPathRooted(dstFolder))
@@ -235,8 +235,7 @@ public class JitCodegenProvider(ILogger logger)
             {
                 if (target.MethodName == "*")
                 {
-                    return Result.FailWithValue(new Error(AsmViewerErrorCode.FlowgraphsNotSupportedForAot,
-                        "Flowgraph for classes (all methods) is not supported yet"));
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.FlowgraphsForClassNotSupported));
                 }
 
                 currentFgFile = Path.GetTempFileName();

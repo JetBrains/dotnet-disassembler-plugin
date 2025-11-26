@@ -45,11 +45,6 @@ public class AsmViewerHost
         });
     }
 
-    private void SubscribeToModelChanges(Lifetime lifetime)
-    {
-        _model.AdviseRefreshTriggers(lifetime, () => RefreshAsmContent(lifetime));
-    }
-
     private void RefreshAsmContent(Lifetime lifetime)
     {
         if (!_model.IsVisible.Maybe.HasValue || !_model.IsVisible.Value)
@@ -72,7 +67,7 @@ public class AsmViewerHost
         _threading.ExecuteOrQueueEx(lifetime, "AsmViewer.SetLoading", () =>
         {
             _model.IsLoading.Value = true;
-            _model.UnavailabilityReason.Value = null;
+            _model.Error.Value = null;
         });
 
         _ = _updateCoordinator
@@ -115,8 +110,7 @@ public class AsmViewerHost
         {
             _logger.Info("Disassembly succeeded, content length: {0}", result.Value.Length);
             _model.CurrentContent.Value = result.Value;
-            _model.UnavailabilityReason.Value = null;
-            _model.ErrorCode.Value = null;
+            _model.Error.Value = null;
 
             _usageCollector.LogDisassemblySucceeded();
         }
@@ -130,13 +124,17 @@ public class AsmViewerHost
                 return;
             }
 
-            _logger.Warn("Disassembly failed - Code: {0}, Message: {1}", error.Code, error.Message);
+            _logger.Warn("Disassembly failed - Code: {0}, Details: {1}", error.Code, error.Details);
 
-            _model.UnavailabilityReason.Value = error.Message;
-            _model.ErrorCode.Value = error.Code.ToString();
+            _model.Error.Value = new ErrorInfo(error.Code.ToString(), error.Details);
 
             _usageCollector.LogError(error.Code);
         }
+    }
+    
+    private void SubscribeToModelChanges(Lifetime lifetime)
+    {
+        _model.AdviseRefreshTriggers(lifetime, () => RefreshAsmContent(lifetime));
     }
 
     private void SubscribeToStatistics(Lifetime lifetime)

@@ -28,7 +28,7 @@ public static class AsmViewerModelInitializer
     private static void InitializeLoadingState(AsmViewerModel model)
     {
         model.IsLoading.Value = false;
-        model.UnavailabilityReason.Value = null;
+        model.Error.Value = null;
     }
 
     private static void InitializeConfiguration(AsmViewerModel model)

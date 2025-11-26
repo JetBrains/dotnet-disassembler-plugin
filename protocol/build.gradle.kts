@@ -5,6 +5,12 @@ plugins {
     id("com.jetbrains.rdgen") version libs.versions.rdGen
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
 dependencies {
     implementation(libs.kotlinStdLib)
     implementation(libs.rdGen)
@@ -23,7 +29,7 @@ val RiderPluginId: String by rootProject
 
 rdgen {
     val csOutput = File(rootDir, "src/dotnet/${DotnetPluginId}")
-    val ktOutput = File(rootDir, "src/rider/main/kotlin/com/jetbrains/rider/plugins/${RiderPluginId.replace('.','/').toLowerCase()}")
+    val ktOutput = File(rootDir, "src/rider/main/kotlin/com/jetbrains/rider/plugins/jitasmviewer")
 
     verbose = true
     packages = "model.rider"
@@ -49,4 +55,9 @@ tasks.withType<RdGenTask> {
     val classPath = sourceSets["main"].runtimeClasspath
     dependsOn(classPath)
     classpath(classPath)
+
+    // Ensure rdgen runs with JDK 21
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    })
 }

@@ -6,14 +6,19 @@ import com.jetbrains.rider.model.nova.ide.SolutionModel
 
 @Suppress("unused")
 class AsmViewerModel : Ext(SolutionModel.Solution) {
+
+    private val ErrorInfo = structdef {
+        field("code", string)
+        field("details", string.nullable)
+    }
+
     init {
         sink("show", void)
 
         property("isVisible", bool)
         property("isLoading", bool)
 
-        property("unavailabilityReason", string.nullable)
-        property("errorCode", string.nullable)
+        property("error", ErrorInfo.nullable)
 
         property("currentContent", string.nullable)
         property("sourceFilePath", string.nullable)
