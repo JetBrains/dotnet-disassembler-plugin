@@ -18,8 +18,8 @@ body:
       description: |
         Please copy and paste any relevant log output.
         Add the full stack trace if available.
-        If possible, run the failing task with `--stacktrace` flag.
-        
+        You can find IDE logs via Help → Collect Logs and Diagnostic Data.
+
         *This will be automatically formatted into code, so there is no need for backticks.*
       render: shell
 
@@ -64,8 +64,3 @@ body:
         - Linux
         - Windows
 
-  - type: input
-    id: url
-    attributes:
-      label: Link to build, i.e. failing GitHub Action job
-      placeholder: https://github.com/username/project/actions/runs/1234567890
