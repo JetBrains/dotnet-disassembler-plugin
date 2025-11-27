@@ -1,12 +1,13 @@
 using System;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using JetBrains.Application.Parts;
 using JetBrains.Core;
 using JetBrains.Util;
 using JetBrains.Lifetimes;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.Protocol;
-using JetBrains.ReSharper.Psi;
+using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.Rider.Model;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
 using ReSharperPlugin.JitAsmViewer.JitDisasmAdapters;
@@ -15,42 +16,25 @@ using Result = JetBrains.Core.Result;
 namespace ReSharperPlugin.JitAsmViewer;
 
 [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
-public class AsmViewerUpdateCoordinator
+public class AsmViewerUpdateCoordinator(
+    ISolution solution,
+    AsmMethodLocator methodLocator,
+    AsmCompilationService compilationService)
 {
     private static readonly ILogger Logger = JetBrains.Util.Logging.Logger.GetLogger(typeof(AsmViewerUpdateCoordinator));
 
-    private readonly SequentialLifetimes _updateLifetimes;
-    private readonly AsmMethodLocator _methodLocator;
-    private readonly AsmCompilationService _compilationService;
-    private readonly AsmViewerModel _model;
-    private readonly object _lock = new();
+    private readonly AsmViewerModel _model = solution.GetProtocolSolution().GetAsmViewerModel();
+    private readonly object _cacheLock = new();
 
-    private (string SourceFilePath, string MethodId, long DocumentStamp, JitDisasmConfiguration Configuration) _lastState;
-    private Result<string, Error>? _lastResult;
+    private int _cacheVersion;
+    [CanBeNull] private CacheEntry _cache;
 
-    public AsmViewerUpdateCoordinator(
-        Lifetime lifetime,
-        ISolution solution,
-        AsmMethodLocator methodLocator,
-        AsmCompilationService compilationService)
-    {
-        _updateLifetimes = new SequentialLifetimes(lifetime);
-        _methodLocator = methodLocator;
-        _compilationService = compilationService;
-        _model = solution.GetProtocolSolution().GetAsmViewerModel();
-    }
-
-    public Task<Result<string, Error>> CompileWithDebouncingAsync(CaretPosition caretPosition)
-    {
-        var updateLifetime = _updateLifetimes.Next();
-        return Task.Run(() => UpdateAsmAsync(caretPosition, updateLifetime), updateLifetime);
-    }
-
-    private async Task<Result<string, Error>> UpdateAsmAsync(CaretPosition caretPosition, Lifetime lifetime)
+    public async Task<Result<string, Error>> CompileAsync(CompileRequest request, Lifetime lifetime)
     {
         try
         {
-            var declarationResult = _methodLocator.FindDeclarationAt(caretPosition.FilePath, caretPosition.Offset);
+            var caretPosition = request.CaretPosition;
+            var declarationResult = methodLocator.FindDeclarationAt(caretPosition.FilePath, caretPosition.Offset);
             if (!declarationResult.Succeed)
                 return Result.FailWithValue(declarationResult.FailValue);
 
@@ -63,40 +47,71 @@ public class AsmViewerUpdateCoordinator
                 return Result.FailWithValue(new Error(AsmViewerErrorCode.InvalidCaretPosition));
 
             var target = JitDisasmTargetUtils.GetTarget(declaredElement);
-            var configuration = JitDisasmConfigurationFactory.Create(_model);
-            var currentState = (caretPosition.FilePath, target.Target, caretPosition.DocumentModificationStamp, configuration);
+            var configuration = JitDisasmConfigurationFactory.Create(request.Configuration);
+            var filePath = caretPosition.FilePath;
+            var methodId = target.Target;
+            var documentStamp = caretPosition.DocumentModificationStamp;
 
-            lock (_lock)
+            int myCacheVersion;
+            lock (_cacheLock)
             {
-                if (currentState == _lastState && _lastResult.HasValue)
-                    return _lastResult.Value;
+                if (_cache is { } entry && entry.StateEquals(filePath, methodId, documentStamp, configuration))
+                {
+                    Logger.Verbose("Cache hit, returning cached result (version: {0})", entry.Version);
+                    return entry.Result;
+                }
 
-                _lastState = currentState;
+                myCacheVersion = ++_cacheVersion;
             }
 
-            var compilationResult = await _compilationService.CompileAsync(
-                declaration,
-                configuration,
-                lifetime);
-
-            if (lifetime.IsNotAlive)
-                return Result.FailWithValue(new Error(AsmViewerErrorCode.UpdateCancelled));
-
-            Result<string, Error> result = compilationResult.Succeed
-                ? Result.Success(compilationResult.Value)
-                : Result.FailWithValue(compilationResult.FailValue);
-
-            lock (_lock)
+            return await lifetime.StartMainWriteAsync(async () =>
             {
-                _lastResult = result;
-            }
+                _model.IsLoading.Value = true;
+                try
+                {
+                    var compilationResult = await compilationService.CompileAsync(
+                        declaration,
+                        configuration,
+                        lifetime);
 
-            return result;
+                    if (lifetime.IsNotAlive)
+                    {
+                        Logger.Info("Lifetime is not alive, returning cancelled");
+                        return Result.FailWithValue(new Error(AsmViewerErrorCode.UpdateCancelled));
+                    }
+
+                    lock (_cacheLock)
+                    {
+                        if (_cacheVersion != myCacheVersion) 
+                            return compilationResult;
+                        
+                        _cache = new CacheEntry(myCacheVersion, filePath, methodId, documentStamp, configuration, compilationResult);
+                        Logger.Verbose("Cache updated (version: {0}), success: {1}", myCacheVersion, compilationResult.Succeed);
+                    }
+
+                    return compilationResult;
+                }
+                finally
+                {
+                    _model.IsLoading.Value = false;
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.UpdateCancelled));
         }
         catch (Exception ex)
         {
             Logger.LogException(ex);
             return Result.FailWithValue(new Error(AsmViewerErrorCode.UnknownError, ex.Message));
         }
+    }
+    
+    private sealed record CacheEntry(int Version, string SourceFilePath, string MethodId, long DocumentStamp,
+        JitDisasmConfiguration Configuration, Result<string, Error> Result)
+    {
+        public bool StateEquals(string filePath, string methodId, long stamp, JitDisasmConfiguration config) =>
+            SourceFilePath == filePath && MethodId == methodId && DocumentStamp == stamp && Configuration == config;
     }
 }

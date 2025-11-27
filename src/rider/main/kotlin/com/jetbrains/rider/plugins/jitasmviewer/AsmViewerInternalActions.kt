@@ -10,10 +10,7 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBPanel
-import com.jetbrains.rd.ide.model.JitConfiguration
-import com.jetbrains.rd.ide.model.asmViewerModel
 import com.jetbrains.rider.plugins.jitasmviewer.statistics.AsmViewerStatisticsCollector
-import com.jetbrains.rider.projectView.solution
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -23,15 +20,12 @@ class CreateSnapshotAction(private val project: Project) : AnAction(
     AllIcons.Actions.Dump
 ) {
     override fun actionPerformed(e: AnActionEvent) {
-        val model = project.solution.asmViewerModel
-        model.compilationResult.value?.content?.let { content ->
-            model.snapshotContent.set(content)
-            AsmViewerStatisticsCollector.logSnapshotCreated(project)
-        }
+        AsmViewerState.getInstance(project).saveContentSnapshot()
+        AsmViewerStatisticsCollector.logSnapshotCreated(project)
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = project.solution.asmViewerModel.compilationResult.value?.content != null
+        e.presentation.isEnabled = AsmViewerState.getInstance(project).lastResponse.value?.content != null
     }
 }
 
@@ -41,26 +35,11 @@ class DiffableModeAction(private val project: Project) : ToggleAction(
     AllIcons.Actions.Diff
 ) {
     override fun isSelected(e: AnActionEvent): Boolean {
-        return project.solution.asmViewerModel.configuration.value?.diffable ?: false
+        return AsmViewerState.getInstance(project).configuration.value.diffable
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-        val model = project.solution.asmViewerModel
-        val currentConfig = model.configuration.value
-        val newConfig = JitConfiguration(
-            showAsmComments = currentConfig?.showAsmComments ?: true,
-            diffable = state,
-            useTieredJit = currentConfig?.useTieredJit ?: false,
-            usePGO = currentConfig?.usePGO ?: false,
-            runAppMode = currentConfig?.runAppMode ?: false,
-            useNoRestoreFlag = currentConfig?.useNoRestoreFlag ?: false,
-            useDotnetPublishForReload = currentConfig?.useDotnetPublishForReload ?: false,
-            useDotnetBuildForReload = currentConfig?.useDotnetBuildForReload ?: false,
-            useUnloadableContext = currentConfig?.useUnloadableContext ?: false,
-            dontGuessTFM = currentConfig?.dontGuessTFM ?: false,
-            selectedCustomJit = currentConfig?.selectedCustomJit
-        )
-        model.configuration.set(newConfig)
+        AsmViewerState.getInstance(project).updateConfiguration { it.copy(diffable = state) }
         AsmViewerStatisticsCollector.logDiffableModeToggled(project, state)
     }
 }
@@ -71,13 +50,12 @@ class DeleteSnapshotAction(private val project: Project) : AnAction(
     AllIcons.Actions.GC
 ) {
     override fun actionPerformed(e: AnActionEvent) {
-        val model = project.solution.asmViewerModel
-        model.snapshotContent.set(null)
+        AsmViewerState.getInstance(project).clearContentSnapshot()
         AsmViewerStatisticsCollector.logSnapshotDeleted(project)
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = project.solution.asmViewerModel.snapshotContent.value != null
+        e.presentation.isEnabled = AsmViewerState.getInstance(project).contentSnapshot.value != null
     }
 }
 
@@ -87,7 +65,7 @@ class SettingsAction(private val project: Project) : AnAction(
     AllIcons.General.Settings
 ) {
     override fun actionPerformed(e: AnActionEvent) {
-        ConfigurationDialog(project, project.solution.asmViewerModel).show()
+        ConfigurationDialog(project).show()
         AsmViewerStatisticsCollector.logSettingsOpened(project)
     }
 }

@@ -18,11 +18,6 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("documentModificationStamp", long)
     }
 
-    private val CompilationResult = structdef {
-        field("content", string.nullable)
-        field("error", ErrorInfo.nullable)
-    }
-
     private val JitConfiguration = structdef {
         field("showAsmComments", bool)
         field("diffable", bool)
@@ -37,16 +32,22 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("selectedCustomJit", string.nullable)
     }
 
+    private val CompileRequest = structdef {
+        field("caretPosition", CaretPosition)
+        field("configuration", JitConfiguration)
+    }
+
+    private val CompilationResponse = structdef {
+        field("content", string.nullable)
+        field("error", ErrorInfo.nullable)
+    }
+
     init {
         sink("show", void)
 
         property("isVisible", bool)
+        property("isLoading", bool)
 
-        property("caretPosition", CaretPosition.nullable)
-        property("compilationResult", CompilationResult.nullable)
-
-        property("snapshotContent", string.nullable)
-
-        property("configuration", JitConfiguration.nullable)
+        call("compile", CompileRequest, CompilationResponse)
     }
 }

@@ -21,10 +21,8 @@ import kotlin.jvm.JvmStatic
 class AsmViewerModel private constructor(
     private val _show: RdSignal<Unit>,
     private val _isVisible: RdOptionalProperty<Boolean>,
-    private val _caretPosition: RdProperty<CaretPosition?>,
-    private val _compilationResult: RdProperty<CompilationResult?>,
-    private val _snapshotContent: RdProperty<String?>,
-    private val _configuration: RdProperty<JitConfiguration?>
+    private val _isLoading: RdOptionalProperty<Boolean>,
+    private val _compile: RdCall<CompileRequest, CompilationResponse>
 ) : RdExtBase() {
     //companion
     
@@ -34,19 +32,16 @@ class AsmViewerModel private constructor(
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(564443201465347), classLoader, "com.jetbrains.rd.ide.model.ErrorInfo"))
             serializers.register(LazyCompanionMarshaller(RdId(2758783625201768569), classLoader, "com.jetbrains.rd.ide.model.CaretPosition"))
-            serializers.register(LazyCompanionMarshaller(RdId(-1052327886214718483), classLoader, "com.jetbrains.rd.ide.model.CompilationResult"))
             serializers.register(LazyCompanionMarshaller(RdId(3780635925811704340), classLoader, "com.jetbrains.rd.ide.model.JitConfiguration"))
+            serializers.register(LazyCompanionMarshaller(RdId(4197557252996108239), classLoader, "com.jetbrains.rd.ide.model.CompileRequest"))
+            serializers.register(LazyCompanionMarshaller(RdId(3283825401676346385), classLoader, "com.jetbrains.rd.ide.model.CompilationResponse"))
         }
         
         
         
         
-        private val __CaretPositionNullableSerializer = CaretPosition.nullable()
-        private val __CompilationResultNullableSerializer = CompilationResult.nullable()
-        private val __StringNullableSerializer = FrameworkMarshallers.String.nullable()
-        private val __JitConfigurationNullableSerializer = JitConfiguration.nullable()
         
-        const val serializationHash = 7273540225599746111L
+        const val serializationHash = 4666260443237672831L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -55,27 +50,20 @@ class AsmViewerModel private constructor(
     //fields
     val show: ISource<Unit> get() = _show
     val isVisible: IOptProperty<Boolean> get() = _isVisible
-    val caretPosition: IProperty<CaretPosition?> get() = _caretPosition
-    val compilationResult: IProperty<CompilationResult?> get() = _compilationResult
-    val snapshotContent: IProperty<String?> get() = _snapshotContent
-    val configuration: IProperty<JitConfiguration?> get() = _configuration
+    val isLoading: IOptProperty<Boolean> get() = _isLoading
+    val compile: IRdCall<CompileRequest, CompilationResponse> get() = _compile
     //methods
     //initializer
     init {
         _isVisible.optimizeNested = true
-        _caretPosition.optimizeNested = true
-        _compilationResult.optimizeNested = true
-        _snapshotContent.optimizeNested = true
-        _configuration.optimizeNested = true
+        _isLoading.optimizeNested = true
     }
     
     init {
         bindableChildren.add("show" to _show)
         bindableChildren.add("isVisible" to _isVisible)
-        bindableChildren.add("caretPosition" to _caretPosition)
-        bindableChildren.add("compilationResult" to _compilationResult)
-        bindableChildren.add("snapshotContent" to _snapshotContent)
-        bindableChildren.add("configuration" to _configuration)
+        bindableChildren.add("isLoading" to _isLoading)
+        bindableChildren.add("compile" to _compile)
     }
     
     //secondary constructor
@@ -83,10 +71,8 @@ class AsmViewerModel private constructor(
     ) : this(
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdProperty<CaretPosition?>(null, __CaretPositionNullableSerializer),
-        RdProperty<CompilationResult?>(null, __CompilationResultNullableSerializer),
-        RdProperty<String?>(null, __StringNullableSerializer),
-        RdProperty<JitConfiguration?>(null, __JitConfigurationNullableSerializer)
+        RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
+        RdCall<CompileRequest, CompilationResponse>(CompileRequest, CompilationResponse)
     )
     
     //equals trait
@@ -97,10 +83,8 @@ class AsmViewerModel private constructor(
         printer.indent {
             print("show = "); _show.print(printer); println()
             print("isVisible = "); _isVisible.print(printer); println()
-            print("caretPosition = "); _caretPosition.print(printer); println()
-            print("compilationResult = "); _compilationResult.print(printer); println()
-            print("snapshotContent = "); _snapshotContent.print(printer); println()
-            print("configuration = "); _configuration.print(printer); println()
+            print("isLoading = "); _isLoading.print(printer); println()
+            print("compile = "); _compile.print(printer); println()
         }
         printer.print(")")
     }
@@ -109,10 +93,8 @@ class AsmViewerModel private constructor(
         return AsmViewerModel(
             _show.deepClonePolymorphic(),
             _isVisible.deepClonePolymorphic(),
-            _caretPosition.deepClonePolymorphic(),
-            _compilationResult.deepClonePolymorphic(),
-            _snapshotContent.deepClonePolymorphic(),
-            _configuration.deepClonePolymorphic()
+            _isLoading.deepClonePolymorphic(),
+            _compile.deepClonePolymorphic()
         )
     }
     //contexts
@@ -195,26 +177,26 @@ data class CaretPosition (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:21]
+ * #### Generated from [AsmViewerModel.kt:40]
  */
-data class CompilationResult (
+data class CompilationResponse (
     val content: String?,
     val error: ErrorInfo?
 ) : IPrintable {
     //companion
     
-    companion object : IMarshaller<CompilationResult> {
-        override val _type: KClass<CompilationResult> = CompilationResult::class
-        override val id: RdId get() = RdId(-1052327886214718483)
+    companion object : IMarshaller<CompilationResponse> {
+        override val _type: KClass<CompilationResponse> = CompilationResponse::class
+        override val id: RdId get() = RdId(3283825401676346385)
         
         @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CompilationResult  {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CompilationResponse  {
             val content = buffer.readNullable { buffer.readString() }
             val error = buffer.readNullable { ErrorInfo.read(ctx, buffer) }
-            return CompilationResult(content, error)
+            return CompilationResponse(content, error)
         }
         
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CompilationResult)  {
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CompilationResponse)  {
             buffer.writeNullable(value.content) { buffer.writeString(it) }
             buffer.writeNullable(value.error) { ErrorInfo.write(ctx, buffer, it) }
         }
@@ -230,7 +212,7 @@ data class CompilationResult (
         if (this === other) return true
         if (other == null || other::class != this::class) return false
         
-        other as CompilationResult
+        other as CompilationResponse
         
         if (content != other.content) return false
         if (error != other.error) return false
@@ -246,10 +228,75 @@ data class CompilationResult (
     }
     //pretty print
     override fun print(printer: PrettyPrinter)  {
-        printer.println("CompilationResult (")
+        printer.println("CompilationResponse (")
         printer.indent {
             print("content = "); content.print(printer); println()
             print("error = "); error.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+    //threading
+}
+
+
+/**
+ * #### Generated from [AsmViewerModel.kt:35]
+ */
+data class CompileRequest (
+    val caretPosition: CaretPosition,
+    val configuration: JitConfiguration
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<CompileRequest> {
+        override val _type: KClass<CompileRequest> = CompileRequest::class
+        override val id: RdId get() = RdId(4197557252996108239)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CompileRequest  {
+            val caretPosition = CaretPosition.read(ctx, buffer)
+            val configuration = JitConfiguration.read(ctx, buffer)
+            return CompileRequest(caretPosition, configuration)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CompileRequest)  {
+            CaretPosition.write(ctx, buffer, value.caretPosition)
+            JitConfiguration.write(ctx, buffer, value.configuration)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as CompileRequest
+        
+        if (caretPosition != other.caretPosition) return false
+        if (configuration != other.configuration) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + caretPosition.hashCode()
+        __r = __r*31 + configuration.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("CompileRequest (")
+        printer.indent {
+            print("caretPosition = "); caretPosition.print(printer); println()
+            print("configuration = "); configuration.print(printer); println()
         }
         printer.print(")")
     }
@@ -325,7 +372,7 @@ data class ErrorInfo (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:26]
+ * #### Generated from [AsmViewerModel.kt:21]
  */
 data class JitConfiguration (
     val showAsmComments: Boolean,

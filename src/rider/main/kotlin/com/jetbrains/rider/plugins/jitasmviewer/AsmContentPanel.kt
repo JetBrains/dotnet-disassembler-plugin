@@ -18,21 +18,22 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JTextPane
+import javax.swing.text.SimpleAttributeSet
+import javax.swing.text.StyleConstants
 
 object AsmContentPanelFactory {
-    private val logger = Logger.getInstance(AsmContentPanelFactory::class.java)
-
-    fun create(project: Project, state: AsmViewerState.Content): AsmContentPanel {
-        logger.debug("Creating content panel: hasSnapshot=${state.hasSnapshot}")
-        return if (state.hasSnapshot) {
-            DiffContentPanel(project, state.currentAsm, state.snapshotAsm!!)
+    fun create(project: Project, content: String?, snapshot: String?): AsmContentPanel {
+        return if (snapshot == null) {
+            SingleContentPanel(project, content)
         } else {
-            SingleContentPanel(project, state.currentAsm)
+            DiffContentPanel(project, content, snapshot)
         }
     }
 }
@@ -44,26 +45,54 @@ abstract class AsmContentPanel(protected val project: Project) : Disposable {
         add(JLabel(AnimatedIcon.Big.INSTANCE), GridBagConstraints())
     }
     protected val contentPanel = JPanel(BorderLayout())
+    private val messagePanel = JPanel(GridBagLayout())
+    private val messageTextPane = JTextPane().apply {
+        isEditable = false
+        background = null
+        border = null
+        font = JLabel().font
+        val centerAttributeSet = SimpleAttributeSet().apply {
+            StyleConstants.setAlignment(this, StyleConstants.ALIGN_CENTER)
+        }
+        styledDocument.setParagraphAttributes(0, styledDocument.length, centerAttributeSet, false)
+    }
 
     val component: JPanel = JPanel(BorderLayout()).apply {
         add(contentPanel, BorderLayout.CENTER)
     }
 
+    init {
+        messagePanel.add(messageTextPane, GridBagConstraints().apply {
+            gridx = 0
+            gridy = 0
+            weightx = 1.0
+            weighty = 1.0
+            anchor = GridBagConstraints.CENTER
+            fill = GridBagConstraints.HORIZONTAL
+            insets = JBUI.insets(10)
+        })
+    }
+
     abstract fun updateContent(current: String, snapshot: String? = null)
 
     fun showLoading() {
-        contentPanel.isVisible = false
-        if (loadingPanel.parent != component) {
-            component.add(loadingPanel, BorderLayout.CENTER)
-        }
-        loadingPanel.isVisible = true
+        component.removeAll()
+        component.add(loadingPanel, BorderLayout.CENTER)
         component.revalidate()
         component.repaint()
     }
 
     fun hideLoading() {
-        loadingPanel.isVisible = false
-        contentPanel.isVisible = true
+        component.removeAll()
+        component.add(contentPanel, BorderLayout.CENTER)
+        component.revalidate()
+        component.repaint()
+    }
+
+    fun showMessage(message: String) {
+        messageTextPane.text = message
+        component.removeAll()
+        component.add(messagePanel, BorderLayout.CENTER)
         component.revalidate()
         component.repaint()
     }
@@ -91,7 +120,7 @@ abstract class AsmContentPanel(protected val project: Project) : Disposable {
 
 class SingleContentPanel(
     project: Project,
-    initialContent: String
+    initialContent: String?
 ) : AsmContentPanel(project) {
 
     companion object {
@@ -101,8 +130,8 @@ class SingleContentPanel(
     private val editor: Editor
 
     init {
-        logger.debug("Initializing SingleContentPanel with content length: ${initialContent.length}")
-        val document = EditorFactory.getInstance().createDocument(initialContent)
+        logger.debug("Initializing SingleContentPanel with content length: ${initialContent?.length}")
+        val document = EditorFactory.getInstance().createDocument(initialContent ?: "")
         editor = EditorFactory.getInstance().createEditor(document, project)
         configureAsmEditor(editor)
         val scrollPane = JBScrollPane(editor.component)
@@ -110,7 +139,6 @@ class SingleContentPanel(
     }
 
     override fun updateContent(current: String, snapshot: String?) {
-        logger.debug("Updating content, new length: ${current.length}")
         ApplicationManager.getApplication().runWriteAction {
             editor.document.setText(current)
         }
@@ -125,8 +153,8 @@ class SingleContentPanel(
 
 class DiffContentPanel(
     project: Project,
-    currentContent: String,
-    snapshotContent: String
+    currentContent: String?,
+    snapshotContent: String?
 ) : AsmContentPanel(project) {
 
     companion object {
@@ -134,12 +162,12 @@ class DiffContentPanel(
     }
 
     private var diffRequestPanel: DiffRequestPanel? = null
-    private val snapshotDoc = EditorFactory.getInstance().createDocument(snapshotContent)
-    private val currentDoc = EditorFactory.getInstance().createDocument(currentContent)
+    private val snapshotDoc = EditorFactory.getInstance().createDocument(snapshotContent ?: "")
+    private val currentDoc = EditorFactory.getInstance().createDocument(currentContent ?: "")
     private val editorFactoryListener: EditorFactoryListener
 
     init {
-        logger.debug("Initializing DiffContentPanel - current: ${currentContent.length}, snapshot: ${snapshotContent.length}")
+        logger.debug("Initializing DiffContentPanel - current: ${currentContent?.length}, snapshot: ${snapshotContent?.length}")
         editorFactoryListener = object : EditorFactoryListener {
             override fun editorCreated(event: EditorFactoryEvent) {
                 val editor = event.editor

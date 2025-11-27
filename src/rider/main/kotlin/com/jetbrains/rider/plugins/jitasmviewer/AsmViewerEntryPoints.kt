@@ -19,7 +19,7 @@ class ShowAsmViewerAction : AnAction() {
 
 class AsmViewerToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        AsmViewerHostUi.getInstance(project).initializeToolWindow(toolWindow)
+        AsmViewerHostUi.getInstance(project).initializeToolWindow()
     }
 
     override fun init(toolWindow: ToolWindow) {

@@ -24,7 +24,11 @@ class AsmViewerBundle : DynamicBundle(BUNDLE) {
         ): Supplier<String> = INSTANCE.getLazyMessage(key, *params)
 
         @Nls
-        fun errorMessage(errorCode: String, details: String?): String {
+        fun errorMessage(errorCode: String?, details: String?): String {
+            if (errorCode == null) {
+                return INSTANCE.getMessage("error.UnknownError")
+            }
+
             val key = "error.$errorCode"
             val localizedMessage = if (INSTANCE.containsKey(key)) {
                 INSTANCE.getMessage(key)
