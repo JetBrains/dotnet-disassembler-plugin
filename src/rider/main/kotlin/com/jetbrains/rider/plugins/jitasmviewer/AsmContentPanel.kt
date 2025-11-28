@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
-import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -39,11 +39,7 @@ object AsmContentPanelFactory {
 }
 
 abstract class AsmContentPanel(protected val project: Project) : Disposable {
-    private val loadingPanel = JPanel(GridBagLayout()).apply {
-        isOpaque = true
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-        add(JLabel(AnimatedIcon.Big.INSTANCE), GridBagConstraints())
-    }
+    private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
     protected val contentPanel = JPanel(BorderLayout())
     private val messagePanel = JPanel(GridBagLayout())
     private val messageTextPane = JTextPane().apply {
@@ -78,11 +74,13 @@ abstract class AsmContentPanel(protected val project: Project) : Disposable {
     fun showLoading() {
         component.removeAll()
         component.add(loadingPanel, BorderLayout.CENTER)
+        loadingPanel.startLoading()
         component.revalidate()
         component.repaint()
     }
 
     fun hideLoading() {
+        loadingPanel.stopLoading()
         component.removeAll()
         component.add(contentPanel, BorderLayout.CENTER)
         component.revalidate()
