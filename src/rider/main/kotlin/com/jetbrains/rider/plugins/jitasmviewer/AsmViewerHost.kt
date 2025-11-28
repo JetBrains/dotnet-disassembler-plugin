@@ -35,30 +35,48 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
     private val model: AsmViewerModel = project.solution.asmViewerModel
     private val state: AsmViewerState by lazy { AsmViewerState.getInstance(project) }
 
+    private val visibilityLifetimes = SequentialLifetimes(serviceLifetime)
+    private val caretTrackingLifetimes = SequentialLifetimes(serviceLifetime)
     private val compilationLifetimes = SequentialLifetimes(serviceLifetime)
 
     init {
         logger.info("Initializing AsmViewerHost for project: ${project.name}")
-
-        setupEditorTracking()
         setupVisibilityTracking()
-        setupConfigurationTracking()
-        setupLoadingTracking()
     }
 
-    private fun setupEditorTracking() {
-        val connection = project.messageBus.connect(serviceLifetime.createNestedDisposable())
+    private fun setupVisibilityTracking() {
+        model.isVisible.advise(serviceLifetime) { isVisible ->
+            logger.debug("Tool window visibility changed: $isVisible")
+            if (isVisible) {
+                val visibleLifetime = visibilityLifetimes.next()
+                setupEditorTracking(visibleLifetime)
+                setupConfigurationTracking(visibleLifetime)
+                setupLoadingTracking(visibleLifetime)
+
+                trackCaretInCurrentEditor(caretTrackingLifetimes.next())
+
+                requestCompilation()
+            } else {
+                visibilityLifetimes.terminateCurrent()
+                caretTrackingLifetimes.terminateCurrent()
+                compilationLifetimes.terminateCurrent()
+            }
+        }
+    }
+
+    private fun setupEditorTracking(visibleLifetime: Lifetime) {
+        val connection = project.messageBus.connect(visibleLifetime.createNestedDisposable())
         connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
             override fun selectionChanged(event: FileEditorManagerEvent) {
                 if (event.newEditor?.file != null) {
-                    trackCaretInCurrentEditor()
+                    trackCaretInCurrentEditor(caretTrackingLifetimes.next())
                 }
                 requestCompilation()
             }
         })
     }
 
-    private fun trackCaretInCurrentEditor() {
+    private fun trackCaretInCurrentEditor(lifetime: Lifetime) {
         val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
         if (isAsmViewerEditor(editor)) return
 
@@ -68,34 +86,19 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
                     requestCompilation()
                 }
             },
-            serviceLifetime.createNestedDisposable()
+            lifetime.createNestedDisposable()
         )
     }
 
-    private fun setupVisibilityTracking() {
-        model.isVisible.advise(serviceLifetime) { isVisible ->
-            logger.debug("Tool window visibility changed: $isVisible")
-            if (isVisible) {
-                logger.debug("Window opened, requesting compilation")
-                requestCompilation()
-            } else {
-                logger.debug("Window hidden, cancelling pending request")
-                compilationLifetimes.terminateCurrent()
-            }
-        }
-    }
-
-    private fun setupConfigurationTracking() {
-        state.configuration.advise(serviceLifetime) {
+    private fun setupConfigurationTracking(lifetime: Lifetime) {
+        state.configuration.advise(lifetime) {
             logger.debug("Configuration changed, requesting recompilation")
             requestCompilation()
         }
     }
 
-    private fun setupLoadingTracking() {
-        model.isLoading.advise(serviceLifetime) { isLoading ->
-            if (model.isVisible.valueOrNull != true) return@advise
-
+    private fun setupLoadingTracking(lifetime: Lifetime) {
+        model.isLoading.advise(lifetime) { isLoading ->
             if (isLoading) {
                 setStatus(AsmViewerStatus.Loading)
             }
@@ -103,8 +106,6 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
     }
 
     private fun requestCompilation() {
-        if (model.isVisible.valueOrNull != true) return
-
         val editor = FileEditorManager.getInstance(project).selectedTextEditor
         if (editor == null || isAsmViewerEditor(editor)) {
             setStatus(AsmViewerStatus.WaitingForInput)
@@ -146,7 +147,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
         override fun extensionCreated(lifetime: Lifetime, session: ClientProjectSession, model: AsmViewerModel) {
             logger.info("Creating protocol extension for project: ${session.project.name}")
             val ui = AsmViewerHostUi.getInstance(session.project)
-            val host = getInstance(session.project)
+            getInstance(session.project)
 
             model.show.advise(lifetime) {
                 logger.debug("Show command received, activating tool window")
