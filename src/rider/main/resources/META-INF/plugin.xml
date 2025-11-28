@@ -23,7 +23,7 @@
 
 <h3>How to Use</h3>
 <ol>
-  <li>Place the caret on any C# method in your .NET 6.0+ project</li>
+  <li>Place the caret on any C# method, property, constructor, or type declaration in your .NET 6.0+ project</li>
   <li>Open the JIT Assembly Viewer tool window (View → Tool Windows → ASM Viewer)</li>
   <li>The plugin will automatically compile and display the JIT assembly for the selected method</li>
   <li>Configure JIT options via the toolbar to see how different settings affect the generated code</li>

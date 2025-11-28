@@ -1,4 +1,5 @@
 using System;
+using JetBrains.Annotations;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.DeclaredElements;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
@@ -8,6 +9,10 @@ namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 
 public static class JitDisasmTargetUtils
 {
+    [CanBeNull]
+    public static IDeclaration FindValidDeclaration(ITreeNode node) =>
+        node.GetContainingNode<IDeclaration>(returnThis: true, predicate: IsValidDisasmTarget);
+
     public static DisasmTarget GetTarget(IDeclaredElement declaredElement)
     {
         string target;
@@ -64,7 +69,7 @@ public static class JitDisasmTargetUtils
         return new DisasmTarget(target, hostType, methodName);
     }
     
-    public static bool ValidateTreeNodeForDisasm(ITreeNode node)
+    private static bool IsValidDisasmTarget(ITreeNode node)
     {
         return node is ICSharpFunctionDeclaration
             or IClassDeclaration

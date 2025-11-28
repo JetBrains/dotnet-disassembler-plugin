@@ -66,9 +66,8 @@ public class AsmMethodLocator
 
             Logger.Verbose("FindDeclarationAt: Element found - {0}", element.GetType().Name);
 
-            var declaration = element.GetContainingNode<IDeclaration>(true);
-
-            if (declaration == null || !JitDisasmTargetUtils.ValidateTreeNodeForDisasm(declaration))
+            var declaration = JitDisasmTargetUtils.FindValidDeclaration(element);
+            if (declaration == null)
             {
                 Logger.Verbose("FindDeclarationAt: No valid declaration found at offset {0}, element: {1}",
                     caretOffset, element.GetType().Name);

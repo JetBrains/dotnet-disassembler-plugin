@@ -26,7 +26,7 @@
 ## Usage
 
 1. Open any C# file in a .NET 6.0+ project
-2. Place the caret on a method you want to analyze
+2. Place the caret on a method, property, constructor, or type declaration you want to analyze
 3. Open the tool window: `View` → `Tool Windows` → `ASM Viewer`
 4. The plugin will automatically compile and display the JIT assembly for the selected method
 5. Use the toolbar to configure JIT options and see how they affect the generated code

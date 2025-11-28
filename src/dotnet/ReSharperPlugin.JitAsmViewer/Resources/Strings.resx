@@ -4,7 +4,7 @@
     <value>Show JIT ASM Viewer</value>
   </data>
   <data name="ShowAsmViewerContextAction_Description">
-    <value>Opens the JIT ASM Viewer window to display JIT-compiled assembly code for the selected method, property, or constructor</value>
+    <value>Opens the JIT ASM Viewer window to display JIT-compiled assembly code for the selected method, property, constructor, or type declaration</value>
   </data>
   <data name="ShowAsmViewerContextAction_Text">
     <value>Show JIT ASM</value>

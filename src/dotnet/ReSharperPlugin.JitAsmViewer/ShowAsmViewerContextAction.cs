@@ -35,7 +35,7 @@ public class ShowAsmViewerContextAction : ContextActionBase
 
     protected override Action<ITextControl> ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
     {
-        return textControl =>
+        return _ =>
         {
             var model = solution.GetProtocolSolution().GetAsmViewerModel();
             model.Show();
@@ -47,18 +47,11 @@ public class ShowAsmViewerContextAction : ContextActionBase
 
     public override bool IsAvailable(IUserDataHolder cache)
     {
-        var declaration = GetDeclarationAtCaret();
-        return declaration != null && JitDisasmTargetUtils.ValidateTreeNodeForDisasm(declaration);
-    }
-
-    private IDeclaration GetDeclarationAtCaret()
-    {
         var selectedElement = _dataProvider.GetSelectedElement<ITreeNode>();
         if (selectedElement == null)
-            return null;
+            return false;
 
-        var declaration = selectedElement.GetContainingNode<IDeclaration>();
-        return declaration;
+        return JitDisasmTargetUtils.FindValidDeclaration(selectedElement) != null;
     }
 
     public override IEnumerable<IntentionAction> CreateBulbItems()
