@@ -12,13 +12,15 @@ using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.Util;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
 using VirtualFileSystemPath = JetBrains.Util.VirtualFileSystemPath;
+using static JetBrains.Util.Logging.Logger;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
 [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
 public class AsmMethodLocator
 {
-    private static readonly ILogger Logger = JetBrains.Util.Logging.Logger.GetLogger(typeof(AsmMethodLocator));
+    private static readonly ILogger Logger = GetLogger(typeof(AsmMethodLocator));
+    
     private readonly ISolution _solution;
     private readonly IPsiCachesState _psiCachesState;
 

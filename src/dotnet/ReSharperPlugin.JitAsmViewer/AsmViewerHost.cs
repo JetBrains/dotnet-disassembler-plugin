@@ -6,7 +6,8 @@ using JetBrains.Rd.Tasks;
 using JetBrains.ReSharper.Feature.Services.Protocol;
 using JetBrains.Rider.Model;
 using JetBrains.Util;
-using JetBrains.Util.Logging;
+using ReSharperPlugin.JitAsmViewer.JitDisasmAdapters;
+using static JetBrains.Util.Logging.Logger;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
@@ -15,8 +16,7 @@ public class AsmViewerHost
 {
     private readonly AsmViewerUpdateCoordinator _updateCoordinator;
     private readonly AsmViewerUsageCollector _usageCollector;
-    private readonly AsmViewerModel _model;
-    private readonly ILogger _logger = Logger.GetLogger(typeof(AsmViewerHost));
+    private readonly ILogger _logger = GetLogger(typeof(AsmViewerHost));
 
     public AsmViewerHost(
         ISolution solution,
@@ -27,8 +27,8 @@ public class AsmViewerHost
         _updateCoordinator = updateCoordinator;
         _usageCollector = usageCollector;
 
-        _model = solution.GetProtocolSolution().GetAsmViewerModel();
-        _model.Compile.SetAsync(OnRequestCompileAsync);
+        var model = solution.GetProtocolSolution().GetAsmViewerModel();
+        model.Compile.SetAsync(OnRequestCompileAsync);
         _logger.Info("AsmViewerHost initialized successfully");
     }
 
@@ -44,7 +44,7 @@ public class AsmViewerHost
             var error = result.FailValue;
             _logger.Warn("Disassembly failed - Code: {0}, Details: {1}", error.Code, error.Details);
             _usageCollector.LogError(error.Code);
-            return new CompilationResponse(null, new ErrorInfo(error.Code.ToString(), error.Details));
+            return new CompilationResponse(null, new ErrorInfo(error.Code.ToRdErrorCode(), error.Details));
         }
 
         _logger.Info("Disassembly succeeded, content length: {0}", result.Value.Length);

@@ -30,6 +30,7 @@ class AsmViewerModel private constructor(
         
         override fun registerSerializersCore(serializers: ISerializers)  {
             val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(564443201287490), classLoader, "com.jetbrains.rd.ide.model.ErrorCode"))
             serializers.register(LazyCompanionMarshaller(RdId(564443201465347), classLoader, "com.jetbrains.rd.ide.model.ErrorInfo"))
             serializers.register(LazyCompanionMarshaller(RdId(2758783625201768569), classLoader, "com.jetbrains.rd.ide.model.CaretPosition"))
             serializers.register(LazyCompanionMarshaller(RdId(3780635925811704340), classLoader, "com.jetbrains.rd.ide.model.JitConfiguration"))
@@ -41,7 +42,7 @@ class AsmViewerModel private constructor(
         
         
         
-        const val serializationHash = 4666260443237672831L
+        const val serializationHash = -4417874353733812450L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -106,7 +107,7 @@ val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::Asm
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:15]
+ * #### Generated from [AsmViewerModel.kt:48]
  */
 data class CaretPosition (
     val filePath: String,
@@ -177,7 +178,7 @@ data class CaretPosition (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:40]
+ * #### Generated from [AsmViewerModel.kt:73]
  */
 data class CompilationResponse (
     val content: String?,
@@ -242,7 +243,7 @@ data class CompilationResponse (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:35]
+ * #### Generated from [AsmViewerModel.kt:68]
  */
 data class CompileRequest (
     val caretPosition: CaretPosition,
@@ -309,8 +310,52 @@ data class CompileRequest (
 /**
  * #### Generated from [AsmViewerModel.kt:10]
  */
+enum class ErrorCode {
+    SourceFileNotFound, 
+    PsiSourceFileUnavailable, 
+    UnsupportedLanguage, 
+    InvalidCaretPosition, 
+    PgoNotSupportedForAot, 
+    RunModeNotSupportedForAot, 
+    TieredJitNotSupportedForAot, 
+    FlowgraphsNotSupportedForAot, 
+    FlowgraphsForClassNotSupported, 
+    UnsupportedTargetFramework, 
+    CustomRuntimeRequiresNet7, 
+    DisassemblyTargetNotFound, 
+    CompilationFailed, 
+    ProjectPathNotFound, 
+    DotnetBuildFailed, 
+    DotnetPublishFailed, 
+    RuntimePackNotFound, 
+    CoreClrCheckedNotFound, 
+    ClrJitNotFound, 
+    UpdateCancelled, 
+    UnknownError;
+    
+    companion object : IMarshaller<ErrorCode> {
+        val marshaller = FrameworkMarshallers.enum<ErrorCode>()
+        
+        
+        override val _type: KClass<ErrorCode> = ErrorCode::class
+        override val id: RdId get() = RdId(564443201287490)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ErrorCode {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ErrorCode)  {
+            marshaller.write(ctx, buffer, value)
+        }
+    }
+}
+
+
+/**
+ * #### Generated from [AsmViewerModel.kt:43]
+ */
 data class ErrorInfo (
-    val code: String,
+    val code: ErrorCode,
     val details: String?
 ) : IPrintable {
     //companion
@@ -321,13 +366,13 @@ data class ErrorInfo (
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ErrorInfo  {
-            val code = buffer.readString()
+            val code = buffer.readEnum<ErrorCode>()
             val details = buffer.readNullable { buffer.readString() }
             return ErrorInfo(code, details)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ErrorInfo)  {
-            buffer.writeString(value.code)
+            buffer.writeEnum(value.code)
             buffer.writeNullable(value.details) { buffer.writeString(it) }
         }
         
@@ -372,7 +417,7 @@ data class ErrorInfo (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:21]
+ * #### Generated from [AsmViewerModel.kt:54]
  */
 data class JitConfiguration (
     val showAsmComments: Boolean,

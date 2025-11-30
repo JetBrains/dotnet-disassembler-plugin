@@ -12,6 +12,7 @@ using JetBrains.Rider.Model;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
 using ReSharperPlugin.JitAsmViewer.JitDisasmAdapters;
 using Result = JetBrains.Core.Result;
+using static JetBrains.Util.Logging.Logger;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
@@ -21,7 +22,7 @@ public class AsmViewerUpdateCoordinator(
     AsmMethodLocator methodLocator,
     AsmCompilationService compilationService)
 {
-    private static readonly ILogger Logger = JetBrains.Util.Logging.Logger.GetLogger(typeof(AsmViewerUpdateCoordinator));
+    private static readonly ILogger Logger = GetLogger(typeof(AsmViewerUpdateCoordinator));
 
     private readonly AsmViewerModel _model = solution.GetProtocolSolution().GetAsmViewerModel();
     private readonly object _cacheLock = new();

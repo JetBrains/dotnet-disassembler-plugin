@@ -7,13 +7,14 @@ using JetBrains.UsageStatistics.FUS.EventLog.Events;
 using JetBrains.UsageStatistics.FUS.EventLog.Fus;
 using JetBrains.Util;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
+using static JetBrains.Util.Logging.Logger;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
 [CounterUsagesCollector]
 public class AsmViewerUsageCollector : CounterUsagesCollector
 {
-    private static readonly ILogger Logger = JetBrains.Util.Logging.Logger.GetLogger(typeof(AsmViewerUsageCollector));
+    private static readonly ILogger Logger = GetLogger(typeof(AsmViewerUsageCollector));
 
     private readonly EventLogGroup _group;
 
@@ -25,7 +26,6 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
 
     private readonly StringEventField _sdkTypeField;
     private readonly StringEventField _targetFrameworkField;
-    private readonly EnumEventField<AsmViewerErrorCode> _errorCodeField;
 
     private readonly BooleanEventField _showAsmCommentsField;
     private readonly BooleanEventField _useTieredJitField;
@@ -54,11 +54,11 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
             _sdkTypeField,
             _targetFrameworkField);
 
-        _errorCodeField = EventFields.Enum<AsmViewerErrorCode>("error_code", "Error code");
+        var errorCodeField = EventFields.Enum<AsmViewerErrorCode>("error_code", "Error code");
         _errorOccurred = _group.RegisterEvent(
             "error.occurred",
             "Error occurred",
-            _errorCodeField);
+            errorCodeField);
 
         _showAsmCommentsField = EventFields.Boolean("show_asm_comments", "Show ASM comments");
         _useTieredJitField = EventFields.Boolean("use_tiered_jit", "Use tiered JIT");

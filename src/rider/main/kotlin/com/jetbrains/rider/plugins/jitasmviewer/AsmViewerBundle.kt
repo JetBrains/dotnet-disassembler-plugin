@@ -1,6 +1,7 @@
 package com.jetbrains.rider.plugins.jitasmviewer
 
 import com.intellij.DynamicBundle
+import com.jetbrains.rd.ide.model.ErrorCode
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -24,7 +25,7 @@ class AsmViewerBundle : DynamicBundle(BUNDLE) {
         ): Supplier<String> = INSTANCE.getLazyMessage(key, *params)
 
         @Nls
-        fun errorMessage(errorCode: String?, details: String?): String {
+        fun errorMessage(errorCode: ErrorCode?, details: String?): String {
             if (errorCode == null) {
                 return INSTANCE.getMessage("error.UnknownError")
             }

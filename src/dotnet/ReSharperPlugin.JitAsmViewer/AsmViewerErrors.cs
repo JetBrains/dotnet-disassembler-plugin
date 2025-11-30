@@ -43,4 +43,3 @@ public enum AsmViewerErrorCode
     UpdateCancelled,
     UnknownError
 }
-

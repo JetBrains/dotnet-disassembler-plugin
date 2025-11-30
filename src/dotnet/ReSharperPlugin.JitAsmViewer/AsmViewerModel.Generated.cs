@@ -90,7 +90,7 @@ namespace JetBrains.Rider.Model
     
     
     
-    protected override long SerializationHash => 4666260443237672831L;
+    protected override long SerializationHash => -4417874353733812450L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -136,7 +136,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:15</p>
+  /// <p>Generated from: AsmViewerModel.kt:48</p>
   /// </summary>
   public sealed class CaretPosition : IPrintable, IEquatable<CaretPosition>
   {
@@ -237,7 +237,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:40</p>
+  /// <p>Generated from: AsmViewerModel.kt:73</p>
   /// </summary>
   public sealed class CompilationResponse : IPrintable, IEquatable<CompilationResponse>
   {
@@ -332,7 +332,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:35</p>
+  /// <p>Generated from: AsmViewerModel.kt:68</p>
   /// </summary>
   public sealed class CompileRequest : IPrintable, IEquatable<CompileRequest>
   {
@@ -428,28 +428,54 @@ namespace JetBrains.Rider.Model
   /// <summary>
   /// <p>Generated from: AsmViewerModel.kt:10</p>
   /// </summary>
+  public enum ErrorCode {
+    SourceFileNotFound,
+    PsiSourceFileUnavailable,
+    UnsupportedLanguage,
+    InvalidCaretPosition,
+    PgoNotSupportedForAot,
+    RunModeNotSupportedForAot,
+    TieredJitNotSupportedForAot,
+    FlowgraphsNotSupportedForAot,
+    FlowgraphsForClassNotSupported,
+    UnsupportedTargetFramework,
+    CustomRuntimeRequiresNet7,
+    DisassemblyTargetNotFound,
+    CompilationFailed,
+    ProjectPathNotFound,
+    DotnetBuildFailed,
+    DotnetPublishFailed,
+    RuntimePackNotFound,
+    CoreClrCheckedNotFound,
+    ClrJitNotFound,
+    UpdateCancelled,
+    UnknownError
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: AsmViewerModel.kt:43</p>
+  /// </summary>
   public sealed class ErrorInfo : IPrintable, IEquatable<ErrorInfo>
   {
     //fields
     //public fields
-    [NotNull] public string Code {get; private set;}
+    public ErrorCode Code {get; private set;}
     [CanBeNull] public string Details {get; private set;}
     
     //private fields
     //primary constructor
     public ErrorInfo(
-      [NotNull] string code,
+      ErrorCode code,
       [CanBeNull] string details
     )
     {
-      if (code == null) throw new ArgumentNullException("code");
-      
       Code = code;
       Details = details;
     }
     //secondary constructor
     //deconstruct trait
-    public void Deconstruct([NotNull] out string code, [CanBeNull] out string details)
+    public void Deconstruct(out ErrorCode code, [CanBeNull] out string details)
     {
       code = Code;
       details = Details;
@@ -458,7 +484,7 @@ namespace JetBrains.Rider.Model
     
     public static CtxReadDelegate<ErrorInfo> Read = (ctx, reader) => 
     {
-      var code = reader.ReadString();
+      var code = (ErrorCode)reader.ReadInt();
       var details = ReadStringNullable(ctx, reader);
       var _result = new ErrorInfo(code, details);
       return _result;
@@ -467,7 +493,7 @@ namespace JetBrains.Rider.Model
     
     public static CtxWriteDelegate<ErrorInfo> Write = (ctx, writer, value) => 
     {
-      writer.Write(value.Code);
+      writer.Write((int)value.Code);
       WriteStringNullable(ctx, writer, value.Details);
     };
     public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
@@ -495,7 +521,7 @@ namespace JetBrains.Rider.Model
     {
       unchecked {
         var hash = 0;
-        hash = hash * 31 + Code.GetHashCode();
+        hash = hash * 31 + (int) Code;
         hash = hash * 31 + (Details != null ? Details.GetHashCode() : 0);
         return hash;
       }
@@ -521,7 +547,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:21</p>
+  /// <p>Generated from: AsmViewerModel.kt:54</p>
   /// </summary>
   public sealed class JitConfiguration : IPrintable, IEquatable<JitConfiguration>
   {

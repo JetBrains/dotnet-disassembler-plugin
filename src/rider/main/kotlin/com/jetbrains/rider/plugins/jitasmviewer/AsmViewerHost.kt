@@ -15,6 +15,7 @@ import com.intellij.openapi.rd.createNestedDisposable
 import com.jetbrains.rd.ide.model.AsmViewerModel
 import com.jetbrains.rd.ide.model.CaretPosition
 import com.jetbrains.rd.ide.model.CompileRequest
+import com.jetbrains.rd.ide.model.ErrorCode
 import com.jetbrains.rd.ide.model.asmViewerModel
 import com.jetbrains.rd.platform.util.idea.LifetimedService
 import com.jetbrains.rd.protocol.SolutionExtListener
@@ -125,6 +126,12 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
 
         model.compile.start(requestLifetime, request).result.advise(requestLifetime) { rdResult ->
             val response = rdResult.unwrap()
+
+            if (response.error?.code == ErrorCode.UpdateCancelled) {
+                logger.debug("Update cancelled, keeping previous result")
+                return@advise
+            }
+
             val status = when {
                 response.content != null -> AsmViewerStatus.Content
                 response.error != null -> AsmViewerStatus.Unavailable

@@ -7,8 +7,41 @@ import com.jetbrains.rider.model.nova.ide.SolutionModel
 @Suppress("unused")
 class AsmViewerModel : Ext(SolutionModel.Solution) {
 
+    private val ErrorCode = enum {
+        // PSI/Navigation errors
+        +"SourceFileNotFound"
+        +"PsiSourceFileUnavailable"
+        +"UnsupportedLanguage"
+        +"InvalidCaretPosition"
+
+        // Configuration errors
+        +"PgoNotSupportedForAot"
+        +"RunModeNotSupportedForAot"
+        +"TieredJitNotSupportedForAot"
+        +"FlowgraphsNotSupportedForAot"
+        +"FlowgraphsForClassNotSupported"
+        +"UnsupportedTargetFramework"
+        +"CustomRuntimeRequiresNet7"
+
+        // Compilation errors
+        +"DisassemblyTargetNotFound"
+        +"CompilationFailed"
+        +"ProjectPathNotFound"
+        +"DotnetBuildFailed"
+        +"DotnetPublishFailed"
+
+        // Runtime/Path errors
+        +"RuntimePackNotFound"
+        +"CoreClrCheckedNotFound"
+        +"ClrJitNotFound"
+
+        // Other errors
+        +"UpdateCancelled"
+        +"UnknownError"
+    }
+
     private val ErrorInfo = structdef {
-        field("code", string)
+        field("code", ErrorCode)
         field("details", string.nullable)
     }
 
