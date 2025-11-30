@@ -52,7 +52,7 @@ public class AsmViewerUpdateCoordinator(
             var configuration = JitDisasmConfigurationFactory.Create(request.Configuration);
             var filePath = caretPosition.FilePath;
             var methodId = target.Target;
-            var documentStamp = caretPosition.DocumentModificationStamp;
+            var fileStamp = caretPosition.FileStamp;
 
             var project = declaration.GetProject();
             var projectContext = project != null ? JitDisasmProjectContextFactory.Create(project) : null;
@@ -60,7 +60,7 @@ public class AsmViewerUpdateCoordinator(
             int myCacheVersion;
             lock (_cacheLock)
             {
-                if (_cache is { } entry && entry.StateEquals(filePath, methodId, documentStamp, configuration, projectContext))
+                if (_cache is { } entry && entry.StateEquals(filePath, methodId, fileStamp, configuration, projectContext))
                 {
                     Logger.Verbose("Cache hit, returning cached result (version: {0})", entry.Version);
                     return entry.Result;
@@ -91,7 +91,7 @@ public class AsmViewerUpdateCoordinator(
                         if (_cacheVersion != myCacheVersion)
                             return compilationResult;
 
-                        _cache = new CacheEntry(myCacheVersion, filePath, methodId, documentStamp, configuration, projectContext, compilationResult);
+                        _cache = new CacheEntry(myCacheVersion, filePath, fileStamp, methodId, configuration, projectContext, compilationResult);
                         Logger.Verbose("Cache updated (version: {0}), success: {1}", myCacheVersion, compilationResult.Succeed);
                     }
 
@@ -114,10 +114,10 @@ public class AsmViewerUpdateCoordinator(
         }
     }
     
-    private sealed record CacheEntry(int Version, string SourceFilePath, string MethodId, long DocumentStamp,
+    private sealed record CacheEntry(int Version, string FilePath, long FileStamp, string MethodId,
         JitDisasmConfiguration Configuration, JitDisasmProjectContext ProjectContext, Result<string, Error> Result)
     {
         public bool StateEquals(string filePath, string methodId, long stamp, JitDisasmConfiguration config, JitDisasmProjectContext projectContext) =>
-            SourceFilePath == filePath && MethodId == methodId && DocumentStamp == stamp && Configuration == config && ProjectContext == projectContext;
+            FilePath == filePath && MethodId == methodId && FileStamp == stamp && Configuration == config && ProjectContext == projectContext;
     }
 }

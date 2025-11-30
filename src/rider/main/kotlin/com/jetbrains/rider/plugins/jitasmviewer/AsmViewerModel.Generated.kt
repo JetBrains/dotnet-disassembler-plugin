@@ -42,7 +42,7 @@ class AsmViewerModel private constructor(
         
         
         
-        const val serializationHash = -4417874353733812450L
+        const val serializationHash = -9119311762756942617L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -111,8 +111,8 @@ val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::Asm
  */
 data class CaretPosition (
     val filePath: String,
-    val offset: Int,
-    val documentModificationStamp: Long
+    val fileStamp: Long,
+    val offset: Int
 ) : IPrintable {
     //companion
     
@@ -123,15 +123,15 @@ data class CaretPosition (
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CaretPosition  {
             val filePath = buffer.readString()
+            val fileStamp = buffer.readLong()
             val offset = buffer.readInt()
-            val documentModificationStamp = buffer.readLong()
-            return CaretPosition(filePath, offset, documentModificationStamp)
+            return CaretPosition(filePath, fileStamp, offset)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CaretPosition)  {
             buffer.writeString(value.filePath)
+            buffer.writeLong(value.fileStamp)
             buffer.writeInt(value.offset)
-            buffer.writeLong(value.documentModificationStamp)
         }
         
         
@@ -148,8 +148,8 @@ data class CaretPosition (
         other as CaretPosition
         
         if (filePath != other.filePath) return false
+        if (fileStamp != other.fileStamp) return false
         if (offset != other.offset) return false
-        if (documentModificationStamp != other.documentModificationStamp) return false
         
         return true
     }
@@ -157,8 +157,8 @@ data class CaretPosition (
     override fun hashCode(): Int  {
         var __r = 0
         __r = __r*31 + filePath.hashCode()
+        __r = __r*31 + fileStamp.hashCode()
         __r = __r*31 + offset.hashCode()
-        __r = __r*31 + documentModificationStamp.hashCode()
         return __r
     }
     //pretty print
@@ -166,8 +166,8 @@ data class CaretPosition (
         printer.println("CaretPosition (")
         printer.indent {
             print("filePath = "); filePath.print(printer); println()
+            print("fileStamp = "); fileStamp.print(printer); println()
             print("offset = "); offset.print(printer); println()
-            print("documentModificationStamp = "); documentModificationStamp.print(printer); println()
         }
         printer.print(")")
     }

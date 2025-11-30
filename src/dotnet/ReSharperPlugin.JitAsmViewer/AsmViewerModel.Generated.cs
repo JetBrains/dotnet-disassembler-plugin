@@ -90,7 +90,7 @@ namespace JetBrains.Rider.Model
     
     
     
-    protected override long SerializationHash => -4417874353733812450L;
+    protected override long SerializationHash => -9119311762756942617L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -143,47 +143,47 @@ namespace JetBrains.Rider.Model
     //fields
     //public fields
     [NotNull] public string FilePath {get; private set;}
+    public long FileStamp {get; private set;}
     public int Offset {get; private set;}
-    public long DocumentModificationStamp {get; private set;}
     
     //private fields
     //primary constructor
     public CaretPosition(
       [NotNull] string filePath,
-      int offset,
-      long documentModificationStamp
+      long fileStamp,
+      int offset
     )
     {
       if (filePath == null) throw new ArgumentNullException("filePath");
       
       FilePath = filePath;
+      FileStamp = fileStamp;
       Offset = offset;
-      DocumentModificationStamp = documentModificationStamp;
     }
     //secondary constructor
     //deconstruct trait
-    public void Deconstruct([NotNull] out string filePath, out int offset, out long documentModificationStamp)
+    public void Deconstruct([NotNull] out string filePath, out long fileStamp, out int offset)
     {
       filePath = FilePath;
+      fileStamp = FileStamp;
       offset = Offset;
-      documentModificationStamp = DocumentModificationStamp;
     }
     //statics
     
     public static CtxReadDelegate<CaretPosition> Read = (ctx, reader) => 
     {
       var filePath = reader.ReadString();
+      var fileStamp = reader.ReadLong();
       var offset = reader.ReadInt();
-      var documentModificationStamp = reader.ReadLong();
-      var _result = new CaretPosition(filePath, offset, documentModificationStamp);
+      var _result = new CaretPosition(filePath, fileStamp, offset);
       return _result;
     };
     
     public static CtxWriteDelegate<CaretPosition> Write = (ctx, writer, value) => 
     {
       writer.Write(value.FilePath);
+      writer.Write(value.FileStamp);
       writer.Write(value.Offset);
-      writer.Write(value.DocumentModificationStamp);
     };
     
     //constants
@@ -202,7 +202,7 @@ namespace JetBrains.Rider.Model
     {
       if (ReferenceEquals(null, other)) return false;
       if (ReferenceEquals(this, other)) return true;
-      return FilePath == other.FilePath && Offset == other.Offset && DocumentModificationStamp == other.DocumentModificationStamp;
+      return FilePath == other.FilePath && FileStamp == other.FileStamp && Offset == other.Offset;
     }
     //hash code trait
     public override int GetHashCode()
@@ -210,8 +210,8 @@ namespace JetBrains.Rider.Model
       unchecked {
         var hash = 0;
         hash = hash * 31 + FilePath.GetHashCode();
+        hash = hash * 31 + FileStamp.GetHashCode();
         hash = hash * 31 + Offset.GetHashCode();
-        hash = hash * 31 + DocumentModificationStamp.GetHashCode();
         return hash;
       }
     }
@@ -221,8 +221,8 @@ namespace JetBrains.Rider.Model
       printer.Println("CaretPosition (");
       using (printer.IndentCookie()) {
         printer.Print("filePath = "); FilePath.PrintEx(printer); printer.Println();
+        printer.Print("fileStamp = "); FileStamp.PrintEx(printer); printer.Println();
         printer.Print("offset = "); Offset.PrintEx(printer); printer.Println();
-        printer.Print("documentModificationStamp = "); DocumentModificationStamp.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }

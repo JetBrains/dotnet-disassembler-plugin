@@ -47,8 +47,8 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
 
     private val CaretPosition = structdef {
         field("filePath", string)
+        field("fileStamp", long)
         field("offset", int)
-        field("documentModificationStamp", long)
     }
 
     private val JitConfiguration = structdef {

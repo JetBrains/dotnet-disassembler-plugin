@@ -7,16 +7,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createNestedDisposable
-import com.jetbrains.rd.ide.model.AsmViewerModel
-import com.jetbrains.rd.ide.model.CaretPosition
-import com.jetbrains.rd.ide.model.CompileRequest
-import com.jetbrains.rd.ide.model.ErrorCode
-import com.jetbrains.rd.ide.model.asmViewerModel
+import com.jetbrains.rd.ide.model.*
 import com.jetbrains.rd.platform.util.idea.LifetimedService
 import com.jetbrains.rd.protocol.SolutionExtListener
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -55,6 +52,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
                 setupEditorTracking(visibleLifetime)
                 setupConfigurationTracking(visibleLifetime)
                 setupTargetFrameworkTracking(visibleLifetime)
+                setupDocumentSaveTracking(visibleLifetime)
                 setupLoadingTracking(visibleLifetime)
 
                 trackCaretInCurrentEditor(caretTrackingLifetimes.next())
@@ -110,6 +108,22 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
         }
     }
 
+    private fun setupDocumentSaveTracking(lifetime: Lifetime) {
+        val connection = project.messageBus.connect(lifetime.createNestedDisposable())
+        connection.subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
+            override fun afterDocumentSaved(document: com.intellij.openapi.editor.Document) {
+                val savedFile = FileDocumentManager.getInstance().getFile(document) ?: return
+                val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
+                val currentFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return
+
+                if (savedFile == currentFile) {
+                    logger.debug("Document saved, requesting recompilation")
+                    requestCompilation()
+                }
+            }
+        })
+    }
+
     private fun setupLoadingTracking(lifetime: Lifetime) {
         model.isLoading.advise(lifetime) { isLoading ->
             if (isLoading) {
@@ -131,7 +145,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
             return
         }
 
-        val caretPosition = CaretPosition(file.path, editor.caretModel.offset, editor.document.modificationStamp)
+        val caretPosition = CaretPosition(file.path, file.modificationStamp, editor.caretModel.offset)
         val request = CompileRequest(caretPosition, settings.toJitConfiguration())
         val requestLifetime = compilationLifetimes.next()
 
