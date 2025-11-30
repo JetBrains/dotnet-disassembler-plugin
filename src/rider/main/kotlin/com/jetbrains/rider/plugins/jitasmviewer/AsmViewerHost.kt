@@ -34,6 +34,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
 
     private val model: AsmViewerModel = project.solution.asmViewerModel
     private val state: AsmViewerState by lazy { AsmViewerState.getInstance(project) }
+    private val settings: AsmViewerSettings by lazy { AsmViewerSettings.getInstance(project) }
 
     private val visibilityLifetimes = SequentialLifetimes(serviceLifetime)
     private val caretTrackingLifetimes = SequentialLifetimes(serviceLifetime)
@@ -91,10 +92,10 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
     }
 
     private fun setupConfigurationTracking(lifetime: Lifetime) {
-        state.configuration.advise(lifetime) {
+        settings.addChangeListener({
             logger.debug("Configuration changed, requesting recompilation")
             requestCompilation()
-        }
+        }, lifetime.createNestedDisposable())
     }
 
     private fun setupLoadingTracking(lifetime: Lifetime) {
@@ -119,7 +120,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
         }
 
         val caretPosition = CaretPosition(file.path, editor.caretModel.offset, editor.document.modificationStamp)
-        val request = CompileRequest(caretPosition, state.configuration.value)
+        val request = CompileRequest(caretPosition, settings.toJitConfiguration())
         val requestLifetime = compilationLifetimes.next()
 
         model.compile.start(requestLifetime, request).result.advise(requestLifetime) { rdResult ->

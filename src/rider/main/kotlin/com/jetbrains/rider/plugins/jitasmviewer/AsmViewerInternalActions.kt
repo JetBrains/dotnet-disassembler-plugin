@@ -35,11 +35,12 @@ class DiffableModeAction(private val project: Project) : ToggleAction(
     AllIcons.Actions.Diff
 ) {
     override fun isSelected(e: AnActionEvent): Boolean {
-        return AsmViewerState.getInstance(project).configuration.value.diffable
+        return AsmViewerSettings.getInstance(project).state.jit.diffable
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-        AsmViewerState.getInstance(project).updateConfiguration { it.copy(diffable = state) }
+        val settings = AsmViewerSettings.getInstance(project)
+        settings.updateFrom(settings.toJitConfiguration().copy(diffable = state))
         AsmViewerStatisticsCollector.logDiffableModeToggled(project, state)
     }
 }

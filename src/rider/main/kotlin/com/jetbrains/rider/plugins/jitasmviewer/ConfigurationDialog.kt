@@ -19,8 +19,8 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         private val logger = Logger.getInstance(ConfigurationDialog::class.java)
     }
 
-    private val state = AsmViewerState.getInstance(project)
-    private val currentConfig = state.configuration.value
+    private val settings = AsmViewerSettings.getInstance(project)
+    private val currentConfig = settings.toJitConfiguration()
     private val generalPanel = GeneralOptionsPanel(currentConfig)
     private val jitPanel = JitOptionsPanel(currentConfig)
     private val buildPanel = BuildOptionsPanel(currentConfig)
@@ -58,7 +58,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     override fun doOKAction() {
         logger.debug("Applying configuration changes")
 
-        state.updateConfiguration {
+        settings.updateFrom(
             JitConfiguration(
                 showAsmComments = generalPanel.showAsmComments,
                 diffable = generalPanel.diffable,
@@ -72,7 +72,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 dontGuessTFM = buildPanel.dontGuessTFM,
                 selectedCustomJit = jitPanel.selectedCustomJit
             )
-        }
+        )
 
         super.doOKAction()
     }
