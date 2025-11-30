@@ -307,6 +307,7 @@ public class JitCodegenProviderTests
     private JitDisasmProjectContext CreateProjectContext([CanBeNull] JitDisasmTargetFramework tfm = null)
     {
         return new JitDisasmProjectContext(
+            Sdk: "Microsoft.NET.Sdk",
             Tfm: tfm ?? new JitDisasmTargetFramework(
                 UniqueString: "net9.0",
                 new Version(9, 0, 0, 0),

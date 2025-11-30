@@ -22,6 +22,7 @@ import com.jetbrains.rd.protocol.SolutionExtListener
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.reactive.flowInto
+import com.jetbrains.rider.model.projectModelTasks
 import com.jetbrains.rider.projectView.solution
 
 @Service(Service.Level.PROJECT)
@@ -53,6 +54,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
                 val visibleLifetime = visibilityLifetimes.next()
                 setupEditorTracking(visibleLifetime)
                 setupConfigurationTracking(visibleLifetime)
+                setupTargetFrameworkTracking(visibleLifetime)
                 setupLoadingTracking(visibleLifetime)
 
                 trackCaretInCurrentEditor(caretTrackingLifetimes.next())
@@ -97,6 +99,15 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
             logger.debug("Configuration changed, requesting recompilation")
             requestCompilation()
         }, lifetime.createNestedDisposable())
+    }
+
+    private fun setupTargetFrameworkTracking(lifetime: Lifetime) {
+        project.solution.projectModelTasks.targetFrameworks.view(lifetime) { projectLifetime, targetFramework ->
+            targetFramework.value.currentTargetFrameworkId.advise(projectLifetime) {
+                logger.debug("Target framework changed to ${it.framework.presentation}, requesting recompilation")
+                requestCompilation()
+            }
+        }
     }
 
     private fun setupLoadingTracking(lifetime: Lifetime) {

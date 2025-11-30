@@ -18,25 +18,20 @@ public class AsmCompilationService(AsmViewerUsageCollector usageCollector)
     public async Task<Result<string, Error>> CompileAsync(
         IDeclaration declaration,
         JitDisasmConfiguration configuration,
+        JitDisasmProjectContext projectContext,
         CancellationToken cancellationToken)
     {
-        var currentElement = declaration.DeclaredElement;
-
         var validationResult = configuration.Validate();
         if (!validationResult.Succeed)
             return Result.FailWithValue(validationResult.FailValue);
 
-        var project = declaration.GetProject();
-        if (project != null)
-        {
-            usageCollector.LogProjectInfo(project);
-        }
+        usageCollector.LogConfigurationSaved(configuration);
+        usageCollector.LogProjectInfo(projectContext);
 
-        var target = JitDisasmTargetUtils.GetTarget(currentElement);
+        var target = JitDisasmTargetUtils.GetTarget(declaration.DeclaredElement);
         if (target == null)
             return Result.FailWithValue(new Error(AsmViewerErrorCode.DisassemblyTargetNotFound));
 
-        var projectContext = JitDisasmProjectContextFactory.Create(project);
         var provider = new JitCodegenProvider(JitCodegenProviderLogger);
         var result = await provider.GetJitCodegenAsync(target, projectContext, configuration, cancellationToken);
 

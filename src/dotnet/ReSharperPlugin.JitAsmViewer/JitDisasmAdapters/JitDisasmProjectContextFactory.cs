@@ -9,6 +9,7 @@ public static class JitDisasmProjectContextFactory
 {
     public static JitDisasmProjectContext Create(IProject project)
     {
+        var sdk = project.ProjectProperties.DotNetCorePlatform?.Sdk;
         var tfm = project.TargetFrameworkIds.TakeMax(x => x.Version.Major, min: 0);
         
         var solution = project.GetSolution();
@@ -18,6 +19,7 @@ public static class JitDisasmProjectContextFactory
             project.GetProperty(new Key("AssemblyName")) as string);
 
         return new JitDisasmProjectContext(
+            Sdk: sdk,
             Tfm: JitDisasmTargetFrameworkFactory.Create(tfm),
             OutputPath: outputPath ?? "bin",
             ProjectFilePath: project.ProjectFileLocation.FullPath,

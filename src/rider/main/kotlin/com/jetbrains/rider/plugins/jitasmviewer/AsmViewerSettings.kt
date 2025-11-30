@@ -7,8 +7,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.xmlb.annotations.Tag
 import com.jetbrains.rd.ide.model.JitConfiguration
 
-@Tag("jit")
-class JitState : BaseState() {
+@Tag("jitConfiguration")
+class JitConfigurationState : BaseState() {
     var showAsmComments by property(true)
     var diffable by property(false)
     var useTieredJit by property(false)
@@ -30,7 +30,7 @@ class JitState : BaseState() {
 class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State>(State()) {
 
     class State : BaseState() {
-        var jit by property(JitState())
+        var jit by property(JitConfigurationState())
     }
 
     private val changeListeners = mutableListOf<() -> Unit>()

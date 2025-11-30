@@ -95,19 +95,13 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
         _contextActionInvoked.Log();
     }
 
-    public void LogProjectInfo(IProject project)
+    public void LogProjectInfo(JitDisasmProjectContext projectContext)
     {
-        if (project == null)
-            return;
-
         try
         {
-            var sdkType = ExtractSdkType(project);
-            var targetFramework = ExtractTargetFramework(project);
-
             _projectInfoCollected.Log(
-                _sdkTypeField.With(sdkType),
-                _targetFrameworkField.With(targetFramework)
+                _sdkTypeField.With(projectContext.Sdk),
+                _targetFrameworkField.With(projectContext.Tfm.UniqueString)
             );
         }
         catch (Exception ex)
@@ -163,59 +157,6 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
         {
             Logger.LogExceptionSilently(ex);
             // Ignore errors during logging
-        }
-    }
-
-    private static string ExtractSdkType(IProject project)
-    {
-        try
-        {
-            var sdk = project.ProjectProperties?.DotNetCorePlatform?.Sdk;
-
-            if (!string.IsNullOrEmpty(sdk))
-            {
-                return sdk;
-            }
-
-            var configs = project.ProjectProperties?.ActiveConfigurations?.Configurations;
-            if (configs != null && Enumerable.Any(configs))
-            {
-                var tfm = configs.First().TargetFrameworkId?.PresentableString;
-                if (tfm != null && !tfm.StartsWith("net", StringComparison.OrdinalIgnoreCase))
-                {
-                    return "Legacy .NET Framework";
-                }
-            }
-
-            return "unknown";
-        }
-        catch (Exception ex)
-        {
-            Logger.LogExceptionSilently(ex);
-            return "unknown";
-        }
-    }
-
-    private static string ExtractTargetFramework(IProject project)
-    {
-        try
-        {
-            var configs = project.ProjectProperties?.ActiveConfigurations?.Configurations;
-            if (configs != null && Enumerable.Any(configs))
-            {
-                var tfm = configs.First().TargetFrameworkId?.PresentableString;
-                if (!string.IsNullOrEmpty(tfm))
-                {
-                    return tfm;
-                }
-            }
-
-            return "unknown";
-        }
-        catch (Exception ex)
-        {
-            Logger.LogExceptionSilently(ex);
-            return "unknown";
         }
     }
 }

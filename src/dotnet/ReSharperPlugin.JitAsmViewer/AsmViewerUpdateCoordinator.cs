@@ -7,6 +7,7 @@ using JetBrains.Util;
 using JetBrains.Lifetimes;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.Protocol;
+using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.Rider.Model;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
@@ -53,10 +54,13 @@ public class AsmViewerUpdateCoordinator(
             var methodId = target.Target;
             var documentStamp = caretPosition.DocumentModificationStamp;
 
+            var project = declaration.GetProject();
+            var projectContext = project != null ? JitDisasmProjectContextFactory.Create(project) : null;
+
             int myCacheVersion;
             lock (_cacheLock)
             {
-                if (_cache is { } entry && entry.StateEquals(filePath, methodId, documentStamp, configuration))
+                if (_cache is { } entry && entry.StateEquals(filePath, methodId, documentStamp, configuration, projectContext))
                 {
                     Logger.Verbose("Cache hit, returning cached result (version: {0})", entry.Version);
                     return entry.Result;
@@ -73,6 +77,7 @@ public class AsmViewerUpdateCoordinator(
                     var compilationResult = await compilationService.CompileAsync(
                         declaration,
                         configuration,
+                        projectContext,
                         lifetime);
 
                     if (lifetime.IsNotAlive)
@@ -83,10 +88,10 @@ public class AsmViewerUpdateCoordinator(
 
                     lock (_cacheLock)
                     {
-                        if (_cacheVersion != myCacheVersion) 
+                        if (_cacheVersion != myCacheVersion)
                             return compilationResult;
-                        
-                        _cache = new CacheEntry(myCacheVersion, filePath, methodId, documentStamp, configuration, compilationResult);
+
+                        _cache = new CacheEntry(myCacheVersion, filePath, methodId, documentStamp, configuration, projectContext, compilationResult);
                         Logger.Verbose("Cache updated (version: {0}), success: {1}", myCacheVersion, compilationResult.Succeed);
                     }
 
@@ -110,9 +115,9 @@ public class AsmViewerUpdateCoordinator(
     }
     
     private sealed record CacheEntry(int Version, string SourceFilePath, string MethodId, long DocumentStamp,
-        JitDisasmConfiguration Configuration, Result<string, Error> Result)
+        JitDisasmConfiguration Configuration, JitDisasmProjectContext ProjectContext, Result<string, Error> Result)
     {
-        public bool StateEquals(string filePath, string methodId, long stamp, JitDisasmConfiguration config) =>
-            SourceFilePath == filePath && MethodId == methodId && DocumentStamp == stamp && Configuration == config;
+        public bool StateEquals(string filePath, string methodId, long stamp, JitDisasmConfiguration config, JitDisasmProjectContext projectContext) =>
+            SourceFilePath == filePath && MethodId == methodId && DocumentStamp == stamp && Configuration == config && ProjectContext == projectContext;
     }
 }
