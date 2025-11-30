@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using JetBrains.Application.Parts;
 using JetBrains.Core;
 using JetBrains.Util;
@@ -10,6 +9,7 @@ using JetBrains.ReSharper.Feature.Services.Protocol;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Resources.Shell;
 using JetBrains.Rider.Model;
+using Microsoft.Extensions.Caching.Memory;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
 using ReSharperPlugin.JitAsmViewer.JitDisasmAdapters;
 using Result = JetBrains.Core.Result;
@@ -23,13 +23,16 @@ public class AsmViewerUpdateCoordinator(
     AsmMethodLocator methodLocator,
     AsmCompilationService compilationService)
 {
+    private const int CacheSize = 50;
+    private static readonly TimeSpan SlidingExpiration = TimeSpan.FromMinutes(30);
+
     private static readonly ILogger Logger = GetLogger(typeof(AsmViewerUpdateCoordinator));
 
     private readonly AsmViewerModel _model = solution.GetProtocolSolution().GetAsmViewerModel();
-    private readonly object _cacheLock = new();
 
+    private readonly Lazy<MemoryCache> _cache = new(() => new MemoryCache(new MemoryCacheOptions { SizeLimit = CacheSize }));
+    private readonly object _cacheLock = new();
     private int _cacheVersion;
-    [CanBeNull] private CacheEntry _cache;
 
     public async Task<Result<string, Error>> CompileAsync(CompileRequest request, Lifetime lifetime)
     {
@@ -57,16 +60,19 @@ public class AsmViewerUpdateCoordinator(
             var project = declaration.GetProject();
             var projectContext = project != null ? JitDisasmProjectContextFactory.Create(project) : null;
 
+            var cacheKey = new CacheKey(filePath, fileStamp, methodId, configuration, projectContext);
+
             int myCacheVersion;
             lock (_cacheLock)
             {
-                if (_cache is { } entry && entry.StateEquals(filePath, methodId, fileStamp, configuration, projectContext))
+                if (_cache.Value.TryGetValue(cacheKey, out CacheEntry entry))
                 {
-                    Logger.Verbose("Cache hit, returning cached result (version: {0})", entry.Version);
+                    Logger.Info("Cache hit for method: {0}, returning cached result (version: {1})", methodId, entry.Version);
                     return entry.Result;
                 }
 
                 myCacheVersion = ++_cacheVersion;
+                Logger.Info("Cache miss for method: {0}, starting compilation (version: {1})", methodId, myCacheVersion);
             }
 
             return await lifetime.StartMainWriteAsync(async () =>
@@ -91,7 +97,11 @@ public class AsmViewerUpdateCoordinator(
                         if (_cacheVersion != myCacheVersion)
                             return compilationResult;
 
-                        _cache = new CacheEntry(myCacheVersion, filePath, fileStamp, methodId, configuration, projectContext, compilationResult);
+                        var cacheEntryOptions = new MemoryCacheEntryOptions()
+                            .SetSize(1)
+                            .SetSlidingExpiration(SlidingExpiration);
+
+                        _cache.Value.Set(cacheKey, new CacheEntry(myCacheVersion, compilationResult), cacheEntryOptions);
                         Logger.Verbose("Cache updated (version: {0}), success: {1}", myCacheVersion, compilationResult.Succeed);
                     }
 
@@ -114,10 +124,8 @@ public class AsmViewerUpdateCoordinator(
         }
     }
     
-    private sealed record CacheEntry(int Version, string FilePath, long FileStamp, string MethodId,
-        JitDisasmConfiguration Configuration, JitDisasmProjectContext ProjectContext, Result<string, Error> Result)
-    {
-        public bool StateEquals(string filePath, string methodId, long stamp, JitDisasmConfiguration config, JitDisasmProjectContext projectContext) =>
-            FilePath == filePath && MethodId == methodId && FileStamp == stamp && Configuration == config && ProjectContext == projectContext;
-    }
+    private sealed record CacheKey( string FilePath, long FileStamp, string MethodId,
+        JitDisasmConfiguration Configuration, JitDisasmProjectContext ProjectContext);
+
+    private sealed record CacheEntry(int Version, Result<string, Error> Result);
 }

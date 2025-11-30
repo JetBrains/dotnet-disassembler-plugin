@@ -6,10 +6,12 @@
     <RootNamespace>$(AssemblyName)</RootNamespace>
     <IsPackable>false</IsPackable>
     <DefineConstants>$(DefineConstants);RIDER</DefineConstants>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="JetBrains.Rider.SDK" Version="$(SdkVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.3" />
     <EmbeddedResource Include="Resources\JitDisasmLoader.cs_template" />
     <EmbeddedResource Include="Resources\JitDisasmLoader.csproj_template" />
   </ItemGroup>

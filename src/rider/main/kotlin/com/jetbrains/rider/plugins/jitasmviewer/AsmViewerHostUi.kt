@@ -45,6 +45,12 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
             }
         }
 
+        state.lastResponse.advise(serviceLifetime) { response ->
+            if (::contentPanel.isInitialized && response?.content != null && state.status.value == AsmViewerStatus.Content) {
+                showContent()
+            }
+        }
+
         state.contentSnapshot.advise(serviceLifetime) {
             if (::contentPanel.isInitialized && state.status.value == AsmViewerStatus.Content) {
                 showContent()
