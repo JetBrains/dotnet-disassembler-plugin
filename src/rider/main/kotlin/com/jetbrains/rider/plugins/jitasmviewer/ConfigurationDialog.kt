@@ -27,22 +27,22 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
 
     init {
         logger.debug("Opening configuration dialog")
-        title = AsmViewerConfigurationBundle.message("dialog.title")
+        title = AsmViewerBundle.message("dialog.title")
         init()
     }
 
     override fun createCenterPanel(): JComponent {
         val formBuilder = FormBuilder.createFormBuilder()
 
-        formBuilder.addComponent(createSectionHeader(AsmViewerConfigurationBundle.message("section.general")))
+        formBuilder.addComponent(createSectionHeader(AsmViewerBundle.message("section.general")))
         generalPanel.addToForm(formBuilder)
         formBuilder.addSeparator()
 
-        formBuilder.addComponent(createSectionHeader(AsmViewerConfigurationBundle.message("section.jit")))
+        formBuilder.addComponent(createSectionHeader(AsmViewerBundle.message("section.jit")))
         jitPanel.addToForm(formBuilder)
         formBuilder.addSeparator()
 
-        formBuilder.addComponent(createSectionHeader(AsmViewerConfigurationBundle.message("section.build")))
+        formBuilder.addComponent(createSectionHeader(AsmViewerBundle.message("section.build")))
         buildPanel.addToForm(formBuilder)
 
         val scrollPane = JBScrollPane(formBuilder.panel).apply {
@@ -88,8 +88,8 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     }
 
     private class GeneralOptionsPanel(config: JitConfiguration) {
-        private val showAsmCommentsCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("general.show.asm.comments"), config.showAsmComments)
-        private val diffableCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("general.diffable.output"), config.diffable)
+        private val showAsmCommentsCheckbox = JBCheckBox(AsmViewerBundle.message("general.show.asm.comments"), config.showAsmComments)
+        private val diffableCheckbox = JBCheckBox(AsmViewerBundle.message("general.diffable.output"), config.diffable)
 
         val showAsmComments: Boolean get() = showAsmCommentsCheckbox.isSelected
         val diffable: Boolean get() = diffableCheckbox.isSelected
@@ -102,9 +102,9 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     }
 
     private class JitOptionsPanel(config: JitConfiguration) {
-        private val useTieredJitCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.tiered"), config.useTieredJit)
-        private val usePGOCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.pgo"), config.usePGO)
-        private val useUnloadableContextCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("jit.use.unloadable.context"), config.useUnloadableContext)
+        private val useTieredJitCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.tiered"), config.useTieredJit)
+        private val usePGOCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.pgo"), config.usePGO)
+        private val useUnloadableContextCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.unloadable.context"), config.useUnloadableContext)
 
         private val jitCompilerCombo = JComboBox(arrayOf("clrjit.dll", "crossgen2.dll (R2R)", "ilc (NativeAOT)")).apply {
             selectedItem = config.selectedCustomJit ?: "clrjit.dll"
@@ -129,17 +129,17 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 .addComponent(usePGOCheckbox)
                 .addComponent(useUnloadableContextCheckbox)
                 .addVerticalGap(10)
-                .addLabeledComponent(AsmViewerConfigurationBundle.message("jit.compiler.label"), jitCompilerCombo)
+                .addLabeledComponent(AsmViewerBundle.message("jit.compiler.label"), jitCompilerCombo)
         }
     }
 
     private class BuildOptionsPanel(config: JitConfiguration) {
-        private val useBuildRadio = JRadioButton(AsmViewerConfigurationBundle.message("build.use.build"), true)
-        private val usePublishRadio = JRadioButton(AsmViewerConfigurationBundle.message("build.use.publish"), config.useDotnetPublishForReload)
-        private val noRestoreCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("build.no.restore"), config.useNoRestoreFlag)
+        private val useBuildRadio = JRadioButton(AsmViewerBundle.message("build.use.build"), true)
+        private val usePublishRadio = JRadioButton(AsmViewerBundle.message("build.use.publish"), config.useDotnetPublishForReload)
+        private val noRestoreCheckbox = JBCheckBox(AsmViewerBundle.message("build.no.restore"), config.useNoRestoreFlag)
 
-        private val runAppModeCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("build.run.app.mode"), config.runAppMode)
-        private val dontGuessTFMCheckbox = JBCheckBox(AsmViewerConfigurationBundle.message("build.dont.guess.tfm"), config.dontGuessTFM)
+        private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("build.run.app.mode"), config.runAppMode)
+        private val dontGuessTFMCheckbox = JBCheckBox(AsmViewerBundle.message("build.dont.guess.tfm"), config.dontGuessTFM)
 
         val useDotnetBuildForReload: Boolean get() = useBuildRadio.isSelected
         val useDotnetPublishForReload: Boolean get() = usePublishRadio.isSelected
