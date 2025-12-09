@@ -31,6 +31,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         +"DotnetPublishFailed"
 
         // Runtime/Path errors
+        +"DotNetCliNotFound"
         +"RuntimePackNotFound"
         +"CoreClrCheckedNotFound"
         +"ClrJitNotFound"

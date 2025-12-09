@@ -10,14 +10,18 @@ namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 
 public class JitCodegenProvider(ILogger logger)
 {
-    public async Task<Result<JitCodeGenResult, Error>> GetJitCodegenAsync(DisasmTarget target, JitDisasmProjectContext projectContext, 
+    public async Task<Result<JitCodeGenResult, Error>> GetJitCodegenAsync(DisasmTarget target, JitDisasmProjectContext projectContext,
         JitDisasmConfiguration configuration, CancellationToken cancellationToken)
     {
         logger.LogInformation("GetJitCodegen called - Target: {0}.{1}, Arch: {2}", target.ClassName, target.MethodName, configuration.Arch);
 
-        var validationResult = configuration.Validate();
-        if (!validationResult.Succeed)
-            return Result.FailWithValue(validationResult.FailValue);
+        var configValidationResult = configuration.Validate();
+        if (!configValidationResult.Succeed)
+            return Result.FailWithValue(configValidationResult.FailValue);
+
+        var contextValidationResult = projectContext.Validate();
+        if (!contextValidationResult.Succeed)
+            return Result.FailWithValue(contextValidationResult.FailValue);
 
         cancellationToken.ThrowIfCancellationRequested();
         var tfm = configuration.OverridenTfm ?? projectContext.Tfm;
@@ -41,16 +45,17 @@ public class JitCodegenProvider(ILogger logger)
             clrCheckedFilesDir = result.Value;
         }
 
-        var outputDir = projectContext.OutputPath;
-        var resultOutDir = Path.Combine(outputDir,
+        var resultOutDir = Path.Combine(projectContext.OutputPath!,
             "JITDISASM" + (configuration.UseDotnetPublishForReload ? "_published" : ""));
-        var projectFilePath = projectContext.ProjectFilePath;
-        var projectDirPath = projectContext.ProjectDirectory;
+
+        var dotnetCliExePath = projectContext.DotNetCliExePath!;
+        var projectFilePath = projectContext.ProjectFilePath!;
+        var projectDirPath = projectContext.ProjectDirectory!;
 
         if (configuration.IsNonCustomDotnetAotMode())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, cancellationToken);
+            return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, dotnetCliExePath, cancellationToken);
         }
 
         string tfmPart = configuration.DontGuessTfm && configuration.OverridenTfm == null
@@ -75,7 +80,7 @@ public class JitCodegenProvider(ILogger logger)
             string dotnetPublishArgs =
                 $"publish {tfmPart} -r win-{configuration.Arch} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
-            publishResult = await ProcessUtils.RunProcessAsync("dotnet", dotnetPublishArgs, null, projectDirPath,
+            publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null, projectDirPath,
                 LogProcessOutput, cancellationToken);
         }
         else
@@ -108,7 +113,7 @@ public class JitCodegenProvider(ILogger logger)
                 fasterBuildEnvVars["DOTNET_MULTILEVEL_LOOKUP"] = "0";
             }
 
-            publishResult = await ProcessUtils.RunProcessAsync("dotnet", dotnetBuildArgs, fasterBuildEnvVars,
+            publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetBuildArgs, fasterBuildEnvVars,
                 projectDirPath, LogProcessOutput, cancellationToken);
         }
 
@@ -159,11 +164,11 @@ public class JitCodegenProvider(ILogger logger)
             }
         }
         cancellationToken.ThrowIfCancellationRequested();
-        return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, cancellationToken);
+        return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, dotnetCliExePath, cancellationToken);
     }
 
     private async Task<Result<JitCodeGenResult, Error>> GetJitCodegenInternalAsync(DisasmTarget target, JitDisasmTargetFramework tfm,
-        JitDisasmConfiguration configuration, JitDisasmProjectContext projectContext, string destFolder,
+        JitDisasmConfiguration configuration, JitDisasmProjectContext projectContext, string destFolder, string dotnetCliExePath,
         CancellationToken cancellationToken)
     {
         try
@@ -188,10 +193,7 @@ public class JitCodegenProvider(ILogger logger)
             if (!configuration.RunAppMode && !configuration.CrossgenIsSelected && !configuration.NativeAotIsSelected)
             {
                 var addinVersion = new Version();
-                await LoaderAppManager.InitLoaderAndCopyToAsync(tfm.UniqueString, dstFolder, log =>
-                {
-                    /*TODO: update UI*/
-                }, addinVersion, cancellationToken);
+                await LoaderAppManager.InitLoaderAndCopyToAsync(dotnetCliExePath, tfm.UniqueString, dstFolder, _ => { }, addinVersion, cancellationToken);
             }
 
             if (configuration.JitDumpInsteadOfDisasm)
@@ -252,7 +254,7 @@ public class JitCodegenProvider(ILogger logger)
                 command = $"\"{fileName}.dll\"";
             }
 
-            string executable = "dotnet";
+            string executable = dotnetCliExePath;
 
             if (configuration.CrossgenIsSelected && configuration.UseCustomRuntime)
             {
@@ -408,7 +410,7 @@ public class JitCodegenProvider(ILogger logger)
                     $" /p:PublishAot=true /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\"" +
                     $" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
-                var publishResult = await ProcessUtils.RunProcessAsync("dotnet", dotnetPublishArgs, null,
+                var publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null,
                     projectContext.ProjectDirectory, LogProcessOutput, cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();

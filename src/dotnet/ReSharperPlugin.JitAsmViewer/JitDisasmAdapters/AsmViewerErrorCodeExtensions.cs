@@ -33,6 +33,7 @@ public static class AsmViewerErrorCodeExtensions
         AsmViewerErrorCode.DotnetPublishFailed => ErrorCode.DotnetPublishFailed,
 
         // Runtime/Path errors
+        AsmViewerErrorCode.DotNetCliNotFound => ErrorCode.DotNetCliNotFound,
         AsmViewerErrorCode.RuntimePackNotFound => ErrorCode.RuntimePackNotFound,
         AsmViewerErrorCode.CoreClrCheckedNotFound => ErrorCode.CoreClrCheckedNotFound,
         AsmViewerErrorCode.ClrJitNotFound => ErrorCode.ClrJitNotFound,

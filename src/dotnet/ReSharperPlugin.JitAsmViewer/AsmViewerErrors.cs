@@ -35,6 +35,7 @@ public enum AsmViewerErrorCode
     DotnetPublishFailed,
 
     // Runtime/Path errors
+    DotNetCliNotFound,
     RuntimePackNotFound,
     CoreClrCheckedNotFound,
     ClrJitNotFound,

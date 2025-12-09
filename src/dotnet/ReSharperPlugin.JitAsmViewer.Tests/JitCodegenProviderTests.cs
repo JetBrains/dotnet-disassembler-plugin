@@ -315,6 +315,7 @@ public class JitCodegenProviderTests
             OutputPath: "bin",
             ProjectFilePath: _testProjectFile,
             ProjectDirectory: _testProjectDir,
-            AssemblyName: "TestProject");
+            AssemblyName: "TestProject",
+            DotNetCliExePath: "dotnet");
     }
 }

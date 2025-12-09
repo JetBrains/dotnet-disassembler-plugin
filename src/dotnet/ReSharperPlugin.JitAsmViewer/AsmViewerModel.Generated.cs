@@ -105,7 +105,7 @@ namespace JetBrains.Rider.Model
     
     
     
-    protected override long SerializationHash => 4791445105749711082L;
+    protected override long SerializationHash => 4420746932129536205L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -153,7 +153,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:62</p>
+  /// <p>Generated from: AsmViewerModel.kt:63</p>
   /// </summary>
   public sealed class CompilationResult : IPrintable, IEquatable<CompilationResult>
   {
@@ -267,6 +267,7 @@ namespace JetBrains.Rider.Model
     ProjectPathNotFound,
     DotnetBuildFailed,
     DotnetPublishFailed,
+    DotNetCliNotFound,
     RuntimePackNotFound,
     CoreClrCheckedNotFound,
     ClrJitNotFound,
@@ -276,7 +277,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:43</p>
+  /// <p>Generated from: AsmViewerModel.kt:44</p>
   /// </summary>
   public sealed class ErrorInfo : IPrintable, IEquatable<ErrorInfo>
   {
@@ -369,7 +370,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:48</p>
+  /// <p>Generated from: AsmViewerModel.kt:49</p>
   /// </summary>
   public sealed class JitConfiguration : IPrintable, IEquatable<JitConfiguration>
   {

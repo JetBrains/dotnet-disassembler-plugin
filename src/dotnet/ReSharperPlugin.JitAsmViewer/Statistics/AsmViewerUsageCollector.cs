@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using JetBrains.ProjectModel;
 using JetBrains.UsageStatistics.FUS.Collectors;
 using JetBrains.UsageStatistics.FUS.EventLog;
 using JetBrains.UsageStatistics.FUS.EventLog.Events;
@@ -101,7 +99,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
         {
             _projectInfoCollected.Log(
                 _sdkTypeField.With(projectContext.Sdk),
-                _targetFrameworkField.With(projectContext.Tfm.UniqueString)
+                _targetFrameworkField.With(projectContext.Tfm?.UniqueString)
             );
         }
         catch (Exception ex)

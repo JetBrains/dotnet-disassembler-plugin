@@ -42,7 +42,7 @@ class AsmViewerModel private constructor(
         
         
         
-        const val serializationHash = 4791445105749711082L
+        const val serializationHash = 4420746932129536205L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -118,7 +118,7 @@ val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::Asm
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:62]
+ * #### Generated from [AsmViewerModel.kt:63]
  */
 data class CompilationResult (
     val content: String?,
@@ -202,6 +202,7 @@ enum class ErrorCode {
     ProjectPathNotFound, 
     DotnetBuildFailed, 
     DotnetPublishFailed, 
+    DotNetCliNotFound, 
     RuntimePackNotFound, 
     CoreClrCheckedNotFound, 
     ClrJitNotFound, 
@@ -227,7 +228,7 @@ enum class ErrorCode {
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:43]
+ * #### Generated from [AsmViewerModel.kt:44]
  */
 data class ErrorInfo (
     val code: ErrorCode,
@@ -292,7 +293,7 @@ data class ErrorInfo (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:48]
+ * #### Generated from [AsmViewerModel.kt:49]
  */
 data class JitConfiguration (
     val showAsmComments: Boolean,
