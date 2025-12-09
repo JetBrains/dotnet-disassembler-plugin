@@ -25,7 +25,7 @@ class CreateSnapshotAction(private val project: Project) : AnAction(
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = AsmViewerState.getInstance(project).lastResponse.value?.content != null
+        e.presentation.isEnabled = AsmViewerState.getInstance(project).lastResult.value?.content != null
     }
 }
 

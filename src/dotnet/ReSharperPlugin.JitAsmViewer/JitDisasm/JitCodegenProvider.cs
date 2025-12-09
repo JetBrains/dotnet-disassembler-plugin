@@ -195,11 +195,11 @@ public class JitCodegenProvider(ILogger logger)
             }
 
             if (configuration.JitDumpInsteadOfDisasm)
-                envVars["DOTNET_JitDump"] = target.Target;
+                envVars["DOTNET_JitDump"] = target.MemberFilter;
             else
             {
-                envVars["DOTNET_JitDisasm"] = target.Target;
-                envVars["DOTNET_JitPrintInlinedMethods"] = target.Target;
+                envVars["DOTNET_JitDisasm"] = target.MemberFilter;
+                envVars["DOTNET_JitPrintInlinedMethods"] = target.MemberFilter;
             }
 
             if (!string.IsNullOrWhiteSpace(configuration.SelectedCustomJit) && !configuration.CrossgenIsSelected &&
@@ -208,7 +208,7 @@ public class JitCodegenProvider(ILogger logger)
                     StringComparison.InvariantCultureIgnoreCase) && configuration.UseCustomRuntime)
             {
                 envVars["DOTNET_AltJitName"] = configuration.SelectedCustomJit;
-                envVars["DOTNET_AltJit"] = target.Target;
+                envVars["DOTNET_AltJit"] = target.MemberFilter;
             }
 
             envVars["DOTNET_TieredPGO"] = configuration.UsePgo ? "1" : "0";
@@ -239,7 +239,7 @@ public class JitCodegenProvider(ILogger logger)
                 }
 
                 currentFgFile = Path.GetTempFileName();
-                envVars["DOTNET_JitDumpFg"] = target.Target;
+                envVars["DOTNET_JitDumpFg"] = target.MemberFilter;
                 envVars["DOTNET_JitDumpFgDot"] = "1";
                 envVars["DOTNET_JitDumpFgPhase"] = "*";
                 envVars["DOTNET_JitDumpFgFile"] = currentFgFile;

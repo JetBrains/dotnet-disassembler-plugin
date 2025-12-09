@@ -45,8 +45,8 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
             }
         }
 
-        state.lastResponse.advise(serviceLifetime) { response ->
-            if (::contentPanel.isInitialized && response?.content != null && state.status.value == AsmViewerStatus.Content) {
+        state.lastResult.advise(serviceLifetime) { result ->
+            if (::contentPanel.isInitialized && result?.content != null && state.status.value == AsmViewerStatus.Content) {
                 showContent()
             }
         }
@@ -100,7 +100,7 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
             AsmViewerStatus.Loading -> contentPanel.showLoading()
             AsmViewerStatus.Content -> showContent()
             AsmViewerStatus.Unavailable -> {
-                val error = state.lastResponse.value?.error
+                val error = state.lastResult.value?.error
                 contentPanel.showMessage(AsmViewerBundle.errorMessage(error?.code, error?.details))
             }
         }
@@ -108,7 +108,7 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
 
     private fun showContent() {
         val currentState = state.value
-        val content = currentState.lastResponse?.content ?: return
+        val content = currentState.lastResult?.content ?: return
         val contentSnapshot = currentState.contentSnapshot
 
         if (isPanelTypeMismatch(contentPanel, contentSnapshot != null)) {

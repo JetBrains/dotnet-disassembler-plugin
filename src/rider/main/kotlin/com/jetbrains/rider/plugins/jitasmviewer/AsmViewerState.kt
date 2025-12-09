@@ -3,7 +3,7 @@ package com.jetbrains.rider.plugins.jitasmviewer
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.jetbrains.rd.ide.model.CompilationResponse
+import com.jetbrains.rd.ide.model.CompilationResult
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.Property
 
@@ -12,7 +12,7 @@ class AsmViewerState {
 
     data class Value(
         val status: AsmViewerStatus,
-        val lastResponse: CompilationResponse?,
+        val lastResult: CompilationResult?,
         val contentSnapshot: String?
     )
 
@@ -20,8 +20,8 @@ class AsmViewerState {
         fun getInstance(project: Project): AsmViewerState = project.service()
     }
 
-    private val _lastResponse = Property<CompilationResponse?>(null)
-    val lastResponse: IPropertyView<CompilationResponse?> = _lastResponse
+    private val _lastResult = Property<CompilationResult?>(null)
+    val lastResult: IPropertyView<CompilationResult?> = _lastResult
 
     private val _status = Property(AsmViewerStatus.WaitingForInput)
     val status: IPropertyView<AsmViewerStatus> = _status
@@ -34,14 +34,14 @@ class AsmViewerState {
     }
 
     @Synchronized
-    fun setResponse(response: CompilationResponse?, status: AsmViewerStatus) {
-        _lastResponse.set(response)
+    fun setResult(result: CompilationResult?, status: AsmViewerStatus) {
+        _lastResult.set(result)
         _status.set(status)
     }
 
     @Synchronized
     fun saveContentSnapshot() {
-        _lastResponse.value?.content?.let { _contentSnapshot.set(it) }
+        _lastResult.value?.content?.let { _contentSnapshot.set(it) }
     }
 
     fun clearContentSnapshot() {
@@ -51,7 +51,7 @@ class AsmViewerState {
     val value: Value
         @Synchronized get() = Value(
             status = _status.value,
-            lastResponse = _lastResponse.value,
+            lastResult = _lastResult.value,
             contentSnapshot = _contentSnapshot.value
         )
 }

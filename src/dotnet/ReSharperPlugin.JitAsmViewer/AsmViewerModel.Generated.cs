@@ -45,37 +45,50 @@ namespace JetBrains.Rider.Model
     [NotNull] public void Show() => _Show.Fire();
     [NotNull] public IViewableProperty<bool> IsVisible => _IsVisible;
     [NotNull] public IViewableProperty<bool> IsLoading => _IsLoading;
-    [NotNull] public IRdEndpoint<CompileRequest, CompilationResponse> Compile => _Compile;
+    [NotNull] public IViewableProperty<JitConfiguration> Configuration => _Configuration;
+    [NotNull] public ISource<Unit> Recompile => _Recompile;
+    [NotNull] public void SendResult(CompilationResult value) => _SendResult.Fire(value);
     
     //private fields
     [NotNull] private readonly RdSignal<Unit> _Show;
     [NotNull] private readonly RdProperty<bool> _IsVisible;
     [NotNull] private readonly RdProperty<bool> _IsLoading;
-    [NotNull] private readonly RdCall<CompileRequest, CompilationResponse> _Compile;
+    [NotNull] private readonly RdProperty<JitConfiguration> _Configuration;
+    [NotNull] private readonly RdSignal<Unit> _Recompile;
+    [NotNull] private readonly RdSignal<CompilationResult> _SendResult;
     
     //primary constructor
     private AsmViewerModel(
       [NotNull] RdSignal<Unit> show,
       [NotNull] RdProperty<bool> isVisible,
       [NotNull] RdProperty<bool> isLoading,
-      [NotNull] RdCall<CompileRequest, CompilationResponse> compile
+      [NotNull] RdProperty<JitConfiguration> configuration,
+      [NotNull] RdSignal<Unit> recompile,
+      [NotNull] RdSignal<CompilationResult> sendResult
     )
     {
       if (show == null) throw new ArgumentNullException("show");
       if (isVisible == null) throw new ArgumentNullException("isVisible");
       if (isLoading == null) throw new ArgumentNullException("isLoading");
-      if (compile == null) throw new ArgumentNullException("compile");
+      if (configuration == null) throw new ArgumentNullException("configuration");
+      if (recompile == null) throw new ArgumentNullException("recompile");
+      if (sendResult == null) throw new ArgumentNullException("sendResult");
       
       _Show = show;
       _IsVisible = isVisible;
       _IsLoading = isLoading;
-      _Compile = compile;
+      _Configuration = configuration;
+      _Recompile = recompile;
+      _SendResult = sendResult;
       _IsVisible.OptimizeNested = true;
       _IsLoading.OptimizeNested = true;
+      _Configuration.OptimizeNested = true;
       BindableChildren.Add(new KeyValuePair<string, object>("show", _Show));
       BindableChildren.Add(new KeyValuePair<string, object>("isVisible", _IsVisible));
       BindableChildren.Add(new KeyValuePair<string, object>("isLoading", _IsLoading));
-      BindableChildren.Add(new KeyValuePair<string, object>("compile", _Compile));
+      BindableChildren.Add(new KeyValuePair<string, object>("configuration", _Configuration));
+      BindableChildren.Add(new KeyValuePair<string, object>("recompile", _Recompile));
+      BindableChildren.Add(new KeyValuePair<string, object>("sendResult", _SendResult));
     }
     //secondary constructor
     internal AsmViewerModel (
@@ -83,14 +96,16 @@ namespace JetBrains.Rider.Model
       new RdSignal<Unit>(JetBrains.Rd.Impl.Serializers.ReadVoid, JetBrains.Rd.Impl.Serializers.WriteVoid),
       new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
       new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
-      new RdCall<CompileRequest, CompilationResponse>(CompileRequest.Read, CompileRequest.Write, CompilationResponse.Read, CompilationResponse.Write)
+      new RdProperty<JitConfiguration>(JitConfiguration.Read, JitConfiguration.Write),
+      new RdSignal<Unit>(JetBrains.Rd.Impl.Serializers.ReadVoid, JetBrains.Rd.Impl.Serializers.WriteVoid),
+      new RdSignal<CompilationResult>(CompilationResult.Read, CompilationResult.Write)
     ) {}
     //deconstruct trait
     //statics
     
     
     
-    protected override long SerializationHash => -9119311762756942617L;
+    protected override long SerializationHash => 4791445105749711082L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -114,7 +129,9 @@ namespace JetBrains.Rider.Model
         printer.Print("show = "); _Show.PrintEx(printer); printer.Println();
         printer.Print("isVisible = "); _IsVisible.PrintEx(printer); printer.Println();
         printer.Print("isLoading = "); _IsLoading.PrintEx(printer); printer.Println();
-        printer.Print("compile = "); _Compile.PrintEx(printer); printer.Println();
+        printer.Print("configuration = "); _Configuration.PrintEx(printer); printer.Println();
+        printer.Print("recompile = "); _Recompile.PrintEx(printer); printer.Println();
+        printer.Print("sendResult = "); _SendResult.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }
@@ -136,110 +153,9 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:48</p>
+  /// <p>Generated from: AsmViewerModel.kt:62</p>
   /// </summary>
-  public sealed class CaretPosition : IPrintable, IEquatable<CaretPosition>
-  {
-    //fields
-    //public fields
-    [NotNull] public string FilePath {get; private set;}
-    public long FileStamp {get; private set;}
-    public int Offset {get; private set;}
-    
-    //private fields
-    //primary constructor
-    public CaretPosition(
-      [NotNull] string filePath,
-      long fileStamp,
-      int offset
-    )
-    {
-      if (filePath == null) throw new ArgumentNullException("filePath");
-      
-      FilePath = filePath;
-      FileStamp = fileStamp;
-      Offset = offset;
-    }
-    //secondary constructor
-    //deconstruct trait
-    public void Deconstruct([NotNull] out string filePath, out long fileStamp, out int offset)
-    {
-      filePath = FilePath;
-      fileStamp = FileStamp;
-      offset = Offset;
-    }
-    //statics
-    
-    public static CtxReadDelegate<CaretPosition> Read = (ctx, reader) => 
-    {
-      var filePath = reader.ReadString();
-      var fileStamp = reader.ReadLong();
-      var offset = reader.ReadInt();
-      var _result = new CaretPosition(filePath, fileStamp, offset);
-      return _result;
-    };
-    
-    public static CtxWriteDelegate<CaretPosition> Write = (ctx, writer, value) => 
-    {
-      writer.Write(value.FilePath);
-      writer.Write(value.FileStamp);
-      writer.Write(value.Offset);
-    };
-    
-    //constants
-    
-    //custom body
-    //methods
-    //equals trait
-    public override bool Equals(object obj)
-    {
-      if (ReferenceEquals(null, obj)) return false;
-      if (ReferenceEquals(this, obj)) return true;
-      if (obj.GetType() != GetType()) return false;
-      return Equals((CaretPosition) obj);
-    }
-    public bool Equals(CaretPosition other)
-    {
-      if (ReferenceEquals(null, other)) return false;
-      if (ReferenceEquals(this, other)) return true;
-      return FilePath == other.FilePath && FileStamp == other.FileStamp && Offset == other.Offset;
-    }
-    //hash code trait
-    public override int GetHashCode()
-    {
-      unchecked {
-        var hash = 0;
-        hash = hash * 31 + FilePath.GetHashCode();
-        hash = hash * 31 + FileStamp.GetHashCode();
-        hash = hash * 31 + Offset.GetHashCode();
-        return hash;
-      }
-    }
-    //pretty print
-    public void Print(PrettyPrinter printer)
-    {
-      printer.Println("CaretPosition (");
-      using (printer.IndentCookie()) {
-        printer.Print("filePath = "); FilePath.PrintEx(printer); printer.Println();
-        printer.Print("fileStamp = "); FileStamp.PrintEx(printer); printer.Println();
-        printer.Print("offset = "); Offset.PrintEx(printer); printer.Println();
-      }
-      printer.Print(")");
-    }
-    //toString
-    public override string ToString()
-    {
-      var printer = new SingleLinePrettyPrinter();
-      Print(printer);
-      return printer.ToString();
-    }
-  }
-  
-  
-  /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:73</p>
-  /// </summary>
-  public sealed class CompilationResponse : IPrintable, IEquatable<CompilationResponse>
+  public sealed class CompilationResult : IPrintable, IEquatable<CompilationResult>
   {
     //fields
     //public fields
@@ -248,7 +164,7 @@ namespace JetBrains.Rider.Model
     
     //private fields
     //primary constructor
-    public CompilationResponse(
+    public CompilationResult(
       [CanBeNull] string content,
       [CanBeNull] ErrorInfo error
     )
@@ -265,17 +181,17 @@ namespace JetBrains.Rider.Model
     }
     //statics
     
-    public static CtxReadDelegate<CompilationResponse> Read = (ctx, reader) => 
+    public static CtxReadDelegate<CompilationResult> Read = (ctx, reader) => 
     {
       var content = ReadStringNullable(ctx, reader);
       var error = ReadErrorInfoNullable(ctx, reader);
-      var _result = new CompilationResponse(content, error);
+      var _result = new CompilationResult(content, error);
       return _result;
     };
     public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
     public static CtxReadDelegate<ErrorInfo> ReadErrorInfoNullable = ErrorInfo.Read.NullableClass();
     
-    public static CtxWriteDelegate<CompilationResponse> Write = (ctx, writer, value) => 
+    public static CtxWriteDelegate<CompilationResult> Write = (ctx, writer, value) => 
     {
       WriteStringNullable(ctx, writer, value.Content);
       WriteErrorInfoNullable(ctx, writer, value.Error);
@@ -293,9 +209,9 @@ namespace JetBrains.Rider.Model
       if (ReferenceEquals(null, obj)) return false;
       if (ReferenceEquals(this, obj)) return true;
       if (obj.GetType() != GetType()) return false;
-      return Equals((CompilationResponse) obj);
+      return Equals((CompilationResult) obj);
     }
-    public bool Equals(CompilationResponse other)
+    public bool Equals(CompilationResult other)
     {
       if (ReferenceEquals(null, other)) return false;
       if (ReferenceEquals(this, other)) return true;
@@ -314,104 +230,10 @@ namespace JetBrains.Rider.Model
     //pretty print
     public void Print(PrettyPrinter printer)
     {
-      printer.Println("CompilationResponse (");
+      printer.Println("CompilationResult (");
       using (printer.IndentCookie()) {
         printer.Print("content = "); Content.PrintEx(printer); printer.Println();
         printer.Print("error = "); Error.PrintEx(printer); printer.Println();
-      }
-      printer.Print(")");
-    }
-    //toString
-    public override string ToString()
-    {
-      var printer = new SingleLinePrettyPrinter();
-      Print(printer);
-      return printer.ToString();
-    }
-  }
-  
-  
-  /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:68</p>
-  /// </summary>
-  public sealed class CompileRequest : IPrintable, IEquatable<CompileRequest>
-  {
-    //fields
-    //public fields
-    [NotNull] public JetBrains.Rider.Model.CaretPosition CaretPosition {get; private set;}
-    [NotNull] public JitConfiguration Configuration {get; private set;}
-    
-    //private fields
-    //primary constructor
-    public CompileRequest(
-      [NotNull] JetBrains.Rider.Model.CaretPosition caretPosition,
-      [NotNull] JitConfiguration configuration
-    )
-    {
-      if (caretPosition == null) throw new ArgumentNullException("caretPosition");
-      if (configuration == null) throw new ArgumentNullException("configuration");
-      
-      CaretPosition = caretPosition;
-      Configuration = configuration;
-    }
-    //secondary constructor
-    //deconstruct trait
-    public void Deconstruct([NotNull] out JetBrains.Rider.Model.CaretPosition caretPosition, [NotNull] out JitConfiguration configuration)
-    {
-      caretPosition = CaretPosition;
-      configuration = Configuration;
-    }
-    //statics
-    
-    public static CtxReadDelegate<CompileRequest> Read = (ctx, reader) => 
-    {
-      var caretPosition = JetBrains.Rider.Model.CaretPosition.Read(ctx, reader);
-      var configuration = JitConfiguration.Read(ctx, reader);
-      var _result = new CompileRequest(caretPosition, configuration);
-      return _result;
-    };
-    
-    public static CtxWriteDelegate<CompileRequest> Write = (ctx, writer, value) => 
-    {
-      JetBrains.Rider.Model.CaretPosition.Write(ctx, writer, value.CaretPosition);
-      JitConfiguration.Write(ctx, writer, value.Configuration);
-    };
-    
-    //constants
-    
-    //custom body
-    //methods
-    //equals trait
-    public override bool Equals(object obj)
-    {
-      if (ReferenceEquals(null, obj)) return false;
-      if (ReferenceEquals(this, obj)) return true;
-      if (obj.GetType() != GetType()) return false;
-      return Equals((CompileRequest) obj);
-    }
-    public bool Equals(CompileRequest other)
-    {
-      if (ReferenceEquals(null, other)) return false;
-      if (ReferenceEquals(this, other)) return true;
-      return Equals(CaretPosition, other.CaretPosition) && Equals(Configuration, other.Configuration);
-    }
-    //hash code trait
-    public override int GetHashCode()
-    {
-      unchecked {
-        var hash = 0;
-        hash = hash * 31 + CaretPosition.GetHashCode();
-        hash = hash * 31 + Configuration.GetHashCode();
-        return hash;
-      }
-    }
-    //pretty print
-    public void Print(PrettyPrinter printer)
-    {
-      printer.Println("CompileRequest (");
-      using (printer.IndentCookie()) {
-        printer.Print("caretPosition = "); CaretPosition.PrintEx(printer); printer.Println();
-        printer.Print("configuration = "); Configuration.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }
@@ -547,7 +369,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:54</p>
+  /// <p>Generated from: AsmViewerModel.kt:48</p>
   /// </summary>
   public sealed class JitConfiguration : IPrintable, IEquatable<JitConfiguration>
   {

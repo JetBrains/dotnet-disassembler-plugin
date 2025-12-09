@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.DeclaredElements;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.ReSharper.Psi.DataContext;
 using JetBrains.ReSharper.Psi.Tree;
 
 namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
@@ -10,8 +11,18 @@ namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 public static class JitDisasmTargetUtils
 {
     [CanBeNull]
-    public static IDeclaration FindValidDeclaration(ITreeNode node) =>
-        node.GetContainingNode<IDeclaration>(returnThis: true, predicate: IsValidDisasmTarget);
+    public static IDeclaration FindValidDeclaration(PsiEditorView editorView)
+    {
+        var psiView = editorView.DefaultSourceFile.ViewDominant();
+        var selectedNode = psiView.GetSelectedTreeNode<ITreeNode>();
+        return selectedNode?.GetContainingNode<IDeclaration>(returnThis: true, predicate: IsValidDisasmTarget);
+    }
+
+    [CanBeNull]
+    public static IDeclaration FindValidDeclaration([CanBeNull] ITreeNode treeNode)
+    {
+        return treeNode?.GetContainingNode<IDeclaration>(returnThis: true, predicate: IsValidDisasmTarget);
+    }
 
     public static DisasmTarget GetTarget(IDeclaredElement declaredElement)
     {
@@ -66,7 +77,7 @@ public static class JitDisasmTargetUtils
                 break;
         }
 
-        return new DisasmTarget(target, hostType, methodName);
+        return new DisasmTarget(target, hostType, methodName, null);
     }
     
     private static bool IsValidDisasmTarget(ITreeNode node)

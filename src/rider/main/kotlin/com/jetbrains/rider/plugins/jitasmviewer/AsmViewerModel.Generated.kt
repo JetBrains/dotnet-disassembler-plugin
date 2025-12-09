@@ -22,7 +22,9 @@ class AsmViewerModel private constructor(
     private val _show: RdSignal<Unit>,
     private val _isVisible: RdOptionalProperty<Boolean>,
     private val _isLoading: RdOptionalProperty<Boolean>,
-    private val _compile: RdCall<CompileRequest, CompilationResponse>
+    private val _configuration: RdOptionalProperty<JitConfiguration>,
+    private val _recompile: RdSignal<Unit>,
+    private val _sendResult: RdSignal<CompilationResult>
 ) : RdExtBase() {
     //companion
     
@@ -32,17 +34,15 @@ class AsmViewerModel private constructor(
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(564443201287490), classLoader, "com.jetbrains.rd.ide.model.ErrorCode"))
             serializers.register(LazyCompanionMarshaller(RdId(564443201465347), classLoader, "com.jetbrains.rd.ide.model.ErrorInfo"))
-            serializers.register(LazyCompanionMarshaller(RdId(2758783625201768569), classLoader, "com.jetbrains.rd.ide.model.CaretPosition"))
             serializers.register(LazyCompanionMarshaller(RdId(3780635925811704340), classLoader, "com.jetbrains.rd.ide.model.JitConfiguration"))
-            serializers.register(LazyCompanionMarshaller(RdId(4197557252996108239), classLoader, "com.jetbrains.rd.ide.model.CompileRequest"))
-            serializers.register(LazyCompanionMarshaller(RdId(3283825401676346385), classLoader, "com.jetbrains.rd.ide.model.CompilationResponse"))
+            serializers.register(LazyCompanionMarshaller(RdId(-1052327886214718483), classLoader, "com.jetbrains.rd.ide.model.CompilationResult"))
         }
         
         
         
         
         
-        const val serializationHash = -9119311762756942617L
+        const val serializationHash = 4791445105749711082L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -52,19 +52,24 @@ class AsmViewerModel private constructor(
     val show: ISource<Unit> get() = _show
     val isVisible: IOptProperty<Boolean> get() = _isVisible
     val isLoading: IOptProperty<Boolean> get() = _isLoading
-    val compile: IRdCall<CompileRequest, CompilationResponse> get() = _compile
+    val configuration: IOptProperty<JitConfiguration> get() = _configuration
+    val recompile: ISignal<Unit> get() = _recompile
+    val sendResult: ISource<CompilationResult> get() = _sendResult
     //methods
     //initializer
     init {
         _isVisible.optimizeNested = true
         _isLoading.optimizeNested = true
+        _configuration.optimizeNested = true
     }
     
     init {
         bindableChildren.add("show" to _show)
         bindableChildren.add("isVisible" to _isVisible)
         bindableChildren.add("isLoading" to _isLoading)
-        bindableChildren.add("compile" to _compile)
+        bindableChildren.add("configuration" to _configuration)
+        bindableChildren.add("recompile" to _recompile)
+        bindableChildren.add("sendResult" to _sendResult)
     }
     
     //secondary constructor
@@ -73,7 +78,9 @@ class AsmViewerModel private constructor(
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
-        RdCall<CompileRequest, CompilationResponse>(CompileRequest, CompilationResponse)
+        RdOptionalProperty<JitConfiguration>(JitConfiguration),
+        RdSignal<Unit>(FrameworkMarshallers.Void),
+        RdSignal<CompilationResult>(CompilationResult)
     )
     
     //equals trait
@@ -85,7 +92,9 @@ class AsmViewerModel private constructor(
             print("show = "); _show.print(printer); println()
             print("isVisible = "); _isVisible.print(printer); println()
             print("isLoading = "); _isLoading.print(printer); println()
-            print("compile = "); _compile.print(printer); println()
+            print("configuration = "); _configuration.print(printer); println()
+            print("recompile = "); _recompile.print(printer); println()
+            print("sendResult = "); _sendResult.print(printer); println()
         }
         printer.print(")")
     }
@@ -95,7 +104,9 @@ class AsmViewerModel private constructor(
             _show.deepClonePolymorphic(),
             _isVisible.deepClonePolymorphic(),
             _isLoading.deepClonePolymorphic(),
-            _compile.deepClonePolymorphic()
+            _configuration.deepClonePolymorphic(),
+            _recompile.deepClonePolymorphic(),
+            _sendResult.deepClonePolymorphic()
         )
     }
     //contexts
@@ -107,97 +118,26 @@ val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::Asm
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:48]
+ * #### Generated from [AsmViewerModel.kt:62]
  */
-data class CaretPosition (
-    val filePath: String,
-    val fileStamp: Long,
-    val offset: Int
-) : IPrintable {
-    //companion
-    
-    companion object : IMarshaller<CaretPosition> {
-        override val _type: KClass<CaretPosition> = CaretPosition::class
-        override val id: RdId get() = RdId(2758783625201768569)
-        
-        @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CaretPosition  {
-            val filePath = buffer.readString()
-            val fileStamp = buffer.readLong()
-            val offset = buffer.readInt()
-            return CaretPosition(filePath, fileStamp, offset)
-        }
-        
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CaretPosition)  {
-            buffer.writeString(value.filePath)
-            buffer.writeLong(value.fileStamp)
-            buffer.writeInt(value.offset)
-        }
-        
-        
-    }
-    //fields
-    //methods
-    //initializer
-    //secondary constructor
-    //equals trait
-    override fun equals(other: Any?): Boolean  {
-        if (this === other) return true
-        if (other == null || other::class != this::class) return false
-        
-        other as CaretPosition
-        
-        if (filePath != other.filePath) return false
-        if (fileStamp != other.fileStamp) return false
-        if (offset != other.offset) return false
-        
-        return true
-    }
-    //hash code trait
-    override fun hashCode(): Int  {
-        var __r = 0
-        __r = __r*31 + filePath.hashCode()
-        __r = __r*31 + fileStamp.hashCode()
-        __r = __r*31 + offset.hashCode()
-        return __r
-    }
-    //pretty print
-    override fun print(printer: PrettyPrinter)  {
-        printer.println("CaretPosition (")
-        printer.indent {
-            print("filePath = "); filePath.print(printer); println()
-            print("fileStamp = "); fileStamp.print(printer); println()
-            print("offset = "); offset.print(printer); println()
-        }
-        printer.print(")")
-    }
-    //deepClone
-    //contexts
-    //threading
-}
-
-
-/**
- * #### Generated from [AsmViewerModel.kt:73]
- */
-data class CompilationResponse (
+data class CompilationResult (
     val content: String?,
     val error: ErrorInfo?
 ) : IPrintable {
     //companion
     
-    companion object : IMarshaller<CompilationResponse> {
-        override val _type: KClass<CompilationResponse> = CompilationResponse::class
-        override val id: RdId get() = RdId(3283825401676346385)
+    companion object : IMarshaller<CompilationResult> {
+        override val _type: KClass<CompilationResult> = CompilationResult::class
+        override val id: RdId get() = RdId(-1052327886214718483)
         
         @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CompilationResponse  {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CompilationResult  {
             val content = buffer.readNullable { buffer.readString() }
             val error = buffer.readNullable { ErrorInfo.read(ctx, buffer) }
-            return CompilationResponse(content, error)
+            return CompilationResult(content, error)
         }
         
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CompilationResponse)  {
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CompilationResult)  {
             buffer.writeNullable(value.content) { buffer.writeString(it) }
             buffer.writeNullable(value.error) { ErrorInfo.write(ctx, buffer, it) }
         }
@@ -213,7 +153,7 @@ data class CompilationResponse (
         if (this === other) return true
         if (other == null || other::class != this::class) return false
         
-        other as CompilationResponse
+        other as CompilationResult
         
         if (content != other.content) return false
         if (error != other.error) return false
@@ -229,75 +169,10 @@ data class CompilationResponse (
     }
     //pretty print
     override fun print(printer: PrettyPrinter)  {
-        printer.println("CompilationResponse (")
+        printer.println("CompilationResult (")
         printer.indent {
             print("content = "); content.print(printer); println()
             print("error = "); error.print(printer); println()
-        }
-        printer.print(")")
-    }
-    //deepClone
-    //contexts
-    //threading
-}
-
-
-/**
- * #### Generated from [AsmViewerModel.kt:68]
- */
-data class CompileRequest (
-    val caretPosition: CaretPosition,
-    val configuration: JitConfiguration
-) : IPrintable {
-    //companion
-    
-    companion object : IMarshaller<CompileRequest> {
-        override val _type: KClass<CompileRequest> = CompileRequest::class
-        override val id: RdId get() = RdId(4197557252996108239)
-        
-        @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CompileRequest  {
-            val caretPosition = CaretPosition.read(ctx, buffer)
-            val configuration = JitConfiguration.read(ctx, buffer)
-            return CompileRequest(caretPosition, configuration)
-        }
-        
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CompileRequest)  {
-            CaretPosition.write(ctx, buffer, value.caretPosition)
-            JitConfiguration.write(ctx, buffer, value.configuration)
-        }
-        
-        
-    }
-    //fields
-    //methods
-    //initializer
-    //secondary constructor
-    //equals trait
-    override fun equals(other: Any?): Boolean  {
-        if (this === other) return true
-        if (other == null || other::class != this::class) return false
-        
-        other as CompileRequest
-        
-        if (caretPosition != other.caretPosition) return false
-        if (configuration != other.configuration) return false
-        
-        return true
-    }
-    //hash code trait
-    override fun hashCode(): Int  {
-        var __r = 0
-        __r = __r*31 + caretPosition.hashCode()
-        __r = __r*31 + configuration.hashCode()
-        return __r
-    }
-    //pretty print
-    override fun print(printer: PrettyPrinter)  {
-        printer.println("CompileRequest (")
-        printer.indent {
-            print("caretPosition = "); caretPosition.print(printer); println()
-            print("configuration = "); configuration.print(printer); println()
         }
         printer.print(")")
     }
@@ -417,7 +292,7 @@ data class ErrorInfo (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:54]
+ * #### Generated from [AsmViewerModel.kt:48]
  */
 data class JitConfiguration (
     val showAsmComments: Boolean,

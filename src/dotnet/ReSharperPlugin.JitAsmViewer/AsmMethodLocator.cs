@@ -1,83 +1,94 @@
-using System.Linq;
 using JetBrains.Application.Parts;
 using JetBrains.Application.Threading;
 using JetBrains.Core;
-using JetBrains.DocumentModel;
 using JetBrains.ProjectModel;
+using JetBrains.Rd;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Caches;
-using JetBrains.ReSharper.Psi.CSharp;
-using JetBrains.ReSharper.Psi.Files;
+using JetBrains.ReSharper.Psi.DataContext;
 using JetBrains.ReSharper.Psi.Tree;
+using JetBrains.TextControl;
 using JetBrains.Util;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
-using VirtualFileSystemPath = JetBrains.Util.VirtualFileSystemPath;
+using ReSharperPlugin.JitAsmViewer.JitDisasmAdapters;
 using static JetBrains.Util.Logging.Logger;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
+public sealed record DeclarationData(
+    DisasmTarget Target,
+    string FilePath,
+    long FileStamp,
+    JitDisasmProjectContext ProjectContext);
+
 [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
-public class AsmMethodLocator
+public class AsmMethodLocator(
+    ISolution solution,
+    ITextControlManager textControlManager,
+    IPsiCachesState psiCachesState)
 {
-    private static readonly ILogger Logger = GetLogger(typeof(AsmMethodLocator));
+    private static readonly ILogger Logger = GetLogger<AsmMethodLocator>();
     
-    private readonly ISolution _solution;
-    private readonly IPsiCachesState _psiCachesState;
-
-    public AsmMethodLocator(ISolution solution, IPsiCachesState psiCachesState)
+    public Result<DeclarationData, Error> FindDeclarationAtCaret()
     {
-        _solution = solution;
-        _psiCachesState = psiCachesState;
-    }
-
-    public Result<IDeclaration, Error> FindDeclarationAt(string sourceFilePath, int caretOffset)
-    {
-        if (!_psiCachesState.IsInitialUpdateFinished.Value)
+        if (!psiCachesState.IsInitialUpdateFinished.Value)
         {
-            Logger.Verbose("FindDeclarationAt: PSI caches not ready yet");
+            Logger.Verbose("Waiting for PSI caches to initialize");
             return Result.FailWithValue(new Error(AsmViewerErrorCode.UpdateCancelled));
         }
 
-        return _solution.Locks.ExecuteWithReadLock<Result<IDeclaration, Error>>(() =>
+        if (!textControlManager.LastFocusedTextControlPerClient.TryGetValue(ClientId.LocalId, out var textControl))
         {
-            var virtualPath = VirtualFileSystemPath.Parse(sourceFilePath, InteractionContext.SolutionContext);
+            Logger.Verbose("No editor is currently focused");
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.SourceFileNotFound));
+        }
 
-            var projectFile = _solution.FindProjectItemsByLocation(virtualPath)
-                .OfType<IProjectFile>()
-                .FirstOrDefault();
+        return solution.Locks.ExecuteWithReadLock<Result<DeclarationData, Error>>(() =>
+        {
+            var psiEditorView = new PsiEditorView(solution, textControl);
 
-            if (projectFile == null)
-                return Result.FailWithValue(new Error(AsmViewerErrorCode.SourceFileNotFound));
-
-            var psiSourceFile = projectFile.ToSourceFile();
-            if (psiSourceFile == null)
-                return Result.FailWithValue(new Error(AsmViewerErrorCode.PsiSourceFileUnavailable));
-
-            var psiFile = psiSourceFile.GetPsiFiles<CSharpLanguage>().FirstOrDefault();
-            var document = psiSourceFile.Document;
-
-            if (psiFile == null || document == null)
-                return Result.FailWithValue(new Error(AsmViewerErrorCode.UnsupportedLanguage));
-
-            var element = psiFile.FindNodeAt(new DocumentOffset(document, caretOffset));
-            if (element == null)
-            {
-                Logger.Verbose("FindDeclarationAt: No element found at offset {0}", caretOffset);
-                return Result.FailWithValue(new Error(AsmViewerErrorCode.InvalidCaretPosition));
-            }
-
-            Logger.Verbose("FindDeclarationAt: Element found - {0}", element.GetType().Name);
-
-            var declaration = JitDisasmTargetUtils.FindValidDeclaration(element);
+            var declaration = JitDisasmTargetUtils.FindValidDeclaration(psiEditorView);
             if (declaration == null)
             {
-                Logger.Verbose("FindDeclarationAt: No valid declaration found at offset {0}, element: {1}",
-                    caretOffset, element.GetType().Name);
+                Logger.Verbose("Caret is not positioned on a method or class declaration");
                 return Result.FailWithValue(new Error(AsmViewerErrorCode.InvalidCaretPosition));
             }
 
-            Logger.Info("FindDeclarationAt: Found declaration - {0}", declaration.GetType().Name);
-            return Result.Success(declaration);
+            var declaredElement = declaration.DeclaredElement;
+            if (declaredElement == null)
+            {
+                Logger.Verbose("Declaration has no associated symbol (possibly incomplete code)");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.InvalidCaretPosition));
+            }
+
+            var sourceFile = declaration.GetSourceFile();
+            if (sourceFile == null)
+            {
+                Logger.Verbose("Declaration is not associated with a source file");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.PsiSourceFileUnavailable));
+            }
+
+            var location = sourceFile.GetLocation();
+            if (location.IsEmpty)
+            {
+                Logger.Verbose("Source file '{0}' has no path on disk", sourceFile.Name);
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.SourceFileNotFound));
+            }
+
+            var project = declaration.GetProject();
+            if (project == null)
+            {
+                Logger.Verbose("Source file '{0}' is not part of any project", location.FullPath);
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.SourceFileNotFound));
+            }
+
+            var target = JitDisasmTargetUtils.GetTarget(declaredElement);
+            var filePath = location.FullPath;
+            var fileStamp = location.FileModificationTimeUtc.Ticks;
+            var projectContext = JitDisasmProjectContextFactory.Create(project);
+
+            Logger.Info("Found target '{0}' in '{1}'", target.MemberFilter, filePath);
+            return Result.Success(new DeclarationData(target, filePath, fileStamp, projectContext));
         });
     }
 }

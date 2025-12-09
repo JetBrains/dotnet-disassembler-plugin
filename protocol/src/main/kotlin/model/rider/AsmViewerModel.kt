@@ -45,12 +45,6 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("details", string.nullable)
     }
 
-    private val CaretPosition = structdef {
-        field("filePath", string)
-        field("fileStamp", long)
-        field("offset", int)
-    }
-
     private val JitConfiguration = structdef {
         field("showAsmComments", bool)
         field("diffable", bool)
@@ -65,12 +59,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("selectedCustomJit", string.nullable)
     }
 
-    private val CompileRequest = structdef {
-        field("caretPosition", CaretPosition)
-        field("configuration", JitConfiguration)
-    }
-
-    private val CompilationResponse = structdef {
+    private val CompilationResult = structdef {
         field("content", string.nullable)
         field("error", ErrorInfo.nullable)
     }
@@ -81,6 +70,9 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         property("isVisible", bool)
         property("isLoading", bool)
 
-        call("compile", CompileRequest, CompilationResponse)
+        property("configuration", JitConfiguration)
+
+        source("recompile", void)
+        sink("sendResult", CompilationResult)
     }
 }
