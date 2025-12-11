@@ -5,6 +5,7 @@ using JetBrains.ProjectModel;
 using JetBrains.Rd;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Caches;
+using JetBrains.ReSharper.Psi.CSharp;
 using JetBrains.ReSharper.Psi.DataContext;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.TextControl;
@@ -46,6 +47,13 @@ public class AsmMethodLocator(
         return solution.Locks.ExecuteWithReadLock<Result<DeclarationData, Error>>(() =>
         {
             var psiEditorView = new PsiEditorView(solution, textControl);
+
+            var psiSourceFile = textControl.Document.GetPsiSourceFile(solution);
+            if (psiSourceFile == null || !psiSourceFile.PrimaryPsiLanguage.Is<CSharpLanguage>())
+            {
+                Logger.Verbose("File is not a C# source file");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.UnsupportedLanguage));
+            }
 
             var declaration = JitDisasmTargetUtils.FindValidDeclaration(psiEditorView);
             if (declaration == null)

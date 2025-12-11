@@ -28,7 +28,6 @@ public enum AsmViewerErrorCode
     CustomRuntimeRequiresNet7,
 
     // Compilation errors
-    DisassemblyTargetNotFound,
     CompilationFailed,
     ProjectPathNotFound,
     DotnetBuildFailed,
@@ -38,7 +37,6 @@ public enum AsmViewerErrorCode
     DotNetCliNotFound,
     RuntimePackNotFound,
     CoreClrCheckedNotFound,
-    ClrJitNotFound,
 
     // Other errors
     UpdateCancelled,

@@ -16,14 +16,23 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.FlowLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.JTextArea
 import javax.swing.JTextPane
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
@@ -91,6 +100,35 @@ abstract class AsmContentPanel(protected val project: Project) : Disposable {
         messageTextPane.text = message
         component.removeAll()
         component.add(messagePanel, BorderLayout.CENTER)
+        component.revalidate()
+        component.repaint()
+    }
+
+    fun showError(message: String, details: String?) {
+        if (details.isNullOrBlank()) {
+            showMessage(message)
+            return
+        }
+
+        val detailsLink = HyperlinkLabel(AsmViewerBundle.message("error.show.details")).apply {
+            addHyperlinkListener {
+                ErrorDetailsDialog(project, details).show()
+            }
+        }
+
+        val innerPanel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            add(JLabel(message).apply { alignmentX = Component.CENTER_ALIGNMENT })
+            add(Box.createVerticalStrut(JBUI.scale(8)))
+            add(JPanel(FlowLayout(FlowLayout.CENTER, 0, 0)).apply { add(detailsLink) })
+        }
+
+        val errorPanel = JPanel(GridBagLayout()).apply {
+            add(innerPanel)
+        }
+
+        component.removeAll()
+        component.add(errorPanel, BorderLayout.CENTER)
         component.revalidate()
         component.repaint()
     }
@@ -247,4 +285,30 @@ class DiffContentPanel(
             diffRequestPanel = null
         }
     }
+}
+
+private class ErrorDetailsDialog(
+    project: Project,
+    private val details: String
+) : DialogWrapper(project, true) {
+
+    init {
+        title = AsmViewerBundle.message("error.details.dialog.title")
+        init()
+    }
+
+    override fun createCenterPanel(): JComponent {
+        val textArea = JTextArea(details).apply {
+            isEditable = false
+            lineWrap = true
+            wrapStyleWord = true
+            font = EditorColorsManager.getInstance().globalScheme.getFont(null)
+        }
+
+        return JBScrollPane(textArea).apply {
+            preferredSize = Dimension(JBUI.scale(600), JBUI.scale(400))
+        }
+    }
+
+    override fun createActions() = arrayOf(okAction)
 }

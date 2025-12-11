@@ -103,8 +103,7 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
         return this?.code in listOf(
             ErrorCode.SourceFileNotFound,
             ErrorCode.PsiSourceFileUnavailable,
-            ErrorCode.InvalidCaretPosition,
-            ErrorCode.UnsupportedLanguage
+            ErrorCode.InvalidCaretPosition
         )
     }
 

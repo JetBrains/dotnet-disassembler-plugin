@@ -24,7 +24,6 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         +"CustomRuntimeRequiresNet7"
 
         // Compilation errors
-        +"DisassemblyTargetNotFound"
         +"CompilationFailed"
         +"ProjectPathNotFound"
         +"DotnetBuildFailed"
@@ -34,7 +33,6 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         +"DotNetCliNotFound"
         +"RuntimePackNotFound"
         +"CoreClrCheckedNotFound"
-        +"ClrJitNotFound"
 
         // Other errors
         +"UpdateCancelled"

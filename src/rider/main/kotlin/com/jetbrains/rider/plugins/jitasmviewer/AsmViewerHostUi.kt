@@ -101,7 +101,10 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
             AsmViewerStatus.Content -> showContent()
             AsmViewerStatus.Unavailable -> {
                 val error = state.lastResult.value?.error
-                contentPanel.showMessage(AsmViewerBundle.errorMessage(error?.code, error?.details))
+                contentPanel.showError(
+                    AsmViewerBundle.errorMessage(error?.code),
+                    error?.details
+                )
             }
         }
     }

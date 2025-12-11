@@ -26,7 +26,6 @@ public static class AsmViewerErrorCodeExtensions
         AsmViewerErrorCode.CustomRuntimeRequiresNet7 => ErrorCode.CustomRuntimeRequiresNet7,
 
         // Compilation errors
-        AsmViewerErrorCode.DisassemblyTargetNotFound => ErrorCode.DisassemblyTargetNotFound,
         AsmViewerErrorCode.CompilationFailed => ErrorCode.CompilationFailed,
         AsmViewerErrorCode.ProjectPathNotFound => ErrorCode.ProjectPathNotFound,
         AsmViewerErrorCode.DotnetBuildFailed => ErrorCode.DotnetBuildFailed,
@@ -36,7 +35,6 @@ public static class AsmViewerErrorCodeExtensions
         AsmViewerErrorCode.DotNetCliNotFound => ErrorCode.DotNetCliNotFound,
         AsmViewerErrorCode.RuntimePackNotFound => ErrorCode.RuntimePackNotFound,
         AsmViewerErrorCode.CoreClrCheckedNotFound => ErrorCode.CoreClrCheckedNotFound,
-        AsmViewerErrorCode.ClrJitNotFound => ErrorCode.ClrJitNotFound,
 
         // Other errors
         AsmViewerErrorCode.UpdateCancelled => ErrorCode.UpdateCancelled,
