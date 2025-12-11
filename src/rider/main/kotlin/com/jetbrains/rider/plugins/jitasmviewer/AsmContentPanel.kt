@@ -1,8 +1,10 @@
 package com.jetbrains.rider.plugins.jitasmviewer
 
+import com.intellij.diff.DiffContentFactory
+import com.jetbrains.rider.plugins.jitasmviewer.language.AsmFileType
+import com.jetbrains.rider.plugins.jitasmviewer.language.AsmSyntaxHighlighter
 import com.intellij.diff.DiffManager
 import com.intellij.diff.DiffRequestPanel
-import com.intellij.diff.contents.DocumentContentImpl
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -10,11 +12,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.HyperlinkLabel
@@ -189,8 +188,8 @@ class SingleContentPanel(
 
 class DiffContentPanel(
     project: Project,
-    currentContent: String?,
-    snapshotContent: String?
+    private var currentContent: String?,
+    private var snapshotContent: String?
 ) : AsmContentPanel(project) {
 
     companion object {
@@ -198,38 +197,30 @@ class DiffContentPanel(
     }
 
     private var diffRequestPanel: DiffRequestPanel? = null
-    private val snapshotDoc = EditorFactory.getInstance().createDocument(snapshotContent ?: "")
-    private val currentDoc = EditorFactory.getInstance().createDocument(currentContent ?: "")
-    private val editorFactoryListener: EditorFactoryListener
 
     init {
         logger.debug("Initializing DiffContentPanel - current: ${currentContent?.length}, snapshot: ${snapshotContent?.length}")
-        editorFactoryListener = object : EditorFactoryListener {
-            override fun editorCreated(event: EditorFactoryEvent) {
-                val editor = event.editor
-                if (editor is EditorEx && (editor.document == currentDoc || editor.document == snapshotDoc)) {
-                    logger.debug("Applying highlighting to diff editor")
-                    applyAsmHighlighting(editor)
-                }
-            }
-        }
-        EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, this)
         createDiffView()
     }
 
     override fun updateContent(current: String, snapshot: String?) {
         logger.debug("Updating diff content - current: ${current.length}, snapshot: ${snapshot?.length ?: 0}")
-        ApplicationManager.getApplication().runWriteAction {
-            currentDoc.setText(current)
-            snapshot?.let { snapshotDoc.setText(it) }
-        }
+        currentContent = current
+        snapshotContent = snapshot
+        contentPanel.removeAll()
+        diffRequestPanel = null
+        createDiffView()
+        contentPanel.revalidate()
+        contentPanel.repaint()
     }
 
     private fun createDiffView() {
         try {
             logger.debug("Creating diff view")
-            val leftContent = DocumentContentImpl(project, snapshotDoc, PlainTextFileType.INSTANCE)
-            val rightContent = DocumentContentImpl(project, currentDoc, PlainTextFileType.INSTANCE)
+            val contentFactory = DiffContentFactory.getInstance()
+            val leftContent = contentFactory.create(project, snapshotContent ?: "", AsmFileType)
+            val rightContent = contentFactory.create(project, currentContent ?: "", AsmFileType)
+
             val diffRequest = SimpleDiffRequest(
                 AsmViewerBundle.message("diff.title"),
                 leftContent,
@@ -243,40 +234,12 @@ class DiffContentPanel(
             }
 
             contentPanel.add(diffRequestPanel!!.component, BorderLayout.CENTER)
-
-            scheduleHighlighting()
             logger.debug("Diff view created successfully")
 
         } catch (e: Exception) {
             logger.error("Failed to create diff view", e)
             contentPanel.add(JLabel(AsmViewerBundle.message("diff.error")), BorderLayout.CENTER)
         }
-    }
-
-    private fun scheduleHighlighting() {
-        val delays = listOf(0L, 100L, 300L)
-        delays.forEach { delay ->
-            ApplicationManager.getApplication().executeOnPooledThread {
-                if (delay > 0) Thread.sleep(delay)
-                ApplicationManager.getApplication().invokeLater {
-                    applyHighlightingToDiffEditors()
-                }
-            }
-        }
-    }
-
-    private fun applyHighlightingToDiffEditors() {
-        EditorFactory.getInstance().allEditors
-            .filterIsInstance<EditorEx>()
-            .filter { it.document == currentDoc || it.document == snapshotDoc }
-            .forEach { editor ->
-                try {
-                    applyAsmHighlighting(editor)
-                } catch (e: Exception) {
-                    logger.warn("Failed to apply highlighting to diff editor", e)
-                    // Ignore highlighting failures
-                }
-            }
     }
 
     override fun dispose() {

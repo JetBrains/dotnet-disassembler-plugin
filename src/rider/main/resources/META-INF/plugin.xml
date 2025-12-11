@@ -45,22 +45,27 @@
   </description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- ASM Viewer Tool Window -->
+
+    <fileType name="JitAsm"
+              implementationClass="com.jetbrains.rider.plugins.jitasmviewer.language.AsmFileType"
+              fieldName="INSTANCE"
+              language="JitAsm"
+              extensions="jitasm"/>
+    <lang.syntaxHighlighterFactory language="JitAsm"
+                                   implementationClass="com.jetbrains.rider.plugins.jitasmviewer.language.AsmSyntaxHighlighterFactory"/>
+
     <toolWindow id="AsmViewer"
                 canCloseContents="false"
                 icon="AllIcons.Actions.ShowCode"
                 anchor="right"
                 factoryClass="com.jetbrains.rider.plugins.jitasmviewer.AsmViewerToolWindowFactory"/>
 
-    <!-- Register ASM Viewer Protocol Listener -->
     <rd.solutionExtListener endpoint="IDE Frontend"
                             listener="com.jetbrains.rider.plugins.jitasmviewer.AsmViewerHost$ProtocolListener"/>
 
-    <!-- Register FUS Statistics Collectors -->
     <statistics.counterUsagesCollector
         implementationClass="com.jetbrains.rider.plugins.jitasmviewer.statistics.AsmViewerStatisticsCollector"/>
-    <statistics.counterUsagesCollector
-        implementationClass="com.jetbrains.rider.plugins.jitasmviewer.statistics.AsmViewerConfigurationStatisticsCollector"/>
+
   </extensions>
     <actions resource-bundle="messages.AsmViewerBundle">
         <!-- Show ASM Viewer Action -->

@@ -1,4 +1,4 @@
-package com.jetbrains.rider.plugins.jitasmviewer
+package com.jetbrains.rider.plugins.jitasmviewer.language
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -80,6 +80,9 @@ class AsmSyntaxHighlighter : SyntaxHighlighterBase() {
             // Synchronization
             "dmb", "dsb", "isb",
             "ldaxr", "stlxr", "ldar", "stlr",
+            "ldapr", "ldaprb", "ldaprh",
+            "ldaxp", "stlxp", "ldxr", "stxr", "ldxp", "stxp",
+            "ldlarb", "ldlarh", "ldlar", "stllrb", "stllrh", "stllr",
 
             // Misc
             "nop", "brk", "hlt", "wfe", "wfi", "yield",

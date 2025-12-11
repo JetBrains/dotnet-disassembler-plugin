@@ -1,8 +1,8 @@
 package com.jetbrains.rider.plugins.jitasmviewer.tests
 
-import com.jetbrains.rider.plugins.jitasmviewer.AsmLexer
-import com.jetbrains.rider.plugins.jitasmviewer.AsmSyntaxHighlighter
-import com.jetbrains.rider.plugins.jitasmviewer.AsmTokenTypes
+import com.jetbrains.rider.plugins.jitasmviewer.language.AsmLexer
+import com.jetbrains.rider.plugins.jitasmviewer.language.AsmSyntaxHighlighter
+import com.jetbrains.rider.plugins.jitasmviewer.language.AsmTokenTypes
 import org.testng.Assert.*
 import org.testng.annotations.Test
 
