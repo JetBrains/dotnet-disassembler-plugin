@@ -10,7 +10,9 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBPanel
+import com.jetbrains.rd.ide.model.asmViewerModel
 import com.jetbrains.rider.plugins.jitasmviewer.statistics.AsmViewerStatisticsCollector
+import com.jetbrains.rider.projectView.solution
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -71,9 +73,21 @@ class SettingsAction(private val project: Project) : AnAction(
     }
 }
 
+class ForceRecompileAction(private val project: Project) : AnAction(
+    AsmViewerBundle.messagePointer("action.force.recompile.text"),
+    AsmViewerBundle.messagePointer("action.force.recompile.description"),
+    AllIcons.Actions.Refresh
+) {
+    override fun actionPerformed(e: AnActionEvent) {
+        project.solution.asmViewerModel.forceRecompile.fire(Unit)
+    }
+}
+
 object AsmViewerToolbarFactory {
     fun createToolbar(project: Project, targetComponent: JPanel): JPanel {
         val actionGroup = DefaultActionGroup().apply {
+            add(ForceRecompileAction(project))
+            add(Separator.create())
             add(CreateSnapshotAction(project))
             add(DeleteSnapshotAction(project))
             add(DiffableModeAction(project))

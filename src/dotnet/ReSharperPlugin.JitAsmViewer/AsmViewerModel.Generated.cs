@@ -47,6 +47,7 @@ namespace JetBrains.Rider.Model
     [NotNull] public IViewableProperty<bool> IsLoading => _IsLoading;
     [NotNull] public IViewableProperty<JitConfiguration> Configuration => _Configuration;
     [NotNull] public ISource<Unit> Recompile => _Recompile;
+    [NotNull] public ISource<Unit> ForceRecompile => _ForceRecompile;
     [NotNull] public void SendResult(CompilationResult value) => _SendResult.Fire(value);
     
     //private fields
@@ -55,6 +56,7 @@ namespace JetBrains.Rider.Model
     [NotNull] private readonly RdProperty<bool> _IsLoading;
     [NotNull] private readonly RdProperty<JitConfiguration> _Configuration;
     [NotNull] private readonly RdSignal<Unit> _Recompile;
+    [NotNull] private readonly RdSignal<Unit> _ForceRecompile;
     [NotNull] private readonly RdSignal<CompilationResult> _SendResult;
     
     //primary constructor
@@ -64,6 +66,7 @@ namespace JetBrains.Rider.Model
       [NotNull] RdProperty<bool> isLoading,
       [NotNull] RdProperty<JitConfiguration> configuration,
       [NotNull] RdSignal<Unit> recompile,
+      [NotNull] RdSignal<Unit> forceRecompile,
       [NotNull] RdSignal<CompilationResult> sendResult
     )
     {
@@ -72,6 +75,7 @@ namespace JetBrains.Rider.Model
       if (isLoading == null) throw new ArgumentNullException("isLoading");
       if (configuration == null) throw new ArgumentNullException("configuration");
       if (recompile == null) throw new ArgumentNullException("recompile");
+      if (forceRecompile == null) throw new ArgumentNullException("forceRecompile");
       if (sendResult == null) throw new ArgumentNullException("sendResult");
       
       _Show = show;
@@ -79,6 +83,7 @@ namespace JetBrains.Rider.Model
       _IsLoading = isLoading;
       _Configuration = configuration;
       _Recompile = recompile;
+      _ForceRecompile = forceRecompile;
       _SendResult = sendResult;
       _IsVisible.OptimizeNested = true;
       _IsLoading.OptimizeNested = true;
@@ -88,6 +93,7 @@ namespace JetBrains.Rider.Model
       BindableChildren.Add(new KeyValuePair<string, object>("isLoading", _IsLoading));
       BindableChildren.Add(new KeyValuePair<string, object>("configuration", _Configuration));
       BindableChildren.Add(new KeyValuePair<string, object>("recompile", _Recompile));
+      BindableChildren.Add(new KeyValuePair<string, object>("forceRecompile", _ForceRecompile));
       BindableChildren.Add(new KeyValuePair<string, object>("sendResult", _SendResult));
     }
     //secondary constructor
@@ -98,6 +104,7 @@ namespace JetBrains.Rider.Model
       new RdProperty<bool>(JetBrains.Rd.Impl.Serializers.ReadBool, JetBrains.Rd.Impl.Serializers.WriteBool),
       new RdProperty<JitConfiguration>(JitConfiguration.Read, JitConfiguration.Write),
       new RdSignal<Unit>(JetBrains.Rd.Impl.Serializers.ReadVoid, JetBrains.Rd.Impl.Serializers.WriteVoid),
+      new RdSignal<Unit>(JetBrains.Rd.Impl.Serializers.ReadVoid, JetBrains.Rd.Impl.Serializers.WriteVoid),
       new RdSignal<CompilationResult>(CompilationResult.Read, CompilationResult.Write)
     ) {}
     //deconstruct trait
@@ -105,7 +112,7 @@ namespace JetBrains.Rider.Model
     
     
     
-    protected override long SerializationHash => 8045303135908629036L;
+    protected override long SerializationHash => -7893216463214670635L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -131,6 +138,7 @@ namespace JetBrains.Rider.Model
         printer.Print("isLoading = "); _IsLoading.PrintEx(printer); printer.Println();
         printer.Print("configuration = "); _Configuration.PrintEx(printer); printer.Println();
         printer.Print("recompile = "); _Recompile.PrintEx(printer); printer.Println();
+        printer.Print("forceRecompile = "); _ForceRecompile.PrintEx(printer); printer.Println();
         printer.Print("sendResult = "); _SendResult.PrintEx(printer); printer.Println();
       }
       printer.Print(")");

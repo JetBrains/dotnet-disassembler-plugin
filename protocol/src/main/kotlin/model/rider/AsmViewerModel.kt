@@ -72,6 +72,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         property("configuration", JitConfiguration)
 
         source("recompile", void)
+        source("forceRecompile", void)
         sink("sendResult", CompilationResult)
     }
 }

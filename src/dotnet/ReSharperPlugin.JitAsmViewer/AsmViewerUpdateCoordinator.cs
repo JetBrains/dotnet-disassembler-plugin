@@ -106,7 +106,19 @@ public class AsmViewerUpdateCoordinator(
             return Result.FailWithValue(new Error(AsmViewerErrorCode.UnknownError, ex.Message));
         }
     }
-    
+
+    public void InvalidateCache()
+    {
+        lock (_cacheLock)
+        {
+            if (_cache.IsValueCreated)
+            {
+                _cache.Value.Compact(1.0);
+            }
+            Logger.Info("Cache invalidated");
+        }
+    }
+
     private sealed record CacheKey(string FilePath, long FileStamp, string MethodId,
         JitDisasmConfiguration Configuration, JitDisasmProjectContext ProjectContext);
 

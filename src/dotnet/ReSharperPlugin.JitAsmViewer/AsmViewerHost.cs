@@ -67,6 +67,7 @@ public class AsmViewerHost
 
             SubscribeToConfigurationChanges(visibleLifetime, compilationTrigger);
             SubscribeToRecompileRequests(visibleLifetime, compilationTrigger);
+            SubscribeToForceRecompileRequests(visibleLifetime, compilationTrigger);
 
             psiCachesState.IsInitialUpdateFinished.WhenTrue(visibleLifetime, psiReadyLifetime =>
             {
@@ -89,6 +90,16 @@ public class AsmViewerHost
         _model.Recompile.Advise(lifetime, _ =>
         {
             _logger.Verbose("Recompile requested");
+            compilationTrigger.FireIncoming();
+        });
+    }
+
+    private void SubscribeToForceRecompileRequests(Lifetime lifetime, GroupingEvent compilationTrigger)
+    {
+        _model.ForceRecompile.Advise(lifetime, _ =>
+        {
+            _logger.Verbose("Force recompile requested, invalidating cache");
+            _updateCoordinator.InvalidateCache();
             compilationTrigger.FireIncoming();
         });
     }

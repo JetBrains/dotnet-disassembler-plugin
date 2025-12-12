@@ -24,6 +24,7 @@ class AsmViewerModel private constructor(
     private val _isLoading: RdOptionalProperty<Boolean>,
     private val _configuration: RdOptionalProperty<JitConfiguration>,
     private val _recompile: RdSignal<Unit>,
+    private val _forceRecompile: RdSignal<Unit>,
     private val _sendResult: RdSignal<CompilationResult>
 ) : RdExtBase() {
     //companion
@@ -42,7 +43,7 @@ class AsmViewerModel private constructor(
         
         
         
-        const val serializationHash = 8045303135908629036L
+        const val serializationHash = -7893216463214670635L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -54,6 +55,7 @@ class AsmViewerModel private constructor(
     val isLoading: IOptProperty<Boolean> get() = _isLoading
     val configuration: IOptProperty<JitConfiguration> get() = _configuration
     val recompile: ISignal<Unit> get() = _recompile
+    val forceRecompile: ISignal<Unit> get() = _forceRecompile
     val sendResult: ISource<CompilationResult> get() = _sendResult
     //methods
     //initializer
@@ -69,6 +71,7 @@ class AsmViewerModel private constructor(
         bindableChildren.add("isLoading" to _isLoading)
         bindableChildren.add("configuration" to _configuration)
         bindableChildren.add("recompile" to _recompile)
+        bindableChildren.add("forceRecompile" to _forceRecompile)
         bindableChildren.add("sendResult" to _sendResult)
     }
     
@@ -79,6 +82,7 @@ class AsmViewerModel private constructor(
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
         RdOptionalProperty<Boolean>(FrameworkMarshallers.Bool),
         RdOptionalProperty<JitConfiguration>(JitConfiguration),
+        RdSignal<Unit>(FrameworkMarshallers.Void),
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdSignal<CompilationResult>(CompilationResult)
     )
@@ -94,6 +98,7 @@ class AsmViewerModel private constructor(
             print("isLoading = "); _isLoading.print(printer); println()
             print("configuration = "); _configuration.print(printer); println()
             print("recompile = "); _recompile.print(printer); println()
+            print("forceRecompile = "); _forceRecompile.print(printer); println()
             print("sendResult = "); _sendResult.print(printer); println()
         }
         printer.print(")")
@@ -106,6 +111,7 @@ class AsmViewerModel private constructor(
             _isLoading.deepClonePolymorphic(),
             _configuration.deepClonePolymorphic(),
             _recompile.deepClonePolymorphic(),
+            _forceRecompile.deepClonePolymorphic(),
             _sendResult.deepClonePolymorphic()
         )
     }
