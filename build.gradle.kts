@@ -207,10 +207,6 @@ tasks.prepareSandbox {
             "$outputFolder/${DotnetPluginId}.pdb",
             "$outputFolder/Microsoft.Extensions.Caching.Abstractions.dll",
             "$outputFolder/Microsoft.Extensions.Caching.Memory.dll",
-            "$outputFolder/Microsoft.Extensions.DependencyInjection.Abstractions.dll",
-            "$outputFolder/Microsoft.Extensions.Logging.Abstractions.dll",
-            "$outputFolder/Microsoft.Extensions.Options.dll",
-            "$outputFolder/Microsoft.Extensions.Primitives.dll",
     )
 
     dllFiles.forEach({ f ->
