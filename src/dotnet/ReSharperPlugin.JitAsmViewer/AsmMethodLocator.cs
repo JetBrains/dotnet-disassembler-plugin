@@ -2,7 +2,6 @@ using JetBrains.Application.Parts;
 using JetBrains.Application.Threading;
 using JetBrains.Core;
 using JetBrains.ProjectModel;
-using JetBrains.Rd;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.Caches;
 using JetBrains.ReSharper.Psi.CSharp;
@@ -25,12 +24,11 @@ public sealed record DeclarationData(
 [SolutionComponent(Instantiation.DemandAnyThreadSafe)]
 public class AsmMethodLocator(
     ISolution solution,
-    ITextControlManager textControlManager,
     IPsiCachesState psiCachesState)
 {
     private static readonly ILogger Logger = GetLogger<AsmMethodLocator>();
-    
-    public Result<DeclarationData, Error> FindDeclarationAtCaret()
+
+    public Result<DeclarationData, Error> FindDeclarationAtCaret(ITextControl textControl)
     {
         if (!psiCachesState.IsInitialUpdateFinished.Value)
         {
@@ -38,14 +36,14 @@ public class AsmMethodLocator(
             return Result.FailWithValue(new Error(AsmViewerErrorCode.UpdateCancelled));
         }
 
-        if (!textControlManager.LastFocusedTextControlPerClient.TryGetValue(ClientId.LocalId, out var textControl))
-        {
-            Logger.Verbose("No editor is currently focused");
-            return Result.FailWithValue(new Error(AsmViewerErrorCode.SourceFileNotFound));
-        }
-
         return solution.Locks.ExecuteWithReadLock<Result<DeclarationData, Error>>(() =>
         {
+            if (!textControl.Lifetime.IsAlive)
+            {
+                Logger.Verbose("Text control is no longer alive");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.UpdateCancelled));
+            }
+
             var psiEditorView = new PsiEditorView(solution, textControl);
 
             var psiSourceFile = textControl.Document.GetPsiSourceFile(solution);

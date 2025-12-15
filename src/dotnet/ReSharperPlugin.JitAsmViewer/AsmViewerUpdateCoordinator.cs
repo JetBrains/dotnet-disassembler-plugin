@@ -6,6 +6,7 @@ using JetBrains.Lifetimes;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.Protocol;
 using JetBrains.Rider.Model;
+using JetBrains.TextControl;
 using JetBrains.Util;
 using Microsoft.Extensions.Caching.Memory;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
@@ -32,11 +33,11 @@ public class AsmViewerUpdateCoordinator(
     private readonly object _cacheLock = new();
     private int _cacheVersion;
 
-    public async Task<Result<string, Error>> CompileAsync(JitConfiguration jitConfiguration, Lifetime lifetime)
+    public async Task<Result<string, Error>> CompileAsync(ITextControl textControl, JitConfiguration jitConfiguration, Lifetime lifetime)
     {
         try
         {
-            var declarationResult = methodLocator.FindDeclarationAtCaret();
+            var declarationResult = methodLocator.FindDeclarationAtCaret(textControl);
             if (!declarationResult.Succeed)
                 return Result.FailWithValue(declarationResult.FailValue);
 

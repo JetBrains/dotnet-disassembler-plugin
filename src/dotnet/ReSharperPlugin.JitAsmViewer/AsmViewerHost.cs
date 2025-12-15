@@ -2,11 +2,12 @@ using System;
 using System.Threading.Tasks;
 using JetBrains.Application.Parts;
 using JetBrains.Application.Threading;
-using JetBrains.Collections.Viewable;
 using JetBrains.DataFlow;
 using JetBrains.Lifetimes;
 using JetBrains.Platform.RdFramework.Util;
+using JetBrains.DocumentManagers;
 using JetBrains.ProjectModel;
+using JetBrains.ReSharper.Feature.Services.Navigation;
 using JetBrains.ReSharper.Feature.Services.Protocol;
 using JetBrains.ReSharper.Psi.Caches;
 using JetBrains.Rider.Model;
@@ -24,20 +25,28 @@ public class AsmViewerHost
 {
     private readonly ILogger _logger = GetLogger<AsmViewerHost>();
 
+    private readonly DocumentManager _documentManager;
+    private readonly IFileLocationsBlacklist _fileLocationsBlacklist;
     private readonly IShellLocks _shellLocks;
     private readonly AsmViewerUpdateCoordinator _updateCoordinator;
     private readonly AsmViewerUsageCollector _usageCollector;
     private readonly AsmViewerModel _model;
 
+    private volatile ITextControl _currentTextControl;
+
     public AsmViewerHost(
         Lifetime lifetime,
         ISolution solution,
+        DocumentManager documentManager,
+        IFileLocationsBlacklist fileLocationsBlacklist,
         IShellLocks shellLocks,
         ITextControlManager textControlManager,
         IPsiCachesState psiCachesState,
         AsmViewerUpdateCoordinator updateCoordinator,
         AsmViewerUsageCollector usageCollector)
     {
+        _documentManager = documentManager;
+        _fileLocationsBlacklist = fileLocationsBlacklist;
         _shellLocks = shellLocks;
         _updateCoordinator = updateCoordinator;
         _usageCollector = usageCollector;
@@ -74,6 +83,12 @@ public class AsmViewerHost
                 SubscribeToTextControlChanges(psiReadyLifetime, textControlManager, compilationTrigger);
             });
         });
+        
+        isVisible.WhenFalse(lifetime, _ =>
+        {
+            _logger.Verbose("ASM Viewer tool window hidden");
+            _currentTextControl = null;
+        });
     }
 
     private void SubscribeToConfigurationChanges(Lifetime lifetime, GroupingEvent compilationTrigger)
@@ -106,34 +121,69 @@ public class AsmViewerHost
 
     private void SubscribeToTextControlChanges(Lifetime lifetime, ITextControlManager textControlManager, GroupingEvent compilationTrigger)
     {
-        textControlManager.LastFocusedTextControlPerClient.ForEachValue_Host(lifetime, (textControlLifetime, textControl) =>
+        var caretSubscriptions = new SequentialLifetimes(lifetime);
+
+        textControlManager.LastFocusedTextControlPerClient.ForEachValue_Host(lifetime, (_, textControl) =>
         {
             if (textControl == null)
             {
                 _logger.Verbose("No focused text control");
+                _currentTextControl = null;
+                caretSubscriptions.TerminateCurrent();
                 _model.SendResult(new CompilationResult(null, new ErrorInfo(ErrorCode.SourceFileNotFound, null)));
                 return;
             }
 
+            // IL Viewer and similar tools open read-only editors with synchronized carets.
+            // We skip these and keep tracking the source editor - caret sync ensures our subscription still works.
+            var projectFile = _documentManager.TryGetProjectFile(textControl.Document);
+            if (projectFile != null && _fileLocationsBlacklist.Contains(projectFile.Location))
+            {
+                _logger.Verbose("Ignoring blacklisted file location: {0}", textControl.Document.Moniker);
+                return;
+            }
+
+            if (textControl == _currentTextControl)
+            {
+                _logger.Verbose("Same source text control, skipping resubscription");
+                return;
+            }
+
+            _currentTextControl = textControl;
+
             _logger.Verbose("Text control focused: {0}", textControl.Document.Moniker);
             compilationTrigger.FireIncoming();
 
-            textControl.Caret.Position.Change.Advise(textControlLifetime, _ => compilationTrigger.FireIncoming());
+            SubscribeToCaretChanges(caretSubscriptions, textControl, compilationTrigger);
         });
+    }
+
+    private static void SubscribeToCaretChanges(SequentialLifetimes subscriptions, ITextControl textControl, GroupingEvent compilationTrigger)
+    {
+        var lifetime = Lifetime.Intersect(subscriptions.Next(), textControl.Lifetime);
+        textControl.Caret.Position.Change.Advise(lifetime, _ => compilationTrigger.FireIncoming());
     }
 
     private async Task RequestCompilationAsync(SequentialLifetimes compilationLifetimes)
     {
-        if (!_model.Configuration.HasValue())
+        var configuration = _model.Configuration.Maybe;
+        if (!configuration.HasValue)
         {
             _logger.Verbose("Configuration not initialized, skipping");
+            return;
+        }
+
+        var textControl = _currentTextControl;
+        if (textControl == null)
+        {
+            _logger.Verbose("No text control, skipping");
             return;
         }
 
         var compilationLifetime = compilationLifetimes.Next();
         _logger.Info("Starting compilation");
 
-        var result = await _updateCoordinator.CompileAsync(_model.Configuration.Value, compilationLifetime);
+        var result = await _updateCoordinator.CompileAsync(textControl, configuration.Value, compilationLifetime);
 
         if (!compilationLifetime.IsAlive || result.FailValue is { Code: AsmViewerErrorCode.UpdateCancelled })
         {
