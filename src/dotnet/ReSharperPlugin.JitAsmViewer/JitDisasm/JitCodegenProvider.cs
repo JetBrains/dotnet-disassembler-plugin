@@ -23,6 +23,8 @@ public class JitCodegenProvider(ILogger logger)
         if (!contextValidationResult.Succeed)
             return Result.FailWithValue(contextValidationResult.FailValue);
 
+        var runtimeId = RuntimePlatformUtils.GetRuntimeId(configuration.Arch);
+
         cancellationToken.ThrowIfCancellationRequested();
         var tfm = configuration.OverridenTfm ?? projectContext.Tfm;
         logger.LogDebug("Target framework: {0}", tfm);
@@ -55,7 +57,7 @@ public class JitCodegenProvider(ILogger logger)
         if (configuration.IsNonCustomDotnetAotMode())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, dotnetCliExePath, cancellationToken);
+            return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, dotnetCliExePath, runtimeId, cancellationToken);
         }
 
         string tfmPart = configuration.DontGuessTfm && configuration.OverridenTfm == null
@@ -78,7 +80,7 @@ public class JitCodegenProvider(ILogger logger)
             logger.LogInformation("Running dotnet publish for reload");
 
             string dotnetPublishArgs =
-                $"publish {tfmPart} -r win-{configuration.Arch} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
+                $"publish {tfmPart} -r {runtimeId} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
             publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null, projectDirPath,
                 LogProcessOutput, cancellationToken);
@@ -150,26 +152,26 @@ public class JitCodegenProvider(ILogger logger)
             if (!Directory.Exists(dstFolder))
             {
                 return Result.FailWithValue(new Error(AsmViewerErrorCode.DotnetPublishFailed,
-                    $"{dstFolder} doesn't exist after 'dotnet publish -r win-{configuration.Arch} -c Release' step"));
+                    $"{dstFolder} doesn't exist after 'dotnet publish -r {runtimeId} -c Release' step"));
             }
 
-            var copyClrFilesResult = await ProcessUtils.RunProcessAsync("robocopy",
-                $"/e \"{clrCheckedFilesDir}\" \"{dstFolder}", null, null, LogProcessOutput, cancellationToken);
-
-            if (!copyClrFilesResult.IsSuccessful)
+            try
             {
-                if (copyClrFilesResult.Exception != null)
-                    logger.LogError(copyClrFilesResult.Exception, "Process execution failed");
-                return Result.FailWithValue(new Error(AsmViewerErrorCode.CompilationFailed, copyClrFilesResult.Error));
+                JitPathUtils.CopyDirectory(clrCheckedFilesDir, dstFolder);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to copy CLR checked files");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.CompilationFailed, ex.Message));
             }
         }
         cancellationToken.ThrowIfCancellationRequested();
-        return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, dotnetCliExePath, cancellationToken);
+        return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, dotnetCliExePath, runtimeId, cancellationToken);
     }
 
     private async Task<Result<JitCodeGenResult, Error>> GetJitCodegenInternalAsync(DisasmTarget target, JitDisasmTargetFramework tfm,
         JitDisasmConfiguration configuration, JitDisasmProjectContext projectContext, string destFolder, string dotnetCliExePath,
-        CancellationToken cancellationToken)
+        string runtimeId, CancellationToken cancellationToken)
     {
         try
         {
@@ -299,14 +301,14 @@ public class JitCodegenProvider(ILogger logger)
                 if (configuration.UseDotnetPublishForReload)
                 {
                     // Reference everything in the publish dir
-                    command += $" -r: \"{dstFolder}\\*.dll\" ";
+                    command += $" -r: \"{Path.Combine(dstFolder, "*.dll")}\" ";
                 }
                 else
                 {
                     // the runtime pack we use doesn't contain corelib so let's use "checked" corelib
                     // TODO: build proper core_root with release version of corelib
                     var corelib = Path.Combine(pathToCoreClrChecked.Value, "System.Private.CoreLib.dll");
-                    command += $" -r: \"{runtimePackPath}\\*.dll\" -r: \"{corelib}\" ";
+                    command += $" -r: \"{Path.Combine(runtimePackPath.Value, "*.dll")}\" -r: \"{corelib}\" ";
                 }
                 
                 logger.LogDebug("Executing crossgen2...");
@@ -347,7 +349,7 @@ public class JitCodegenProvider(ILogger logger)
                 if (configuration.UseDotnetPublishForReload)
                 {
                     // Reference everything in the publish dir
-                    command += $" -r: \"{dstFolder}\\*.dll\" ";
+                    command += $" -r: \"{Path.Combine(dstFolder, "*.dll")}\" ";
                 }
                 else
                 {
@@ -406,7 +408,7 @@ public class JitCodegenProvider(ILogger logger)
 
                 // NOTE: CustomBeforeDirectoryBuildProps is probably not a good idea to overwrite, but we need to pass IlcArgs somehow
                 string dotnetPublishArgs =
-                    $"publish {tfmPart} -r win-{configuration.Arch} -c Release" +
+                    $"publish {tfmPart} -r {runtimeId} -c Release" +
                     $" /p:PublishAot=true /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\"" +
                     $" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 

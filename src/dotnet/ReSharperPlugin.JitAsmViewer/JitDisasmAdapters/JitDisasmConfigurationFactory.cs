@@ -31,7 +31,7 @@ public static class JitDisasmConfigurationFactory
             PathToLocalCoreClr = null,
             OverridenJitDisasm = null,
             OverridenTfm = null,
-            Arch = "x64"
+            Arch = RuntimePlatformUtils.GetCurrentArch()
         };
     }
 }
