@@ -23,7 +23,7 @@ class AsmViewerState {
     private val _lastResult = Property<CompilationResult?>(null)
     val lastResult: IPropertyView<CompilationResult?> = _lastResult
 
-    private val _status = Property(AsmViewerStatus.WaitingForInput)
+    private val _status = Property(AsmViewerStatus.Initializing)
     val status: IPropertyView<AsmViewerStatus> = _status
 
     private val _contentSnapshot = Property<String?>(null)

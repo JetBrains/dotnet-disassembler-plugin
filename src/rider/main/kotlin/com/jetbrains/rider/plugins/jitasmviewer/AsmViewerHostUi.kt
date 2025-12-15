@@ -96,6 +96,7 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
 
     private fun onStatusChanged(status: AsmViewerStatus) {
         when (status) {
+            AsmViewerStatus.Initializing -> contentPanel.showMessage(AsmViewerBundle.message("state.initializing"))
             AsmViewerStatus.WaitingForInput -> contentPanel.showMessage(AsmViewerBundle.message("state.waiting.for.input"))
             AsmViewerStatus.Loading -> contentPanel.showLoading()
             AsmViewerStatus.Content -> showContent()

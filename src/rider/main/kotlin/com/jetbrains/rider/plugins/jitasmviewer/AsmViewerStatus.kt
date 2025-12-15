@@ -1,8 +1,9 @@
 package com.jetbrains.rider.plugins.jitasmviewer
 
 enum class AsmViewerStatus {
-    Loading,
+    Initializing,
     WaitingForInput,
+    Loading,
     Content,
     Unavailable
 }

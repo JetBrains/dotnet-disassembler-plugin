@@ -55,6 +55,10 @@ abstract class AsmContentPanel(protected val project: Project) : Disposable {
         background = null
         border = null
         font = JLabel().font
+        caret = object : javax.swing.text.DefaultCaret() {
+            override fun isVisible(): Boolean = false
+            override fun isSelectionVisible(): Boolean = true
+        }
         val centerAttributeSet = SimpleAttributeSet().apply {
             StyleConstants.setAlignment(this, StyleConstants.ALIGN_CENTER)
         }

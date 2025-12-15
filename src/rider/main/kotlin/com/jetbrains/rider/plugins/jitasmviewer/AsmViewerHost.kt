@@ -16,6 +16,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.reactive.flowInto
 import com.jetbrains.rider.projectView.solution
+import com.jetbrains.rider.projectView.SolutionLifecycleHost
 
 @Service(Service.Level.PROJECT)
 class AsmViewerHost(private val project: Project) : LifetimedService() {
@@ -118,7 +119,14 @@ class AsmViewerHost(private val project: Project) : LifetimedService() {
                 ui.activateToolwindow()
             }
 
-            ui.activated.flowInto(lifetime, model.isVisible)
+            val state = AsmViewerState.getInstance(session.project)
+            SolutionLifecycleHost.getInstance(session.project).isBackendLoaded.advise(lifetime) { loaded ->
+                if (loaded) {
+                    logger.info("Backend loaded, connecting visibility")
+                    state.setStatus(AsmViewerStatus.WaitingForInput)
+                    ui.activated.flowInto(lifetime, model.isVisible)
+                }
+            }
         }
     }
 }
