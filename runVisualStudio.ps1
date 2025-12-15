@@ -1,6 +1,6 @@
 Param(
     $RootSuffix = "JitAsmViewer",
-    $Version = "9999.0.0"
+    $Version = "0.0.1"
 )
 
 Set-StrictMode -Version Latest
@@ -27,11 +27,10 @@ if (!(Test-Path "$UserProjectXmlFile")) {
     $DownloadLink = [uri] ($VersionEntry.downloads.windows.link.replace(".exe", ".Checked.exe"))
 
     # Download installer
-    $InstallerFile = "$PSScriptRoot\build\installer\$($DownloadLink.Segments[-1])"
+    $InstallerFile = "$env:TEMP\JetBrains\Installer.Offline\$($DownloadLink.Segments[-1])"
     if (!(Test-Path $InstallerFile)) {
-        mkdir -Force $(Split-Path $InstallerFile -Parent) > $null
         Write-Output "Downloading $($DownloadLink.Segments[-2].TrimEnd("/")) installer"
-        (New-Object System.Net.WebClient).DownloadFile($DownloadLink, $InstallerFile)
+        Start-BitsTransfer -Source $DownloadLink -Destination $InstallerFile
     } else {
         Write-Output "Using cached installer from $InstallerFile"
     }

@@ -4,69 +4,63 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
-using JetBrains.ProjectModel;
-using JetBrains.Util;
-using JetBrains.Util.Dotnet.TargetFrameworkIds;
-using JetBrains.Util.Logging;
-using Key = JetBrains.Util.Key;
-using Result = JetBrains.Core.Result;
+using Microsoft.Extensions.Logging;
 
 namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 
-public class JitCodegenProvider(IProject project)
+public class JitCodegenProvider(ILogger logger)
 {
-    private readonly IProject _project = project;
-    private ILogger _logger = Logger.GetLogger<JitCodegenProvider>();
-    
-    public async Task<Result<JitCodeGenResult>> GetJitCodegen(DisasmTarget target, JitDisasmConfiguration configuration,
-        CancellationToken cancellationToken)
+    public async Task<Result<JitCodeGenResult, Error>> GetJitCodegenAsync(DisasmTarget target, JitDisasmProjectContext projectContext,
+        JitDisasmConfiguration configuration, CancellationToken cancellationToken)
     {
-        var validationResult = configuration.Validate();
-        if (!validationResult.Succeed)
-            return Result.Fail(validationResult.FailMessage);
+        logger.LogInformation("GetJitCodegen called - Target: {0}.{1}, Arch: {2}", target.ClassName, target.MethodName, configuration.Arch);
+
+        var configValidationResult = configuration.Validate();
+        if (!configValidationResult.Succeed)
+            return Result.FailWithValue(configValidationResult.FailValue);
+
+        var contextValidationResult = projectContext.Validate();
+        if (!contextValidationResult.Succeed)
+            return Result.FailWithValue(contextValidationResult.FailValue);
+
+        var runtimeId = RuntimePlatformUtils.GetRuntimeId(configuration.Arch);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var tfm = configuration.OverridenTfm ?? projectContext.Tfm;
+        logger.LogDebug("Target framework: {0}", tfm);
+
+        if (!tfm.IsNetCore)
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.UnsupportedTargetFramework));
+
+        if (configuration.UseCustomRuntime && tfm.Version.Major < 7)
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.CustomRuntimeRequiresNet7));
 
         string clrCheckedFilesDir = null;
         if (configuration.UseCustomRuntime)
         {
+            logger.LogDebug("Using custom runtime from: {0}", configuration.PathToLocalCoreClr);
+
             var result = JitPathUtils.GetPathToCoreClrChecked(configuration.PathToLocalCoreClr, configuration.Arch,
                 configuration.CrossgenIsSelected);
             if (!result.Succeed)
-                return Result.Fail(result.FailMessage);
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.CoreClrCheckedNotFound, result.FailMessage));
             clrCheckedFilesDir = result.Value;
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
-        var tfm = string.IsNullOrWhiteSpace(configuration.OverridenTFM)
-            ? _project.TargetFrameworkIds.TakeMax(x => x.Version.Major, 6)
-            : TargetFrameworkId.Create(configuration.OverridenTFM);
-
-        if (tfm.IsNullOrDefault() || !tfm.IsNetCoreApp)
-            return Result.Fail(
-                """
-                Only net6.0 (and newer) apps are supported.
-                Make sure <TargetFramework>net6.0</TargetFramework> is set in your csproj.
-                """);
-        if (configuration.UseCustomRuntime && tfm.Version.Major < 7)
-            return Result.Fail(
-                """
-                Only net7.0 (and newer) apps are supported with non-locally built dotnet/runtime.
-                Make sure <TargetFramework>net7.0</TargetFramework> is set in your csproj.
-                """);
-
-        var projectOutputPath = _project.GetProperty(new Key("OutputPath")) as string;
-        var outputDir = string.IsNullOrWhiteSpace(projectOutputPath) ? "bin" : projectOutputPath;
-        var resultOutDir = Path.Combine(outputDir,
+        var resultOutDir = Path.Combine(projectContext.OutputPath!,
             "JITDISASM" + (configuration.UseDotnetPublishForReload ? "_published" : ""));
-        var projectFilePath = _project.ProjectFileLocation.FullPath;
-        var projectDirPath = _project.Location.FullPath;
-        
+
+        var dotnetCliExePath = projectContext.DotNetCliExePath!;
+        var projectFilePath = projectContext.ProjectFilePath!;
+        var projectDirPath = projectContext.ProjectDirectory!;
+
         if (configuration.IsNonCustomDotnetAotMode())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return await GetJitCodegenInternal(target, tfm, configuration, resultOutDir, cancellationToken);
+            return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, dotnetCliExePath, runtimeId, cancellationToken);
         }
 
-        string tfmPart = configuration.DontGuessTFM && string.IsNullOrWhiteSpace(configuration.OverridenTFM)
+        string tfmPart = configuration.DontGuessTfm && configuration.OverridenTfm == null
             ? ""
             : $"-f {tfm}";
 
@@ -83,21 +77,25 @@ public class JitCodegenProvider(IProject project)
         ProcessResult publishResult;
         if (configuration.UseDotnetPublishForReload)
         {
-            string dotnetPublishArgs =
-                $"publish {tfmPart} -r win-{configuration.Arch} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
+            logger.LogInformation("Running dotnet publish for reload");
 
-            publishResult = await ProcessUtils.RunProcess("dotnet", dotnetPublishArgs, null, projectDirPath,
-                cancellationToken: cancellationToken);
+            string dotnetPublishArgs =
+                $"publish {tfmPart} -r {runtimeId} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
+
+            publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null, projectDirPath,
+                LogProcessOutput, cancellationToken);
         }
         else
         {
+            logger.LogInformation("Running dotnet build");
+
             if (configuration.UseCustomRuntime)
             {
                 var result = JitPathUtils.GetPathToRuntimePack(configuration.PathToLocalCoreClr, configuration.Arch);
                 if (!result.Succeed)
-                    return Result.Fail(result.FailMessage);
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.RuntimePackNotFound, result.FailMessage));
             }
-            
+
             string dotnetBuildArgs = $"build {tfmPart} -c Release -o {resultOutDir} --no-self-contained " +
                                      "/p:RuntimeIdentifier=\"\" " +
                                      "/p:RuntimeIdentifiers=\"\" " +
@@ -117,24 +115,34 @@ public class JitCodegenProvider(IProject project)
                 fasterBuildEnvVars["DOTNET_MULTILEVEL_LOOKUP"] = "0";
             }
 
-            publishResult = await ProcessUtils.RunProcess("dotnet", dotnetBuildArgs, fasterBuildEnvVars,
-                projectDirPath,
-                cancellationToken: cancellationToken);
+            publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetBuildArgs, fasterBuildEnvVars,
+                projectDirPath, LogProcessOutput, cancellationToken);
         }
 
         File.Delete(tmpProps);
         cancellationToken.ThrowIfCancellationRequested();
-        
-        if (!string.IsNullOrEmpty(publishResult.Error))
+
+        if (!publishResult.IsSuccessful)
         {
-            Result.Fail(publishResult.Error);
+            if (publishResult.Exception != null)
+                logger.LogError(publishResult.Exception, "Process execution failed");
+
+            var errorCode = configuration.UseDotnetPublishForReload
+                ? AsmViewerErrorCode.DotnetPublishFailed
+                : AsmViewerErrorCode.DotnetBuildFailed;
+            return Result.FailWithValue(new Error(errorCode, publishResult.Error));
         }
-        
+
         // in case if there are compilation errors:
         if (publishResult.Output.Contains(": error"))
         {
-            Result.Fail(publishResult.Output);
+            var errorCode = configuration.UseDotnetPublishForReload
+                ? AsmViewerErrorCode.DotnetPublishFailed
+                : AsmViewerErrorCode.DotnetBuildFailed;
+            return Result.FailWithValue(new Error(errorCode, publishResult.Output));
         }
+        
+        logger.LogInformation("Build/publish completed successfully");
         
         if (configuration.UseDotnetPublishForReload && configuration.UseCustomRuntime)
         {
@@ -143,32 +151,33 @@ public class JitCodegenProvider(IProject project)
                 dstFolder = Path.Combine(projectDirPath, resultOutDir);
             if (!Directory.Exists(dstFolder))
             {
-                return Result.Fail($"Something went wrong, {dstFolder} doesn't exist after 'dotnet publish -r win-{configuration.Arch} -c Release' step");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.DotnetPublishFailed,
+                    $"{dstFolder} doesn't exist after 'dotnet publish -r {runtimeId} -c Release' step"));
             }
 
-            var copyClrFilesResult = await ProcessUtils.RunProcess("robocopy",
-                $"/e \"{clrCheckedFilesDir}\" \"{dstFolder}", null, cancellationToken: cancellationToken);
-
-            if (!string.IsNullOrEmpty(copyClrFilesResult.Error))
+            try
             {
-                return Result.Fail(copyClrFilesResult.Error);
+                JitPathUtils.CopyDirectory(clrCheckedFilesDir, dstFolder);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to copy CLR checked files");
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.CompilationFailed, ex.Message));
             }
         }
         cancellationToken.ThrowIfCancellationRequested();
-        return await GetJitCodegenInternal(target, tfm, configuration, resultOutDir, cancellationToken);
+        return await GetJitCodegenInternalAsync(target, tfm, configuration, projectContext, resultOutDir, dotnetCliExePath, runtimeId, cancellationToken);
     }
 
-    private async Task<Result<JitCodeGenResult>> GetJitCodegenInternal(DisasmTarget target, TargetFrameworkId tfm,
-        JitDisasmConfiguration configuration, string destFolder,
-        CancellationToken cancellationToken)
+    private async Task<Result<JitCodeGenResult, Error>> GetJitCodegenInternalAsync(DisasmTarget target, JitDisasmTargetFramework tfm,
+        JitDisasmConfiguration configuration, JitDisasmProjectContext projectContext, string destFolder, string dotnetCliExePath,
+        string runtimeId, CancellationToken cancellationToken)
     {
         try
         {
-            var projectPath = _project.ProjectFileLocation.FullPath;
+            var projectPath = projectContext.ProjectFilePath;
             if (string.IsNullOrWhiteSpace(projectPath))
-                return Result.Fail($"{nameof(GetJitCodegenInternal)}: {nameof(projectPath)} is null or empty");
-
-            string fgPngPath = null;
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.ProjectPathNotFound));
 
             string dstFolder = destFolder;
             if (!Path.IsPathRooted(dstFolder))
@@ -176,17 +185,9 @@ public class JitCodegenProvider(IProject project)
 
             string fileName = Path.GetFileNameWithoutExtension(projectPath);
 
-            try
+            if (!string.IsNullOrWhiteSpace(projectContext.AssemblyName))
             {
-                    var customAsmName = _project.GetProperty(new Key("AssemblyName")) as string;
-                    if (!string.IsNullOrWhiteSpace(customAsmName))
-                    {
-                        fileName = customAsmName;
-                    }
-            }
-            catch(Exception e)
-            {
-                _logger.Error(e);                
+                fileName = projectContext.AssemblyName;
             }
 
             var envVars = new Dictionary<string, string>();
@@ -194,18 +195,16 @@ public class JitCodegenProvider(IProject project)
             if (!configuration.RunAppMode && !configuration.CrossgenIsSelected && !configuration.NativeAotIsSelected)
             {
                 var addinVersion = new Version();
-                await LoaderAppManager.InitLoaderAndCopyTo(tfm.ToString(), dstFolder, log =>
-                {
-                    /*TODO: update UI*/
-                }, addinVersion, cancellationToken);
+                await LoaderAppManager.InitLoaderAndCopyToAsync(dotnetCliExePath, tfm.UniqueString, dstFolder, _ => { }, addinVersion, cancellationToken);
             }
 
             if (configuration.JitDumpInsteadOfDisasm)
-                envVars["DOTNET_JitDump"] = target.Target;
-            else if (configuration.PrintInlinees)
-                envVars["DOTNET_JitPrintInlinedMethods"] = target.Target;
+                envVars["DOTNET_JitDump"] = target.MemberFilter;
             else
-                envVars["DOTNET_JitDisasm"] = target.Target;
+            {
+                envVars["DOTNET_JitDisasm"] = target.MemberFilter;
+                envVars["DOTNET_JitPrintInlinedMethods"] = target.MemberFilter;
+            }
 
             if (!string.IsNullOrWhiteSpace(configuration.SelectedCustomJit) && !configuration.CrossgenIsSelected &&
                 !configuration.NativeAotIsSelected &&
@@ -213,17 +212,17 @@ public class JitCodegenProvider(IProject project)
                     StringComparison.InvariantCultureIgnoreCase) && configuration.UseCustomRuntime)
             {
                 envVars["DOTNET_AltJitName"] = configuration.SelectedCustomJit;
-                envVars["DOTNET_AltJit"] = target.Target;
+                envVars["DOTNET_AltJit"] = target.MemberFilter;
             }
 
-            envVars["DOTNET_TieredPGO"] = configuration.UsePGO ? "1" : "0";
+            envVars["DOTNET_TieredPGO"] = configuration.UsePgo ? "1" : "0";
             envVars["DOTNET_JitDisasmDiffable"] = configuration.Diffable ? "1" : "0";
 
             if (!configuration.UseDotnetPublishForReload && configuration.UseCustomRuntime)
             {
                 var runtimePackPath = JitPathUtils.GetPathToRuntimePack(configuration.PathToLocalCoreClr, configuration.Arch);
                 if (!runtimePackPath.Succeed)
-                    return Result.Fail(runtimePackPath.FailMessage);
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.RuntimePackNotFound, runtimePackPath.FailMessage));
 
                 // tell jit to look for BCL libs in the locally built runtime pack
                 envVars["CORE_LIBRARIES"] = runtimePackPath.Value;
@@ -240,11 +239,11 @@ public class JitCodegenProvider(IProject project)
             {
                 if (target.MethodName == "*")
                 {
-                    return Result.Fail("Flowgraph for classes (all methods) is not supported yet.");
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.FlowgraphsForClassNotSupported));
                 }
 
                 currentFgFile = Path.GetTempFileName();
-                envVars["DOTNET_JitDumpFg"] = target.Target;
+                envVars["DOTNET_JitDumpFg"] = target.MemberFilter;
                 envVars["DOTNET_JitDumpFgDot"] = "1";
                 envVars["DOTNET_JitDumpFgPhase"] = "*";
                 envVars["DOTNET_JitDumpFgFile"] = currentFgFile;
@@ -257,17 +256,17 @@ public class JitCodegenProvider(IProject project)
                 command = $"\"{fileName}.dll\"";
             }
 
-            string executable = "dotnet";
+            string executable = dotnetCliExePath;
 
             if (configuration.CrossgenIsSelected && configuration.UseCustomRuntime)
             {
                 var pathToCoreClrChecked = JitPathUtils.GetPathToCoreClrChecked(configuration.PathToLocalCoreClr, configuration.Arch, configuration.CrossgenIsSelected);
                 if (!pathToCoreClrChecked.Succeed)
-                    return Result.Fail(pathToCoreClrChecked.FailMessage);
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.CoreClrCheckedNotFound, pathToCoreClrChecked.FailMessage));
 
                 var runtimePackPath = JitPathUtils.GetPathToRuntimePack(configuration.PathToLocalCoreClr, configuration.Arch);
                 if (!runtimePackPath.Succeed)
-                    return Result.Fail(runtimePackPath.FailMessage);
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.RuntimePackNotFound, runtimePackPath.FailMessage));
 
                 executable = Path.Combine(configuration.PathToLocalCoreClr, "dotnet.cmd");
                 command = $"{Path.Combine(pathToCoreClrChecked.Value, "crossgen2", "crossgen2.dll")} --out aot ";
@@ -302,24 +301,24 @@ public class JitCodegenProvider(IProject project)
                 if (configuration.UseDotnetPublishForReload)
                 {
                     // Reference everything in the publish dir
-                    command += $" -r: \"{dstFolder}\\*.dll\" ";
+                    command += $" -r: \"{Path.Combine(dstFolder, "*.dll")}\" ";
                 }
                 else
                 {
                     // the runtime pack we use doesn't contain corelib so let's use "checked" corelib
                     // TODO: build proper core_root with release version of corelib
                     var corelib = Path.Combine(pathToCoreClrChecked.Value, "System.Private.CoreLib.dll");
-                    command += $" -r: \"{runtimePackPath}\\*.dll\" -r: \"{corelib}\" ";
+                    command += $" -r: \"{Path.Combine(runtimePackPath.Value, "*.dll")}\" -r: \"{corelib}\" ";
                 }
-
-                _logger.Verbose("Executing crossgen2...");
-                _logger.Trace($"target: {target}\n{tfm}\n{configuration}");
+                
+                logger.LogDebug("Executing crossgen2...");
+                logger.LogTrace($"target: {target}\n{tfm}\n{configuration}");
             }
             else if (configuration.NativeAotIsSelected && configuration.UseCustomRuntime)
             {
                 var pathToCoreClrCheckedForNativeAot = JitPathUtils.GetPathToCoreClrCheckedForNativeAot(configuration.PathToLocalCoreClr, configuration.Arch);
                 if (!pathToCoreClrCheckedForNativeAot.Succeed)
-                    return Result.Fail(pathToCoreClrCheckedForNativeAot.FailMessage);
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.CoreClrCheckedNotFound, pathToCoreClrCheckedForNativeAot.FailMessage));
 
                 command = "";
                 executable = Path.Combine(pathToCoreClrCheckedForNativeAot.Value, "ilc", "ilc.exe");
@@ -350,7 +349,7 @@ public class JitCodegenProvider(IProject project)
                 if (configuration.UseDotnetPublishForReload)
                 {
                     // Reference everything in the publish dir
-                    command += $" -r: \"{dstFolder}\\*.dll\" ";
+                    command += $" -r: \"{Path.Combine(dstFolder, "*.dll")}\" ";
                 }
                 else
                 {
@@ -359,12 +358,12 @@ public class JitCodegenProvider(IProject project)
                     //var corelib = Path.Combine(clrCheckedFilesDir, "System.Private.CoreLib.dll");
                     //command += $" -r: \"{runtimePackPath}\\*.dll\" -r: \"{corelib}\" ";
                 }
-                _logger.Verbose("Executing ILC... Make sure your method is not inlined and is reachable as NativeAOT runs IL Link. It might take some time...");
+                logger.LogDebug("Executing ILC... Make sure your method is not inlined and is reachable as NativeAOT runs IL Link. It might take some time...");
             }
-            else if (configuration.IsNonCustomNativeAOTMode())
+            else if (configuration.IsNonCustomNativeAotMode())
             {
-                _logger.Verbose("Compiling for NativeAOT (.NET 8.0+ is required) ...");
-
+                logger.LogDebug("Compiling for NativeAOT (.NET 8.0+ is required) ...");
+                
                 // For non-custom NativeAOT we need to use dotnet publish + with custom IlcArgs
                 // namely, we need to re-direct jit's output to a file (JitStdOutFile).
 
@@ -403,22 +402,22 @@ public class JitCodegenProvider(IProject project)
                                              </Project>
                                              """);
 
-                string tfmPart = configuration.DontGuessTFM && string.IsNullOrWhiteSpace(configuration.OverridenTFM)
+                string tfmPart = configuration.DontGuessTfm && configuration.OverridenTfm == null
                     ? ""
                     : $"-f {tfm}";
 
                 // NOTE: CustomBeforeDirectoryBuildProps is probably not a good idea to overwrite, but we need to pass IlcArgs somehow
                 string dotnetPublishArgs =
-                    $"publish {tfmPart} -r win-{configuration.Arch} -c Release" +
+                    $"publish {tfmPart} -r {runtimeId} -c Release" +
                     $" /p:PublishAot=true /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\"" +
                     $" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
-                var publishResult = await ProcessUtils.RunProcess("dotnet", dotnetPublishArgs, null,
-                    project.Location.FullPath, cancellationToken: cancellationToken);
+                var publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null,
+                    projectContext.ProjectDirectory, LogProcessOutput, cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (string.IsNullOrEmpty(publishResult.Error))
+                if (publishResult.IsSuccessful)
                 {
                     if (!File.Exists(tmpJitStdout))
                     {
@@ -430,7 +429,7 @@ public class JitCodegenProvider(IProject project)
 
                                   {publishResult.Output}
                                   """;
-                        _logger.Verbose(output);
+                        logger.LogDebug(output);
                     }
                     else
                     {
@@ -445,12 +444,14 @@ public class JitCodegenProvider(IProject project)
                 }
                 else
                 {
-                    return Result.Fail(publishResult.Error);
+                    if (publishResult.Exception != null)
+                        logger.LogError(publishResult.Exception, "Process execution failed");
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.DotnetPublishFailed, publishResult.Error));
                 }
             }
             else
             {
-                _logger.Verbose("Executing DisasmoLoader...");
+                logger.LogDebug("Executing DisasmoLoader...");
             }
 
 
@@ -459,7 +460,7 @@ public class JitCodegenProvider(IProject project)
             {
                 var pathToCoreClrChecked = JitPathUtils.GetPathToCoreClrChecked(configuration.PathToLocalCoreClr, configuration.Arch, configuration.CrossgenIsSelected);
                 if (!pathToCoreClrChecked.Succeed)
-                    return Result.Fail(pathToCoreClrChecked.FailMessage);
+                    return Result.FailWithValue(new Error(AsmViewerErrorCode.CoreClrCheckedNotFound, pathToCoreClrChecked.FailMessage));
 
                 executable = Path.Combine(pathToCoreClrChecked.Value, "CoreRun.exe");
             }
@@ -469,20 +470,27 @@ public class JitCodegenProvider(IProject project)
             {
                 envVars["DOTNET_JitDisasm"] = configuration.OverridenJitDisasm;
             }
+            
+            logger.LogInformation("Executing process: {0} with args: {1}", executable, command.Length > 100 ? command.Substring(0, 100) + "..." : command);
 
-            ProcessResult result = await ProcessUtils.RunProcess(
-                executable, command, envVars, dstFolder, cancellationToken: cancellationToken);
+            ProcessResult result = await ProcessUtils.RunProcessAsync(
+                executable, command, envVars, dstFolder, LogProcessOutput, cancellationToken);
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (string.IsNullOrEmpty(result.Error))
+            if (result.IsSuccessful)
             {
-                if (configuration.JitDumpInsteadOfDisasm || configuration.PrintInlinees)
+                logger.LogInformation("Process execution succeeded, output length: {0}", result.Output.Length);
+
+                if (configuration.JitDumpInsteadOfDisasm)
                     return Result.Success(new JitCodeGenResult(result.Output));
                 return Result.Success(new JitCodeGenResult(DisassemblyPrettifier.Prettify(result.Output, !configuration.ShowAsmComments && !configuration.RunAppMode)));
             }
 
-            return Result.Fail(result.Output + "\nERROR:\n" + result.Error);
+            if (result.Exception != null)
+                logger.LogError(result.Exception, "Process execution failed");
+
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.CompilationFailed, result.Output + "\nERROR:\n" + result.Error));
 
             /*if (configuration.FgEnable && configuration.JitDumpInsteadOfDisasm)
             {
@@ -539,17 +547,26 @@ public class JitCodegenProvider(IProject project)
                         Debug.WriteLine(exc);
                     }
                 }
-            }*/
+            }
 
-            return Result.Fail("TODO");
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.UnknownError, "Reached unexpected code path"));*/
         }
-        catch (OperationCanceledException e)
+        catch (OperationCanceledException)
         {
-            return Result.Canceled(e);
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.UpdateCancelled));
         }
         catch (Exception e)
         {
-            return Result.Fail(e);
+            logger.LogError(e, "Unexpected error during JIT code generation");
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.UnknownError, e.Message));
         }
+    }
+
+    private void LogProcessOutput(bool isError, string message)
+    {
+        if (isError)
+            logger.LogWarning(message);
+        else
+            logger.LogDebug(message);
     }
 }

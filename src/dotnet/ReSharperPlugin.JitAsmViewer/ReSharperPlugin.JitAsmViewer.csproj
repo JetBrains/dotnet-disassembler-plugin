@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="JetBrains.ReSharper.SDK" Version="$(SdkVersion)" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.3" />
     <PackageReference Include="Wave" Version="$(WaveVersion)" />
   </ItemGroup>
 

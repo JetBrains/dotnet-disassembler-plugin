@@ -1,121 +1,321 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
-using JetBrains.DocumentManagers;
-using JetBrains.DocumentModel;
-using JetBrains.Lifetimes;
-using JetBrains.ProjectModel;
-using JetBrains.ProjectModel.Search;
-using JetBrains.ReSharper.Feature.Services.CSharp.CodeCompletion;
-using JetBrains.ReSharper.Feature.Services.Util;
-using JetBrains.ReSharper.FeaturesTestFramework.Intentions;
-using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.Cpp.Util;
-using JetBrains.ReSharper.Psi.DataContext;
-using JetBrains.ReSharper.Psi.Files;
-using JetBrains.ReSharper.Psi.Modules;
-using JetBrains.ReSharper.Psi.Tree;
-using JetBrains.TestFramework.Projects;
-using JetBrains.TestFramework.Utils;
-using JetBrains.TextControl;
-using JetBrains.TextControl.DataContext;
-using JetBrains.Util;
+using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
 
 namespace ReSharperPlugin.JitAsmViewer.Tests;
 
-using JetBrains.ReSharper.TestFramework;
-
-public abstract class JitCodegenProviderTests : BaseTestWithExistingSolutionLoadedByMsbuild
+[TestFixture]
+public class JitCodegenProviderTests
 {
-    private readonly string _solutionName = "JitCodegenProviderTests.sln";
-    protected override string RelativeTestDataPath => nameof(JitCodegenProviderTests);
+    private string _testProjectDir;
+    private string _testProjectFile;
+    private JitCodegenProvider _jitCodegenProvider;
+    private DisasmTarget _mainMethodTarget;
+    private DisasmTarget _addMethodTarget;
+    private DisasmTarget _valuePropertyTarget;
+    private DisasmTarget _missingMethodTarget;
 
-    protected override string GetGoldTestDataPath(string fileName)
+    [SetUp]
+    public void SetUp()
     {
-        return base.GetGoldTestDataPath(fileName);
-    }
+        _testProjectDir = Path.Combine(Path.GetTempPath(), "JitAsmViewerTests_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_testProjectDir);
+        _testProjectFile = Path.Combine(_testProjectDir, "TestProject.csproj");
 
-    protected void DoCodegenTest(Func<IPsiSourceFile, int> offset, JitDisasmConfiguration jitDisasmConfiguration,
-        [NotNull] [CallerMemberName] string testFileName = "", [NotNull] [CallerMemberName] string testMethodName = "")
-    {
-        if (string.IsNullOrWhiteSpace(testFileName))
-            throw new TestFailureException("Method name is empty");
+        File.WriteAllText(_testProjectFile, @"
+            <Project Sdk=""Microsoft.NET.Sdk"">
+              <PropertyGroup>
+                <OutputType>Exe</OutputType>
+                <TargetFramework>net9.0</TargetFramework>
+              </PropertyGroup>
+            </Project>");
 
-        DoTestSolution(_solutionName,
-            PrepareSolutionFlags.COPY_TO_TEMP_FOLDER_ONCE | PrepareSolutionFlags.RESTORE_NUGETS, (_, solution) =>
+        var programFile = Path.Combine(_testProjectDir, "Program.cs");
+        File.WriteAllText(programFile, @"
+            using System;
+
+            public class TestClass
             {
-                var testLifetime = new Lifetime();
-                var fileName = testFileName.Replace("Test", "");
-                var testProject = solution.GetProjectByName(nameof(JitCodegenProviderTests));
-                var psiModules = solution.GetComponent<IPsiModules>();
-                var psiServices = solution.GetPsiServices();
+                private static int _value = 100;
 
-                var testCsProjectFile = testProject
-                    .GetAllProjectFiles(x => Path.GetFileNameWithoutExtension(x.Name) == fileName).Single();
-
-                var testPsiSourceFile = psiModules.GetPsiSourceFilesFor(testCsProjectFile).Single();
-
-                var testCsFile = psiServices.Files
-                    .GetPsiFiles<KnownLanguage>(testPsiSourceFile, PsiLanguageCategories.All).Single();
-
-                var tokenNode =
-                    testCsFile.FindTokenAt(new DocumentOffset(testPsiSourceFile.Document, offset(testPsiSourceFile)));
-                if (tokenNode == null)
-                    throw new TestFailureException("Cannot find token under cursor");
-
-                if (!JitDisasmTargetUtils.ValidateTreeNodeForDisasm(tokenNode.Parent) ||
-                    tokenNode.Parent is not IDeclaration declaration)
-                    throw new TestFailureException("Token's parent is not IDeclaration");
-
-                if (declaration.DeclaredElement is not { } declaredElement)
-                    throw new TestFailureException("declaration.DeclaredElement is null");
-
-                var target = JitDisasmTargetUtils.GetTarget(declaredElement);
-                var result = new JitCodegenProvider(testProject)
-                    .GetJitCodegen(target, jitDisasmConfiguration, testLifetime)
-                    .Result;
-
-                if (!result.Succeed)
-                    throw new TestFailureException(result.FailMessage);
-                var asmString = result.Value.Result;
-                
-                var goldFileName = Path.GetFileName(testCsProjectFile.Location.FullPath);
-                if(!string.IsNullOrWhiteSpace(testMethodName))
-                    goldFileName = $"{goldFileName}.{testMethodName.Replace("Test", "")}";
-                
-                ExecuteWithGold(goldFileName, sw =>
+                public static void Main()
                 {
-                    sw.WriteLine("DeclaredElemet: {0}", declaredElement);
-                    sw.WriteLine(asmString);
-                    sw.WriteLine("#END#");
-                });
-            });
-    }
-}
+                    Console.WriteLine(Add(2, 3));
+                    Console.WriteLine(Value);
+                }
 
-[TestNet70]
-public class JitCodegenProviderTestsNetCoreTests : JitCodegenProviderTests
-{
-    // Test JitCodegen.cs
-    private void TestJitCodegen(Func<IPsiSourceFile, int> offsetSelector, JitDisasmConfiguration jitDisasmConfiguration, [NotNull] [CallerMemberName] string testMethodName = "")
+                public static int Add(int a, int b)
+                {
+                    return a + b;
+                }
+
+                public static int Value
+                {
+                    get { return _value; }
+                }
+            }");
+        
+        _jitCodegenProvider = new JitCodegenProvider(Mock.Of<ILogger>());
+        
+        _mainMethodTarget = new DisasmTarget("TestClass:Main", "TestClass", "Main");
+        _addMethodTarget = new DisasmTarget("TestClass:Add", "TestClass", "Add");
+        _valuePropertyTarget = new DisasmTarget("TestClass:get_Value", "TestClass", "get_Value");
+        _missingMethodTarget = new DisasmTarget("TestClass:MissingMethod", "TestClass", "MissingMethod");
+    }
+
+    [TearDown]
+    public void TearDown()
     {
-        DoCodegenTest(offsetSelector, jitDisasmConfiguration, testMethodName: testMethodName);
+        if (!Directory.Exists(_testProjectDir))
+        {
+            return;
+        }
+        
+        try
+        {
+            Directory.Delete(_testProjectDir, true);
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
     }
 
     [Test]
-    public void TestLocalMethod()
+    public async Task GetJitCodegen_WhenConfigurationInvalid_ShouldReturnError()
     {
-        TestJitCodegen(x => x.Document.GetText().IndexOf("LocalAdd(int", StringComparison.InvariantCulture), new JitDisasmConfiguration());
+        // Arrange
+        var projectContext = CreateProjectContext();
+
+        var config = new JitDisasmConfiguration
+        {
+            SelectedCustomJit = JitDisasmConfiguration.Crossgen,
+            UsePgo = true
+        };
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeed);
+        Assert.NotNull(result.FailValue);
+        Assert.AreEqual(AsmViewerErrorCode.PgoNotSupportedForAot, result.FailValue.Code);
+    }
+
+    [Test]
+    public async Task GetJitCodegen_WhenUnsupportedTargetFramework_ShouldReturnError()
+    {
+        // Arrange
+        var projectContext = CreateProjectContext() with
+        {
+            Tfm = new JitDisasmTargetFramework(
+                UniqueString: "net472",
+                new Version(4, 7, 2),
+                IsNetCore: false)
+        };
+
+        var config = new JitDisasmConfiguration();
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeed);
+        Assert.AreEqual(AsmViewerErrorCode.UnsupportedTargetFramework, result.FailValue.Code);
+    }
+
+    [Test]
+    public async Task GetJitCodegen_WhenCustomRuntimeWithOldFramework_ShouldReturnError()
+    {
+        // Arrange
+        var projectContext = CreateProjectContext() with
+        {
+            Tfm = new JitDisasmTargetFramework(
+                UniqueString: "net6.0",
+                new Version(6, 0, 0, 0),
+                IsNetCore: true)
+        };
+
+        var config = new JitDisasmConfiguration
+        {
+            UseCustomRuntime = true,
+            PathToLocalCoreClr = "/some/path"
+        };
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeed);
+        Assert.AreEqual(AsmViewerErrorCode.CustomRuntimeRequiresNet7, result.FailValue.Code);
+    }
+
+    [Test]
+    [TestCase(JitDisasmConfiguration.Crossgen, true, AsmViewerErrorCode.RunModeNotSupportedForAot)]
+    [TestCase(JitDisasmConfiguration.Ilc, true, AsmViewerErrorCode.RunModeNotSupportedForAot)]
+    public async Task GetJitCodegen_WithRunAppMode_ShouldReturnError(
+        string customJit, bool runAppMode, AsmViewerErrorCode expectedError)
+    {
+        // Arrange
+        var projectContext = CreateProjectContext();
+
+        var config = new JitDisasmConfiguration
+        {
+            SelectedCustomJit = customJit,
+            RunAppMode = runAppMode
+        };
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeed);
+        Assert.AreEqual(expectedError, result.FailValue.Code);
+    }
+
+    [Test]
+    [TestCase(JitDisasmConfiguration.Crossgen, true, AsmViewerErrorCode.TieredJitNotSupportedForAot)]
+    [TestCase(JitDisasmConfiguration.Ilc, true, AsmViewerErrorCode.TieredJitNotSupportedForAot)]
+    public async Task GetJitCodegen_WithTieredJit_ShouldReturnError(
+        string customJit, bool useTieredJit, AsmViewerErrorCode expectedError)
+    {
+        // Arrange
+        var projectContext = CreateProjectContext();
+
+        var config = new JitDisasmConfiguration
+        {
+            SelectedCustomJit = customJit,
+            UseTieredJit = useTieredJit
+        };
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeed);
+        Assert.AreEqual(expectedError, result.FailValue.Code);
+    }
+
+    [Test]
+    public async Task GetJitCodegen_WithFlowgraphsAndAot_ShouldReturnError()
+    {
+        // Arrange
+        var projectContext = CreateProjectContext();
+
+        var config = new JitDisasmConfiguration
+        {
+            SelectedCustomJit = JitDisasmConfiguration.Crossgen,
+            FgEnable = true
+        };
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeed);
+        Assert.AreEqual(AsmViewerErrorCode.FlowgraphsNotSupportedForAot, result.FailValue.Code);
     }
     
     [Test]
-    public void TestClass()
+    public async Task GetJitCodegen_WithMainMethod_ShouldReturnAssemblyCode()
     {
-        TestJitCodegen(x => x.Document.GetText().IndexOf("TestClass", StringComparison.InvariantCulture), new JitDisasmConfiguration());
+        // Arrange
+        var projectContext = CreateProjectContext();
+
+        var config = new JitDisasmConfiguration();
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_mainMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
+        Assert.NotNull(result.Value);
+        Assert.NotNull(result.Value.Result);
+        Assert.IsNotEmpty(result.Value.Result);
+        Assert.True(result.Value.Result.Contains(_mainMethodTarget.ClassName) 
+                    || result.Value.Result.Contains(_mainMethodTarget.MethodName), 
+            "Output should contain method or class name");
+    }
+
+    [Test]
+    public async Task GetJitCodegen_WithMethod_ShouldReturnAssemblyCode()
+    {
+        // Arrange
+        var projectContext = CreateProjectContext();
+
+        var config = new JitDisasmConfiguration();
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
+        Assert.NotNull(result.Value);
+        Assert.NotNull(result.Value.Result);
+        Assert.IsNotEmpty(result.Value.Result);
+        Assert.True(result.Value.Result.Contains(_addMethodTarget.ClassName) 
+                    || result.Value.Result.Contains(_addMethodTarget.MethodName), 
+            "Output should contain method or class name");
+    }
+    
+    [Test]
+    public async Task GetJitCodegen_WithProperty_ShouldReturnAssemblyCode()
+    {
+        // Arrange
+        var projectContext = CreateProjectContext();
+
+        var config = new JitDisasmConfiguration();
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_valuePropertyTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
+        Assert.NotNull(result.Value);
+        Assert.NotNull(result.Value.Result);
+        Assert.IsNotEmpty(result.Value.Result);
+        Assert.True(result.Value.Result.Contains(_valuePropertyTarget.ClassName) 
+                    || result.Value.Result.Contains(_valuePropertyTarget.MethodName), 
+            "Output should contain method or class name");
+    }
+    
+    [Test]
+    public async Task GetJitCodegen_WithMissingMethod_ShouldReturnEmptyOrMinimalOutput()
+    {
+        // Arrange
+        var projectContext = CreateProjectContext();
+
+        var config = new JitDisasmConfiguration();
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_missingMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
+        Assert.NotNull(result.Value);
+        Assert.NotNull(result.Value.Result);
+        Assert.That(result.Value.Result.Length, Is.Zero,
+            "Expected empty or minimal output for missing method");
+    }
+
+    private JitDisasmProjectContext CreateProjectContext([CanBeNull] JitDisasmTargetFramework tfm = null)
+    {
+        return new JitDisasmProjectContext(
+            Sdk: "Microsoft.NET.Sdk",
+            Tfm: tfm ?? new JitDisasmTargetFramework(
+                UniqueString: "net9.0",
+                new Version(9, 0, 0, 0),
+                IsNetCore: true),
+            OutputPath: "bin",
+            ProjectFilePath: _testProjectFile,
+            ProjectDirectory: _testProjectDir,
+            AssemblyName: "TestProject",
+            DotNetCliExePath: "dotnet");
     }
 }

@@ -1,29 +1,77 @@
-<idea-plugin require-restart="true">
+<idea-plugin url="https://github.com/JetBrains/JitAsmViewer" require-restart="true">
   <id>com.jetbrains.rider.plugins.jitasmviewer</id>
-  <name>JitAsmViewer</name>
+  <name>JIT Assembly Viewer</name>
   <version>_PLACEHOLDER_</version>
-  <vendor url="https://project-url">Author</vendor>
+  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
   <idea-version since-build="_PLACEHOLDER_" until-build="_PLACEHOLDER_" />
   <depends>com.intellij.modules.rider</depends>
 
   <description>
 <![CDATA[
-<p>Sample description</p>
+<h2>JIT Assembly Viewer for Rider</h2>
+
+<p><strong>Experimental plugin</strong> that displays JIT-compiled assembly code for C# methods directly in Rider.</p>
+
+<h3>Features</h3>
+<ul>
+  <li>View JIT-compiled assembly for any C# method</li>
+  <li>Configurable JIT optimization settings (tiered compilation, PGO, diffable output)</li>
+  <li>Multiple codegen modes: standard JIT, ReadyToRun (crossgen2), or NativeAOT (ilc)</li>
+  <li>Snapshot and diff view to compare assembly output after code changes</li>
+  <li>Syntax highlighting for assembly code</li>
+</ul>
+
+<h3>How to Use</h3>
+<ol>
+  <li>Place the caret on any C# method, property, constructor, or type declaration in your .NET 6.0+ project</li>
+  <li>Open the JIT Assembly Viewer tool window (View → Tool Windows → ASM Viewer)</li>
+  <li>The plugin will automatically compile and display the JIT assembly for the selected method</li>
+  <li>Configure JIT options via the toolbar to see how different settings affect the generated code</li>
+  <li>Use "Create Snapshot" button to save current assembly, then modify your C# code to see the diff</li>
+</ol>
+
+<h3>Requirements</h3>
+<ul>
+  <li>.NET SDK 6.0 or higher</li>
+  <li>Works only with .NET Core/6+ projects (not .NET Framework)</li>
+</ul>
+
+<h3>Credits</h3>
+<p>This plugin is based on the <a href="https://github.com/EgorBo/Disasmo">Disasmo</a> project by Egor Bogatov.</p>
+
+<h3>Feedback</h3>
+<p>This is an experimental first release. Please report issues and suggestions on <a href="https://github.com/JetBrains/JitAsmViewer/issues">GitHub</a>.</p>
 ]]>
   </description>
-  <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="CefToolWindow"
-                secondary="true"
-                anchor="right"
-                factoryClass="com.jetbrains.rider.plugins.jitasmviewer.JitAsmViewerToolWindowFactory"
-                icon="ReSharperIcons.Common.Bulb"/>
 
-    <rdclient.view key="com.jetbrains.rd.ide.model.BeCefToolWindowPanel"
-                   implementationClass="com.jetbrains.rider.plugins.jitasmviewer.JitAsmViewerToolWindowPanel" />
+  <extensions defaultExtensionNs="com.intellij">
+
+    <fileType name="JitAsm"
+              implementationClass="com.jetbrains.rider.plugins.jitasmviewer.language.AsmFileType"
+              fieldName="INSTANCE"
+              language="JitAsm"
+              extensions="jitasm"/>
+    <lang.syntaxHighlighterFactory language="JitAsm"
+                                   implementationClass="com.jetbrains.rider.plugins.jitasmviewer.language.AsmSyntaxHighlighterFactory"/>
+
+    <toolWindow id="AsmViewer"
+                canCloseContents="false"
+                icon="AllIcons.Actions.ShowCode"
+                anchor="right"
+                factoryClass="com.jetbrains.rider.plugins.jitasmviewer.AsmViewerToolWindowFactory"/>
+
+    <rd.solutionExtListener endpoint="IDE Frontend"
+                            listener="com.jetbrains.rider.plugins.jitasmviewer.AsmViewerHost$ProtocolListener"/>
+
+    <statistics.counterUsagesCollector
+        implementationClass="com.jetbrains.rider.plugins.jitasmviewer.statistics.AsmViewerStatisticsCollector"/>
+
   </extensions>
-    <actions>
-        <action id="com.jetbrains.rider.plugins.jitasmviewer.JitAsmProviderAction"
-                class="com.jetbrains.rider.plugins.jitasmviewer.JitAsmProviderAction"
-                text="View JIt codegen for selected method"/>
+    <actions resource-bundle="messages.AsmViewerBundle">
+        <!-- Show ASM Viewer Action -->
+        <action id="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction"
+                class="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>

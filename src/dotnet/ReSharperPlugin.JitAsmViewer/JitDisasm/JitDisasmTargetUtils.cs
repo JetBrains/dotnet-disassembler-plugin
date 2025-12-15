@@ -1,13 +1,29 @@
 using System;
+using JetBrains.Annotations;
 using JetBrains.ReSharper.Psi;
 using JetBrains.ReSharper.Psi.CSharp.DeclaredElements;
 using JetBrains.ReSharper.Psi.CSharp.Tree;
+using JetBrains.ReSharper.Psi.DataContext;
 using JetBrains.ReSharper.Psi.Tree;
 
 namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 
 public static class JitDisasmTargetUtils
 {
+    [CanBeNull]
+    public static IDeclaration FindValidDeclaration(PsiEditorView editorView)
+    {
+        var psiView = editorView.DefaultSourceFile.ViewDominant();
+        var selectedNode = psiView.GetSelectedTreeNode<ITreeNode>();
+        return selectedNode?.GetContainingNode<IDeclaration>(returnThis: true, predicate: IsValidDisasmTarget);
+    }
+
+    [CanBeNull]
+    public static IDeclaration FindValidDeclaration([CanBeNull] ITreeNode treeNode)
+    {
+        return treeNode?.GetContainingNode<IDeclaration>(returnThis: true, predicate: IsValidDisasmTarget);
+    }
+
     public static DisasmTarget GetTarget(IDeclaredElement declaredElement)
     {
         string target;
@@ -18,7 +34,7 @@ public static class JitDisasmTargetUtils
         ITypeElement containingType =
             declaredElement as ITypeElement ?? (declaredElement as ITypeMember)?.ContainingType ?? (declaredElement as ITypeOwnerDeclaration)?.GetContainingTypeElement();
         if (containingType is null)
-            throw new Exception($"ContainingType is null for {declaredElement}");
+            throw new Exception($"Unable to determine containing type for '{declaredElement.ShortName}' (type: {declaredElement.GetType().Name}). Make sure the method is inside a .NET Core/6+ project.");
 
         // match all for nested types
         if (containingType.GetContainingType() is not null)
@@ -61,10 +77,10 @@ public static class JitDisasmTargetUtils
                 break;
         }
 
-        return new DisasmTarget(target, hostType, methodName);
+        return new DisasmTarget(target, hostType, methodName, null);
     }
     
-    public static bool ValidateTreeNodeForDisasm(ITreeNode node)
+    private static bool IsValidDisasmTarget(ITreeNode node)
     {
         return node is ICSharpFunctionDeclaration
             or IClassDeclaration

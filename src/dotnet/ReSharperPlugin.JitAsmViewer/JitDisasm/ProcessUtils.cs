@@ -4,17 +4,12 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using JetBrains.Threading;
-using JetBrains.Util;
-using JetBrains.Util.Logging;
 
 namespace ReSharperPlugin.JitAsmViewer.JitDisasm;
 
 public static class ProcessUtils
 {
-    private static ILogger ourLogger = Logger.GetLogger(typeof(ProcessUtils));
-
-    public static async ValueTask<ProcessResult> RunProcess(
+    public static async ValueTask<ProcessResult> RunProcessAsync(
         string path, 
         string args = "", 
         Dictionary<string, string> envVars = null, 
@@ -22,8 +17,6 @@ public static class ProcessUtils
         Action<bool, string> outputLogger = null, 
         CancellationToken cancellationToken = default)
     {
-        ourLogger.Verbose($"\nExecuting a command in directory \"{workingDir}\":\n\t{path} {args}\nEnv.vars:\n{DumpEnvVars(envVars)}");
-
         var logger = new StringBuilder();
         var loggerForErrors = new StringBuilder();
         Process process = null;
@@ -67,17 +60,18 @@ public static class ProcessUtils
             process.BeginErrorReadLine();
 
             cancellationToken.ThrowIfCancellationRequested();
-            if (JetDispatcher.CurrentDispatcher.IsAsyncBehaviorProhibited)
-                process.WaitForExit();
-            else
-                await process.WaitForExitAsync(cancellationToken);
+            await process.WaitForExitAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
 
             return new ProcessResult { Error = loggerForErrors.ToString().Trim('\r', '\n'), Output = logger.ToString().Trim('\r', '\n') };
         }
         catch (Exception e)
         {
-            return new ProcessResult { Error = $"RunProcess failed:{e.Message}.\npath={path}\nargs={args}\nworkingdir={workingDir ?? Environment.CurrentDirectory}\n{loggerForErrors}" };
+            return new ProcessResult
+            {
+                Error = $"RunProcess failed:{e.Message}.\npath={path}\nargs={args}\nworkingdir={workingDir ?? Environment.CurrentDirectory}\n{loggerForErrors}",
+                Exception = e
+            };
         }
         finally
         {
@@ -130,4 +124,6 @@ public class ProcessResult
 {
     public string Output { get; set; }
     public string Error { get; set; }
+    public Exception Exception { get; set; }
+    public bool IsSuccessful => Exception == null && string.IsNullOrEmpty(Error);
 }
