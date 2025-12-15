@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream
 plugins {
     id("java")
     alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.changelog)
     id("org.jetbrains.intellij.platform") version "2.10.4"     // See https://github.com/JetBrains/intellij-platform-gradle-plugin/releases
     id("me.filippov.gradle.jvm.wrapper") version "0.14.0"
 }
@@ -181,6 +182,11 @@ intellijPlatform {
             recommended()
         }
     }
+}
+
+changelog {
+    groups.empty()
+    repositoryUrl.set(providers.gradleProperty("PluginRepositoryUrl"))
 }
 
 tasks.runIde {
