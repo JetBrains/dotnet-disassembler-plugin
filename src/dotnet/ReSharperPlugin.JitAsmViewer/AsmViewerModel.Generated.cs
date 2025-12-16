@@ -112,7 +112,7 @@ namespace JetBrains.Rider.Model
     
     
     
-    protected override long SerializationHash => -7893216463214670635L;
+    protected override long SerializationHash => -7495926793394799236L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -161,7 +161,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:61</p>
+  /// <p>Generated from: AsmViewerModel.kt:60</p>
   /// </summary>
   public sealed class CompilationResult : IPrintable, IEquatable<CompilationResult>
   {
@@ -390,7 +390,6 @@ namespace JetBrains.Rider.Model
     public bool UseNoRestoreFlag {get; private set;}
     public bool UseDotnetPublishForReload {get; private set;}
     public bool UseDotnetBuildForReload {get; private set;}
-    public bool UseUnloadableContext {get; private set;}
     public bool DontGuessTFM {get; private set;}
     [CanBeNull] public string SelectedCustomJit {get; private set;}
     
@@ -405,7 +404,6 @@ namespace JetBrains.Rider.Model
       bool useNoRestoreFlag,
       bool useDotnetPublishForReload,
       bool useDotnetBuildForReload,
-      bool useUnloadableContext,
       bool dontGuessTFM,
       [CanBeNull] string selectedCustomJit
     )
@@ -418,13 +416,12 @@ namespace JetBrains.Rider.Model
       UseNoRestoreFlag = useNoRestoreFlag;
       UseDotnetPublishForReload = useDotnetPublishForReload;
       UseDotnetBuildForReload = useDotnetBuildForReload;
-      UseUnloadableContext = useUnloadableContext;
       DontGuessTFM = dontGuessTFM;
       SelectedCustomJit = selectedCustomJit;
     }
     //secondary constructor
     //deconstruct trait
-    public void Deconstruct(out bool showAsmComments, out bool diffable, out bool useTieredJit, out bool usePGO, out bool runAppMode, out bool useNoRestoreFlag, out bool useDotnetPublishForReload, out bool useDotnetBuildForReload, out bool useUnloadableContext, out bool dontGuessTFM, [CanBeNull] out string selectedCustomJit)
+    public void Deconstruct(out bool showAsmComments, out bool diffable, out bool useTieredJit, out bool usePGO, out bool runAppMode, out bool useNoRestoreFlag, out bool useDotnetPublishForReload, out bool useDotnetBuildForReload, out bool dontGuessTFM, [CanBeNull] out string selectedCustomJit)
     {
       showAsmComments = ShowAsmComments;
       diffable = Diffable;
@@ -434,7 +431,6 @@ namespace JetBrains.Rider.Model
       useNoRestoreFlag = UseNoRestoreFlag;
       useDotnetPublishForReload = UseDotnetPublishForReload;
       useDotnetBuildForReload = UseDotnetBuildForReload;
-      useUnloadableContext = UseUnloadableContext;
       dontGuessTFM = DontGuessTFM;
       selectedCustomJit = SelectedCustomJit;
     }
@@ -450,10 +446,9 @@ namespace JetBrains.Rider.Model
       var useNoRestoreFlag = reader.ReadBool();
       var useDotnetPublishForReload = reader.ReadBool();
       var useDotnetBuildForReload = reader.ReadBool();
-      var useUnloadableContext = reader.ReadBool();
       var dontGuessTFM = reader.ReadBool();
       var selectedCustomJit = ReadStringNullable(ctx, reader);
-      var _result = new JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, useUnloadableContext, dontGuessTFM, selectedCustomJit);
+      var _result = new JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, dontGuessTFM, selectedCustomJit);
       return _result;
     };
     public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
@@ -468,7 +463,6 @@ namespace JetBrains.Rider.Model
       writer.Write(value.UseNoRestoreFlag);
       writer.Write(value.UseDotnetPublishForReload);
       writer.Write(value.UseDotnetBuildForReload);
-      writer.Write(value.UseUnloadableContext);
       writer.Write(value.DontGuessTFM);
       WriteStringNullable(ctx, writer, value.SelectedCustomJit);
     };
@@ -490,7 +484,7 @@ namespace JetBrains.Rider.Model
     {
       if (ReferenceEquals(null, other)) return false;
       if (ReferenceEquals(this, other)) return true;
-      return ShowAsmComments == other.ShowAsmComments && Diffable == other.Diffable && UseTieredJit == other.UseTieredJit && UsePGO == other.UsePGO && RunAppMode == other.RunAppMode && UseNoRestoreFlag == other.UseNoRestoreFlag && UseDotnetPublishForReload == other.UseDotnetPublishForReload && UseDotnetBuildForReload == other.UseDotnetBuildForReload && UseUnloadableContext == other.UseUnloadableContext && DontGuessTFM == other.DontGuessTFM && Equals(SelectedCustomJit, other.SelectedCustomJit);
+      return ShowAsmComments == other.ShowAsmComments && Diffable == other.Diffable && UseTieredJit == other.UseTieredJit && UsePGO == other.UsePGO && RunAppMode == other.RunAppMode && UseNoRestoreFlag == other.UseNoRestoreFlag && UseDotnetPublishForReload == other.UseDotnetPublishForReload && UseDotnetBuildForReload == other.UseDotnetBuildForReload && DontGuessTFM == other.DontGuessTFM && Equals(SelectedCustomJit, other.SelectedCustomJit);
     }
     //hash code trait
     public override int GetHashCode()
@@ -505,7 +499,6 @@ namespace JetBrains.Rider.Model
         hash = hash * 31 + UseNoRestoreFlag.GetHashCode();
         hash = hash * 31 + UseDotnetPublishForReload.GetHashCode();
         hash = hash * 31 + UseDotnetBuildForReload.GetHashCode();
-        hash = hash * 31 + UseUnloadableContext.GetHashCode();
         hash = hash * 31 + DontGuessTFM.GetHashCode();
         hash = hash * 31 + (SelectedCustomJit != null ? SelectedCustomJit.GetHashCode() : 0);
         return hash;
@@ -524,7 +517,6 @@ namespace JetBrains.Rider.Model
         printer.Print("useNoRestoreFlag = "); UseNoRestoreFlag.PrintEx(printer); printer.Println();
         printer.Print("useDotnetPublishForReload = "); UseDotnetPublishForReload.PrintEx(printer); printer.Println();
         printer.Print("useDotnetBuildForReload = "); UseDotnetBuildForReload.PrintEx(printer); printer.Println();
-        printer.Print("useUnloadableContext = "); UseUnloadableContext.PrintEx(printer); printer.Println();
         printer.Print("dontGuessTFM = "); DontGuessTFM.PrintEx(printer); printer.Println();
         printer.Print("selectedCustomJit = "); SelectedCustomJit.PrintEx(printer); printer.Println();
       }

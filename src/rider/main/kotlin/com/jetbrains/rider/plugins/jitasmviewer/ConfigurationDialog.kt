@@ -68,7 +68,6 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 useNoRestoreFlag = buildPanel.useNoRestoreFlag,
                 useDotnetPublishForReload = buildPanel.useDotnetPublishForReload,
                 useDotnetBuildForReload = buildPanel.useDotnetBuildForReload,
-                useUnloadableContext = jitPanel.useUnloadableContext,
                 dontGuessTFM = buildPanel.dontGuessTFM,
                 selectedCustomJit = jitPanel.selectedCustomJit
             )
@@ -104,7 +103,6 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     private class JitOptionsPanel(config: JitConfiguration) {
         private val useTieredJitCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.tiered"), config.useTieredJit)
         private val usePGOCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.pgo"), config.usePGO)
-        private val useUnloadableContextCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.unloadable.context"), config.useUnloadableContext)
 
         private val jitCompilerCombo = JComboBox(arrayOf("clrjit.dll", "crossgen2.dll (R2R)", "ilc (NativeAOT)")).apply {
             selectedItem = config.selectedCustomJit ?: "clrjit.dll"
@@ -112,7 +110,6 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
 
         val useTieredJit: Boolean get() = useTieredJitCheckbox.isSelected
         val usePGO: Boolean get() = usePGOCheckbox.isSelected
-        val useUnloadableContext: Boolean get() = useUnloadableContextCheckbox.isSelected
         val selectedCustomJit: String? get() = jitCompilerCombo.selectedItem?.toString()
 
         init {
@@ -127,7 +124,6 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
             formBuilder
                 .addComponent(useTieredJitCheckbox)
                 .addComponent(usePGOCheckbox)
-                .addComponent(useUnloadableContextCheckbox)
                 .addVerticalGap(10)
                 .addLabeledComponent(AsmViewerBundle.message("jit.compiler.label"), jitCompilerCombo)
         }

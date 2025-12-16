@@ -17,11 +17,11 @@ public static class JitDisasmConfigurationFactory
             UseNoRestoreFlag = config.UseNoRestoreFlag,
             UseDotnetPublishForReload = config.UseDotnetPublishForReload,
             UseDotnetBuildForReload = config.UseDotnetBuildForReload,
-            UseUnloadableContext = config.UseUnloadableContext,
             DontGuessTfm = config.DontGuessTFM,
             SelectedCustomJit = config.SelectedCustomJit ?? JitDisasmConfiguration.DefaultJit,
 
             // Advanced properties use defaults (not exposed in UI)
+            UseUnloadableContext = false,
             JitDumpInsteadOfDisasm = false,
             UseCustomRuntime = false,
             FgEnable = false,

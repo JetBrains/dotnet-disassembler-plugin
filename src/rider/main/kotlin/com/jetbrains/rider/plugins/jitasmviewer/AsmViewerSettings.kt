@@ -17,7 +17,6 @@ class JitConfigurationState : BaseState() {
     var useNoRestoreFlag by property(false)
     var useDotnetPublishForReload by property(false)
     var useDotnetBuildForReload by property(false)
-    var useUnloadableContext by property(false)
     var dontGuessTFM by property(false)
     var selectedCustomJit by string(null)
 }
@@ -57,7 +56,6 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         useNoRestoreFlag = state.jit.useNoRestoreFlag,
         useDotnetPublishForReload = state.jit.useDotnetPublishForReload,
         useDotnetBuildForReload = state.jit.useDotnetBuildForReload,
-        useUnloadableContext = state.jit.useUnloadableContext,
         dontGuessTFM = state.jit.dontGuessTFM,
         selectedCustomJit = state.jit.selectedCustomJit
     )
@@ -71,7 +69,6 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         state.jit.useNoRestoreFlag = config.useNoRestoreFlag
         state.jit.useDotnetPublishForReload = config.useDotnetPublishForReload
         state.jit.useDotnetBuildForReload = config.useDotnetBuildForReload
-        state.jit.useUnloadableContext = config.useUnloadableContext
         state.jit.dontGuessTFM = config.dontGuessTFM
         state.jit.selectedCustomJit = config.selectedCustomJit
         fireChangeListeners()
