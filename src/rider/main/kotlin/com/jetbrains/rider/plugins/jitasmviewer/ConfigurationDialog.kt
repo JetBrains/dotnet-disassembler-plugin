@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.ide.model.JitConfiguration
@@ -68,7 +69,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 useNoRestoreFlag = buildPanel.useNoRestoreFlag,
                 useDotnetPublishForReload = buildPanel.useDotnetPublishForReload,
                 useDotnetBuildForReload = buildPanel.useDotnetBuildForReload,
-                dontGuessTFM = buildPanel.dontGuessTFM,
+                targetFrameworkOverride = buildPanel.targetFrameworkOverride,
                 selectedCustomJit = jitPanel.selectedCustomJit
             )
         )
@@ -135,13 +136,16 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         private val noRestoreCheckbox = JBCheckBox(AsmViewerBundle.message("build.no.restore"), config.useNoRestoreFlag)
 
         private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("build.run.app.mode"), config.runAppMode)
-        private val dontGuessTFMCheckbox = JBCheckBox(AsmViewerBundle.message("build.dont.guess.tfm"), config.dontGuessTFM)
+        private val targetFrameworkField = JBTextField(config.targetFrameworkOverride ?: "").apply {
+            emptyText.text = AsmViewerBundle.message("build.target.framework.placeholder")
+            columns = 15
+        }
 
         val useDotnetBuildForReload: Boolean get() = useBuildRadio.isSelected
         val useDotnetPublishForReload: Boolean get() = usePublishRadio.isSelected
         val useNoRestoreFlag: Boolean get() = noRestoreCheckbox.isSelected && useBuildRadio.isSelected
         val runAppMode: Boolean get() = runAppModeCheckbox.isSelected
-        val dontGuessTFM: Boolean get() = dontGuessTFMCheckbox.isSelected
+        val targetFrameworkOverride: String? get() = targetFrameworkField.text.takeIf { it.isNotBlank() }
 
         init {
             val buttonGroup = ButtonGroup()
@@ -168,7 +172,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 .addComponent(usePublishRadio)
                 .addVerticalGap(10)
                 .addComponent(runAppModeCheckbox)
-                .addComponent(dontGuessTFMCheckbox)
+                .addLabeledComponent(AsmViewerBundle.message("build.target.framework.label"), targetFrameworkField)
         }
 
         private fun createIndented(component: JComponent) = JPanel(BorderLayout()).apply {

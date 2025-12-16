@@ -17,8 +17,10 @@ public static class JitDisasmConfigurationFactory
             UseNoRestoreFlag = config.UseNoRestoreFlag,
             UseDotnetPublishForReload = config.UseDotnetPublishForReload,
             UseDotnetBuildForReload = config.UseDotnetBuildForReload,
-            DontGuessTfm = config.DontGuessTFM,
             SelectedCustomJit = config.SelectedCustomJit ?? JitDisasmConfiguration.DefaultJit,
+            OverridenTfm = !string.IsNullOrWhiteSpace(config.TargetFrameworkOverride)
+                ? JitDisasmTargetFrameworkFactory.Create(config.TargetFrameworkOverride)
+                : null,
 
             // Advanced properties use defaults (not exposed in UI)
             UseUnloadableContext = false,
@@ -30,7 +32,7 @@ public static class JitDisasmConfigurationFactory
             IlcArgs = null,
             PathToLocalCoreClr = null,
             OverridenJitDisasm = null,
-            OverridenTfm = null,
+            DontGuessTfm = false,
             Arch = RuntimePlatformUtils.GetCurrentArch()
         };
     }

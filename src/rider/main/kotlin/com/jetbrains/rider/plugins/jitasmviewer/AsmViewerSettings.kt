@@ -17,7 +17,7 @@ class JitConfigurationState : BaseState() {
     var useNoRestoreFlag by property(false)
     var useDotnetPublishForReload by property(false)
     var useDotnetBuildForReload by property(false)
-    var dontGuessTFM by property(false)
+    var targetFrameworkOverride by string(null)
     var selectedCustomJit by string(null)
 }
 
@@ -56,7 +56,7 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         useNoRestoreFlag = state.jit.useNoRestoreFlag,
         useDotnetPublishForReload = state.jit.useDotnetPublishForReload,
         useDotnetBuildForReload = state.jit.useDotnetBuildForReload,
-        dontGuessTFM = state.jit.dontGuessTFM,
+        targetFrameworkOverride = state.jit.targetFrameworkOverride,
         selectedCustomJit = state.jit.selectedCustomJit
     )
 
@@ -69,7 +69,7 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         state.jit.useNoRestoreFlag = config.useNoRestoreFlag
         state.jit.useDotnetPublishForReload = config.useDotnetPublishForReload
         state.jit.useDotnetBuildForReload = config.useDotnetBuildForReload
-        state.jit.dontGuessTFM = config.dontGuessTFM
+        state.jit.targetFrameworkOverride = config.targetFrameworkOverride
         state.jit.selectedCustomJit = config.selectedCustomJit
         fireChangeListeners()
     }

@@ -43,7 +43,7 @@ class AsmViewerModel private constructor(
         
         
         
-        const val serializationHash = -7495926793394799236L
+        const val serializationHash = 2217888023682860089L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -308,7 +308,7 @@ data class JitConfiguration (
     val useNoRestoreFlag: Boolean,
     val useDotnetPublishForReload: Boolean,
     val useDotnetBuildForReload: Boolean,
-    val dontGuessTFM: Boolean,
+    val targetFrameworkOverride: String?,
     val selectedCustomJit: String?
 ) : IPrintable {
     //companion
@@ -327,9 +327,9 @@ data class JitConfiguration (
             val useNoRestoreFlag = buffer.readBool()
             val useDotnetPublishForReload = buffer.readBool()
             val useDotnetBuildForReload = buffer.readBool()
-            val dontGuessTFM = buffer.readBool()
+            val targetFrameworkOverride = buffer.readNullable { buffer.readString() }
             val selectedCustomJit = buffer.readNullable { buffer.readString() }
-            return JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, dontGuessTFM, selectedCustomJit)
+            return JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCustomJit)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: JitConfiguration)  {
@@ -341,7 +341,7 @@ data class JitConfiguration (
             buffer.writeBool(value.useNoRestoreFlag)
             buffer.writeBool(value.useDotnetPublishForReload)
             buffer.writeBool(value.useDotnetBuildForReload)
-            buffer.writeBool(value.dontGuessTFM)
+            buffer.writeNullable(value.targetFrameworkOverride) { buffer.writeString(it) }
             buffer.writeNullable(value.selectedCustomJit) { buffer.writeString(it) }
         }
         
@@ -366,7 +366,7 @@ data class JitConfiguration (
         if (useNoRestoreFlag != other.useNoRestoreFlag) return false
         if (useDotnetPublishForReload != other.useDotnetPublishForReload) return false
         if (useDotnetBuildForReload != other.useDotnetBuildForReload) return false
-        if (dontGuessTFM != other.dontGuessTFM) return false
+        if (targetFrameworkOverride != other.targetFrameworkOverride) return false
         if (selectedCustomJit != other.selectedCustomJit) return false
         
         return true
@@ -382,7 +382,7 @@ data class JitConfiguration (
         __r = __r*31 + useNoRestoreFlag.hashCode()
         __r = __r*31 + useDotnetPublishForReload.hashCode()
         __r = __r*31 + useDotnetBuildForReload.hashCode()
-        __r = __r*31 + dontGuessTFM.hashCode()
+        __r = __r*31 + if (targetFrameworkOverride != null) targetFrameworkOverride.hashCode() else 0
         __r = __r*31 + if (selectedCustomJit != null) selectedCustomJit.hashCode() else 0
         return __r
     }
@@ -398,7 +398,7 @@ data class JitConfiguration (
             print("useNoRestoreFlag = "); useNoRestoreFlag.print(printer); println()
             print("useDotnetPublishForReload = "); useDotnetPublishForReload.print(printer); println()
             print("useDotnetBuildForReload = "); useDotnetBuildForReload.print(printer); println()
-            print("dontGuessTFM = "); dontGuessTFM.print(printer); println()
+            print("targetFrameworkOverride = "); targetFrameworkOverride.print(printer); println()
             print("selectedCustomJit = "); selectedCustomJit.print(printer); println()
         }
         printer.print(")")

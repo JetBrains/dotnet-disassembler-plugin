@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using JetBrains.Util.Dotnet.TargetFrameworkIds;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
 
@@ -12,5 +13,11 @@ public static class JitDisasmTargetFrameworkFactory
                         || (tfmId.UniqueString.StartsWith("net") && tfmId.Version.Major >= 5);
 
         return new JitDisasmTargetFramework(tfmId.UniqueString, tfmId.Version, isNetCore);
+    }
+
+    public static JitDisasmTargetFramework Create([NotNull] string tfmString)
+    {
+        var tfmId = TargetFrameworkId.Create(tfmString);
+        return Create(tfmId);
     }
 }

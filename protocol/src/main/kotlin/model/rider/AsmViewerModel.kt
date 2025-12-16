@@ -53,7 +53,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("useNoRestoreFlag", bool)
         field("useDotnetPublishForReload", bool)
         field("useDotnetBuildForReload", bool)
-        field("dontGuessTFM", bool)
+        field("targetFrameworkOverride", string.nullable)
         field("selectedCustomJit", string.nullable)
     }
 

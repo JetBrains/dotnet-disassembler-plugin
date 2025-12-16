@@ -48,7 +48,7 @@ public class JitCodegenProvider(ILogger logger)
         }
 
         var resultOutDir = Path.Combine(projectContext.OutputPath!,
-            "JITDISASM" + (configuration.UseDotnetPublishForReload ? "_published" : ""));
+            "JITDISASM" + (configuration.UseDotnetPublishForReload ? "_published" : ""), tfm.UniqueString);
 
         var dotnetCliExePath = projectContext.DotNetCliExePath!;
         var projectFilePath = projectContext.ProjectFilePath!;
