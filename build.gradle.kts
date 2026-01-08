@@ -1,6 +1,7 @@
 import com.jetbrains.plugin.structure.base.utils.isFile
 import groovy.ant.FileNameFinder
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.Constants
 import java.io.ByteArrayOutputStream
 
@@ -202,6 +203,19 @@ tasks.patchPluginXml {
     changeNotes.set(changelogMatches.map {
         it.groups[1]!!.value.replace("(?s)\r?\n".toRegex(), "<br />\n")
     }.take(1).joinToString())
+
+    val descriptionStart = "<!-- Plugin description -->"
+    val descriptionEnd = "<!-- Plugin description end -->"
+    val readmeText = file("${rootDir}/README.md").readText()
+    val readmeLines = readmeText.lines()
+
+    if (readmeLines.containsAll(listOf(descriptionStart, descriptionEnd))) {
+        val descriptionLines = readmeLines.subList(
+            readmeLines.indexOf(descriptionStart) + 1,
+            readmeLines.indexOf(descriptionEnd)
+        )
+        pluginDescription.set(markdownToHTML(descriptionLines.joinToString("\n")))
+    }
 }
 
 tasks.prepareSandbox {
