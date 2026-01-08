@@ -3,6 +3,7 @@ package com.jetbrains.rider.plugins.jitasmviewer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -136,6 +137,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         private val noRestoreCheckbox = JBCheckBox(AsmViewerBundle.message("build.no.restore"), config.useNoRestoreFlag)
 
         private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("build.run.app.mode"), config.runAppMode)
+        private val runAppModeHelp = ContextHelpLabel.create(AsmViewerBundle.message("build.run.project.help"))
         private val targetFrameworkField = JBTextField(config.targetFrameworkOverride ?: "").apply {
             emptyText.text = AsmViewerBundle.message("build.target.framework.placeholder")
             columns = 15
@@ -171,8 +173,15 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 .addComponent(createIndented(noRestoreCheckbox))
                 .addComponent(usePublishRadio)
                 .addVerticalGap(10)
-                .addComponent(runAppModeCheckbox)
+                .addComponent(createWithHelpLabel(runAppModeCheckbox, runAppModeHelp))
                 .addLabeledComponent(AsmViewerBundle.message("build.target.framework.label"), targetFrameworkField)
+        }
+
+        private fun createWithHelpLabel(component: JComponent, helpLabel: JComponent) = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.X_AXIS)
+            add(component)
+            add(Box.createHorizontalStrut(JBUI.scale(4)))
+            add(helpLabel)
         }
 
         private fun createIndented(component: JComponent) = JPanel(BorderLayout()).apply {
