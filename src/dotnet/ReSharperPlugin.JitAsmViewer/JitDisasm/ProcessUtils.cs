@@ -19,6 +19,7 @@ public static class ProcessUtils
     {
         var logger = new StringBuilder();
         var loggerForErrors = new StringBuilder();
+        var loggerLock = new object();
         Process process = null;
         try
         {
@@ -48,13 +49,19 @@ public static class ProcessUtils
             process!.ErrorDataReceived += (sender, e) =>
             {
                 outputLogger?.Invoke(true, e.Data + "\n");
-                logger.AppendLine(e.Data);
-                loggerForErrors.AppendLine(e.Data);
+                lock (loggerLock)
+                {
+                    logger.AppendLine(e.Data);
+                    loggerForErrors.AppendLine(e.Data);
+                }
             };
             process.OutputDataReceived += (sender, e) =>
             {
                 outputLogger?.Invoke(false, e.Data + "\n");
-                logger.AppendLine(e.Data);
+                lock (loggerLock)
+                {
+                    logger.AppendLine(e.Data);
+                }
             };
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
