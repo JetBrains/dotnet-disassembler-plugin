@@ -26,6 +26,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     private val generalPanel = GeneralOptionsPanel(currentConfig)
     private val jitPanel = JitOptionsPanel(currentConfig)
     private val buildPanel = BuildOptionsPanel(currentConfig)
+    private val runtimePanel = RuntimeOptionsPanel(currentConfig)
 
     init {
         logger.debug("Opening configuration dialog")
@@ -46,6 +47,10 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
 
         formBuilder.addComponent(createSectionHeader(AsmViewerBundle.message("section.build")))
         buildPanel.addToForm(formBuilder)
+        formBuilder.addSeparator()
+
+        formBuilder.addComponent(createSectionHeader(AsmViewerBundle.message("section.runtime")))
+        runtimePanel.addToForm(formBuilder)
 
         val scrollPane = JBScrollPane(formBuilder.panel).apply {
             preferredSize = Dimension(550, 450)
@@ -66,13 +71,13 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 diffable = generalPanel.diffable,
                 useTieredJit = jitPanel.useTieredJit,
                 usePGO = jitPanel.usePGO,
-                runAppMode = buildPanel.runAppMode,
+                runAppMode = runtimePanel.runAppMode,
                 useNoRestoreFlag = buildPanel.useNoRestoreFlag,
                 useDotnetPublishForReload = buildPanel.useDotnetPublishForReload,
                 useDotnetBuildForReload = buildPanel.useDotnetBuildForReload,
                 targetFrameworkOverride = buildPanel.targetFrameworkOverride,
                 selectedCustomJit = jitPanel.selectedCustomJit,
-                disassemblyTimeoutSeconds = buildPanel.disassemblyTimeoutSeconds
+                disassemblyTimeoutSeconds = runtimePanel.disassemblyTimeoutSeconds
             )
         )
 
@@ -136,22 +141,15 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         private val useBuildRadio = JRadioButton(AsmViewerBundle.message("build.use.build"), true)
         private val usePublishRadio = JRadioButton(AsmViewerBundle.message("build.use.publish"), config.useDotnetPublishForReload)
         private val noRestoreCheckbox = JBCheckBox(AsmViewerBundle.message("build.no.restore"), config.useNoRestoreFlag)
-
-        private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("build.run.app.mode"), config.runAppMode)
-        private val runAppModeHelp = ContextHelpLabel.create(AsmViewerBundle.message("build.run.project.help"))
         private val targetFrameworkField = JBTextField(config.targetFrameworkOverride ?: "").apply {
             emptyText.text = AsmViewerBundle.message("build.target.framework.placeholder")
             columns = 15
         }
-        private val timeoutSpinner = JSpinner(SpinnerNumberModel(config.disassemblyTimeoutSeconds, 0, 3600, 10))
-        private val timeoutHelp = ContextHelpLabel.create(AsmViewerBundle.message("build.timeout.help"))
 
         val useDotnetBuildForReload: Boolean get() = useBuildRadio.isSelected
         val useDotnetPublishForReload: Boolean get() = usePublishRadio.isSelected
         val useNoRestoreFlag: Boolean get() = noRestoreCheckbox.isSelected && useBuildRadio.isSelected
-        val runAppMode: Boolean get() = runAppModeCheckbox.isSelected
         val targetFrameworkOverride: String? get() = targetFrameworkField.text.takeIf { it.isNotBlank() }
-        val disassemblyTimeoutSeconds: Int get() = timeoutSpinner.value as Int
 
         init {
             val buttonGroup = ButtonGroup()
@@ -177,9 +175,28 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 .addComponent(createIndented(noRestoreCheckbox))
                 .addComponent(usePublishRadio)
                 .addVerticalGap(10)
-                .addComponent(createWithHelpLabel(runAppModeCheckbox, runAppModeHelp))
                 .addLabeledComponent(AsmViewerBundle.message("build.target.framework.label"), targetFrameworkField)
-                .addLabeledComponent(AsmViewerBundle.message("build.timeout.label"), createWithHelpLabel(timeoutSpinner, timeoutHelp))
+        }
+
+        private fun createIndented(component: JComponent) = JPanel(BorderLayout()).apply {
+            border = JBUI.Borders.emptyLeft(20)
+            add(component, BorderLayout.WEST)
+        }
+    }
+
+    private class RuntimeOptionsPanel(config: JitConfiguration) {
+        private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("runtime.run.app.mode"), config.runAppMode)
+        private val runAppModeHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.run.project.help"))
+        private val timeoutSpinner = JSpinner(SpinnerNumberModel(config.disassemblyTimeoutSeconds, 0, 3600, 10))
+        private val timeoutHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.timeout.help"))
+
+        val runAppMode: Boolean get() = runAppModeCheckbox.isSelected
+        val disassemblyTimeoutSeconds: Int get() = timeoutSpinner.value as Int
+
+        fun addToForm(formBuilder: FormBuilder) {
+            formBuilder
+                .addComponent(createWithHelpLabel(runAppModeCheckbox, runAppModeHelp))
+                .addLabeledComponent(AsmViewerBundle.message("runtime.timeout.label"), createWithHelpLabel(timeoutSpinner, timeoutHelp))
         }
 
         private fun createWithHelpLabel(component: JComponent, helpLabel: JComponent) = JPanel().apply {
@@ -187,11 +204,6 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
             add(component)
             add(Box.createHorizontalStrut(JBUI.scale(4)))
             add(helpLabel)
-        }
-
-        private fun createIndented(component: JComponent) = JPanel(BorderLayout()).apply {
-            border = JBUI.Borders.emptyLeft(20)
-            add(component, BorderLayout.WEST)
         }
     }
 }
