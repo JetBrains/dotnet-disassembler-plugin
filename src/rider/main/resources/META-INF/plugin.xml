@@ -56,7 +56,7 @@
 
     <toolWindow id="AsmViewer"
                 canCloseContents="false"
-                icon="AllIcons.Actions.ShowCode"
+                icon="AllIcons.Debugger.Db_primitive"
                 anchor="right"
                 factoryClass="com.jetbrains.rider.plugins.jitasmviewer.AsmViewerToolWindowFactory"/>
 

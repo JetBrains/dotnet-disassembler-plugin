@@ -8,12 +8,13 @@ using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Feature.Services.Intentions;
 using JetBrains.ReSharper.Feature.Services.Protocol;
+using JetBrains.ReSharper.Feature.Services.Resources;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.Rider.Model;
 using JetBrains.TextControl;
 using JetBrains.Util;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
-using ReSharperPlugin.JitAsmViewer.Resources;
+using Strings = ReSharperPlugin.JitAsmViewer.Resources.Strings;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
@@ -60,6 +61,6 @@ public class ShowAsmViewerContextAction : ContextActionBase
 
     public override IEnumerable<IntentionAction> CreateBulbItems()
     {
-        return new[] { new IntentionAction(this, Text, null, Anchor) };
+        return this.ToContextActionIntentions(Anchor, LocalHistoryThemedIcons.Diff.Id);
     }
 }
