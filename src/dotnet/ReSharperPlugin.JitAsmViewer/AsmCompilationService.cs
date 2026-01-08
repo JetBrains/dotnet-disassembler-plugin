@@ -24,6 +24,9 @@ public class AsmCompilationService(AsmViewerUsageCollector usageCollector)
         if (!validationResult.Succeed)
             return Result.FailWithValue(validationResult.FailValue);
 
+        if (target.IsGenericMethod && !configuration.RunAppMode)
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.GenericMethodsRequireRunMode));
+
         usageCollector.LogConfigurationSaved(configuration);
         usageCollector.LogProjectInfo(projectContext);
 

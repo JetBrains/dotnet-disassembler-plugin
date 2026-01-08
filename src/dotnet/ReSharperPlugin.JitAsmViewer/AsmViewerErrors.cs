@@ -26,6 +26,7 @@ public enum AsmViewerErrorCode
     FlowgraphsForClassNotSupported,
     UnsupportedTargetFramework,
     CustomRuntimeRequiresNet7,
+    GenericMethodsRequireRunMode,
 
     // Compilation errors
     CompilationFailed,

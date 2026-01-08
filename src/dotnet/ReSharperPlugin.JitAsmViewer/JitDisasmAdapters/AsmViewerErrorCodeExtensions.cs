@@ -24,6 +24,7 @@ public static class AsmViewerErrorCodeExtensions
         AsmViewerErrorCode.FlowgraphsForClassNotSupported => ErrorCode.FlowgraphsForClassNotSupported,
         AsmViewerErrorCode.UnsupportedTargetFramework => ErrorCode.UnsupportedTargetFramework,
         AsmViewerErrorCode.CustomRuntimeRequiresNet7 => ErrorCode.CustomRuntimeRequiresNet7,
+        AsmViewerErrorCode.GenericMethodsRequireRunMode => ErrorCode.GenericMethodsRequireRunMode,
 
         // Compilation errors
         AsmViewerErrorCode.CompilationFailed => ErrorCode.CompilationFailed,

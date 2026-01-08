@@ -43,7 +43,7 @@ class AsmViewerModel private constructor(
         
         
         
-        const val serializationHash = 2217888023682860089L
+        const val serializationHash = 3144762645277635381L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -124,7 +124,7 @@ val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::Asm
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:60]
+ * #### Generated from [AsmViewerModel.kt:61]
  */
 data class CompilationResult (
     val content: String?,
@@ -203,6 +203,7 @@ enum class ErrorCode {
     FlowgraphsForClassNotSupported, 
     UnsupportedTargetFramework, 
     CustomRuntimeRequiresNet7, 
+    GenericMethodsRequireRunMode, 
     CompilationFailed, 
     ProjectPathNotFound, 
     DotnetBuildFailed, 
@@ -232,7 +233,7 @@ enum class ErrorCode {
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:42]
+ * #### Generated from [AsmViewerModel.kt:43]
  */
 data class ErrorInfo (
     val code: ErrorCode,
@@ -297,7 +298,7 @@ data class ErrorInfo (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:47]
+ * #### Generated from [AsmViewerModel.kt:48]
  */
 data class JitConfiguration (
     val showAsmComments: Boolean,

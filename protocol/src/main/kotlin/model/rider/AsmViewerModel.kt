@@ -22,6 +22,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         +"FlowgraphsForClassNotSupported"
         +"UnsupportedTargetFramework"
         +"CustomRuntimeRequiresNet7"
+        +"GenericMethodsRequireRunMode"
 
         // Compilation errors
         +"CompilationFailed"

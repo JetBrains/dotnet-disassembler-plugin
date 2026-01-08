@@ -29,6 +29,7 @@ public static class JitDisasmTargetUtils
         string target;
         string hostType;
         string methodName;
+        bool isGenericMethod = false;
 
         string prefix = "";
         ITypeElement containingType =
@@ -58,10 +59,11 @@ public static class JitDisasmTargetUtils
                 methodName = "*";
                 hostType = containingType.ShortName;
                 break;
-            case IFunction:
+            case IFunction function:
                 target = prefix + ":" + declaredElement.ShortName;
                 methodName = declaredElement.ShortName;
                 hostType = containingType.ShortName;
+                isGenericMethod = function is ITypeParametersOwner { TypeParameters.Count: > 0 };
                 break;
             case IProperty:
                 target = prefix + ":get_" + declaredElement.ShortName + " " + prefix + ":set_" +
@@ -77,7 +79,7 @@ public static class JitDisasmTargetUtils
                 break;
         }
 
-        return new DisasmTarget(target, hostType, methodName, null);
+        return new DisasmTarget(target, hostType, methodName, isGenericMethod);
     }
     
     private static bool IsValidDisasmTarget(ITreeNode node)
