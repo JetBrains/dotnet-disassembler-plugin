@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Rider.Model;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
 
@@ -21,6 +22,7 @@ public static class JitDisasmConfigurationFactory
             OverridenTfm = !string.IsNullOrWhiteSpace(config.TargetFrameworkOverride)
                 ? JitDisasmTargetFrameworkFactory.Create(config.TargetFrameworkOverride)
                 : null,
+            DisassemblyTimeout = TimeSpan.FromSeconds(config.DisassemblyTimeoutSeconds),
 
             // Advanced properties use defaults (not exposed in UI)
             UseUnloadableContext = false,

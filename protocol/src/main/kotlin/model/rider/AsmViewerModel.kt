@@ -36,6 +36,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         +"CoreClrCheckedNotFound"
 
         // Other errors
+        +"DisassemblyTimeout"
         +"UpdateCancelled"
         +"UnknownError"
     }
@@ -56,6 +57,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("useDotnetBuildForReload", bool)
         field("targetFrameworkOverride", string.nullable)
         field("selectedCustomJit", string.nullable)
+        field("disassemblyTimeoutSeconds", int)
     }
 
     private val CompilationResult = structdef {

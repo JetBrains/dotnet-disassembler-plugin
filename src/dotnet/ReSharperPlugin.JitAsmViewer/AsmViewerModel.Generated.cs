@@ -112,7 +112,7 @@ namespace JetBrains.Rider.Model
     
     
     
-    protected override long SerializationHash => 3144762645277635381L;
+    protected override long SerializationHash => -8113457424028594267L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -161,7 +161,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:61</p>
+  /// <p>Generated from: AsmViewerModel.kt:63</p>
   /// </summary>
   public sealed class CompilationResult : IPrintable, IEquatable<CompilationResult>
   {
@@ -278,13 +278,14 @@ namespace JetBrains.Rider.Model
     DotNetCliNotFound,
     RuntimePackNotFound,
     CoreClrCheckedNotFound,
+    DisassemblyTimeout,
     UpdateCancelled,
     UnknownError
   }
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:43</p>
+  /// <p>Generated from: AsmViewerModel.kt:44</p>
   /// </summary>
   public sealed class ErrorInfo : IPrintable, IEquatable<ErrorInfo>
   {
@@ -377,7 +378,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:48</p>
+  /// <p>Generated from: AsmViewerModel.kt:49</p>
   /// </summary>
   public sealed class JitConfiguration : IPrintable, IEquatable<JitConfiguration>
   {
@@ -393,6 +394,7 @@ namespace JetBrains.Rider.Model
     public bool UseDotnetBuildForReload {get; private set;}
     [CanBeNull] public string TargetFrameworkOverride {get; private set;}
     [CanBeNull] public string SelectedCustomJit {get; private set;}
+    public int DisassemblyTimeoutSeconds {get; private set;}
     
     //private fields
     //primary constructor
@@ -406,7 +408,8 @@ namespace JetBrains.Rider.Model
       bool useDotnetPublishForReload,
       bool useDotnetBuildForReload,
       [CanBeNull] string targetFrameworkOverride,
-      [CanBeNull] string selectedCustomJit
+      [CanBeNull] string selectedCustomJit,
+      int disassemblyTimeoutSeconds
     )
     {
       ShowAsmComments = showAsmComments;
@@ -419,10 +422,11 @@ namespace JetBrains.Rider.Model
       UseDotnetBuildForReload = useDotnetBuildForReload;
       TargetFrameworkOverride = targetFrameworkOverride;
       SelectedCustomJit = selectedCustomJit;
+      DisassemblyTimeoutSeconds = disassemblyTimeoutSeconds;
     }
     //secondary constructor
     //deconstruct trait
-    public void Deconstruct(out bool showAsmComments, out bool diffable, out bool useTieredJit, out bool usePGO, out bool runAppMode, out bool useNoRestoreFlag, out bool useDotnetPublishForReload, out bool useDotnetBuildForReload, [CanBeNull] out string targetFrameworkOverride, [CanBeNull] out string selectedCustomJit)
+    public void Deconstruct(out bool showAsmComments, out bool diffable, out bool useTieredJit, out bool usePGO, out bool runAppMode, out bool useNoRestoreFlag, out bool useDotnetPublishForReload, out bool useDotnetBuildForReload, [CanBeNull] out string targetFrameworkOverride, [CanBeNull] out string selectedCustomJit, out int disassemblyTimeoutSeconds)
     {
       showAsmComments = ShowAsmComments;
       diffable = Diffable;
@@ -434,6 +438,7 @@ namespace JetBrains.Rider.Model
       useDotnetBuildForReload = UseDotnetBuildForReload;
       targetFrameworkOverride = TargetFrameworkOverride;
       selectedCustomJit = SelectedCustomJit;
+      disassemblyTimeoutSeconds = DisassemblyTimeoutSeconds;
     }
     //statics
     
@@ -449,7 +454,8 @@ namespace JetBrains.Rider.Model
       var useDotnetBuildForReload = reader.ReadBool();
       var targetFrameworkOverride = ReadStringNullable(ctx, reader);
       var selectedCustomJit = ReadStringNullable(ctx, reader);
-      var _result = new JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCustomJit);
+      var disassemblyTimeoutSeconds = reader.ReadInt();
+      var _result = new JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCustomJit, disassemblyTimeoutSeconds);
       return _result;
     };
     public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
@@ -466,6 +472,7 @@ namespace JetBrains.Rider.Model
       writer.Write(value.UseDotnetBuildForReload);
       WriteStringNullable(ctx, writer, value.TargetFrameworkOverride);
       WriteStringNullable(ctx, writer, value.SelectedCustomJit);
+      writer.Write(value.DisassemblyTimeoutSeconds);
     };
     public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
     
@@ -485,7 +492,7 @@ namespace JetBrains.Rider.Model
     {
       if (ReferenceEquals(null, other)) return false;
       if (ReferenceEquals(this, other)) return true;
-      return ShowAsmComments == other.ShowAsmComments && Diffable == other.Diffable && UseTieredJit == other.UseTieredJit && UsePGO == other.UsePGO && RunAppMode == other.RunAppMode && UseNoRestoreFlag == other.UseNoRestoreFlag && UseDotnetPublishForReload == other.UseDotnetPublishForReload && UseDotnetBuildForReload == other.UseDotnetBuildForReload && Equals(TargetFrameworkOverride, other.TargetFrameworkOverride) && Equals(SelectedCustomJit, other.SelectedCustomJit);
+      return ShowAsmComments == other.ShowAsmComments && Diffable == other.Diffable && UseTieredJit == other.UseTieredJit && UsePGO == other.UsePGO && RunAppMode == other.RunAppMode && UseNoRestoreFlag == other.UseNoRestoreFlag && UseDotnetPublishForReload == other.UseDotnetPublishForReload && UseDotnetBuildForReload == other.UseDotnetBuildForReload && Equals(TargetFrameworkOverride, other.TargetFrameworkOverride) && Equals(SelectedCustomJit, other.SelectedCustomJit) && DisassemblyTimeoutSeconds == other.DisassemblyTimeoutSeconds;
     }
     //hash code trait
     public override int GetHashCode()
@@ -502,6 +509,7 @@ namespace JetBrains.Rider.Model
         hash = hash * 31 + UseDotnetBuildForReload.GetHashCode();
         hash = hash * 31 + (TargetFrameworkOverride != null ? TargetFrameworkOverride.GetHashCode() : 0);
         hash = hash * 31 + (SelectedCustomJit != null ? SelectedCustomJit.GetHashCode() : 0);
+        hash = hash * 31 + DisassemblyTimeoutSeconds.GetHashCode();
         return hash;
       }
     }
@@ -520,6 +528,7 @@ namespace JetBrains.Rider.Model
         printer.Print("useDotnetBuildForReload = "); UseDotnetBuildForReload.PrintEx(printer); printer.Println();
         printer.Print("targetFrameworkOverride = "); TargetFrameworkOverride.PrintEx(printer); printer.Println();
         printer.Print("selectedCustomJit = "); SelectedCustomJit.PrintEx(printer); printer.Println();
+        printer.Print("disassemblyTimeoutSeconds = "); DisassemblyTimeoutSeconds.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }

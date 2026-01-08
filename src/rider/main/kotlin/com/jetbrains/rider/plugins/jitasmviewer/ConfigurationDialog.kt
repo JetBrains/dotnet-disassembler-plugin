@@ -71,7 +71,8 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 useDotnetPublishForReload = buildPanel.useDotnetPublishForReload,
                 useDotnetBuildForReload = buildPanel.useDotnetBuildForReload,
                 targetFrameworkOverride = buildPanel.targetFrameworkOverride,
-                selectedCustomJit = jitPanel.selectedCustomJit
+                selectedCustomJit = jitPanel.selectedCustomJit,
+                disassemblyTimeoutSeconds = buildPanel.disassemblyTimeoutSeconds
             )
         )
 
@@ -142,12 +143,15 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
             emptyText.text = AsmViewerBundle.message("build.target.framework.placeholder")
             columns = 15
         }
+        private val timeoutSpinner = JSpinner(SpinnerNumberModel(config.disassemblyTimeoutSeconds, 0, 3600, 10))
+        private val timeoutHelp = ContextHelpLabel.create(AsmViewerBundle.message("build.timeout.help"))
 
         val useDotnetBuildForReload: Boolean get() = useBuildRadio.isSelected
         val useDotnetPublishForReload: Boolean get() = usePublishRadio.isSelected
         val useNoRestoreFlag: Boolean get() = noRestoreCheckbox.isSelected && useBuildRadio.isSelected
         val runAppMode: Boolean get() = runAppModeCheckbox.isSelected
         val targetFrameworkOverride: String? get() = targetFrameworkField.text.takeIf { it.isNotBlank() }
+        val disassemblyTimeoutSeconds: Int get() = timeoutSpinner.value as Int
 
         init {
             val buttonGroup = ButtonGroup()
@@ -175,6 +179,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 .addVerticalGap(10)
                 .addComponent(createWithHelpLabel(runAppModeCheckbox, runAppModeHelp))
                 .addLabeledComponent(AsmViewerBundle.message("build.target.framework.label"), targetFrameworkField)
+                .addLabeledComponent(AsmViewerBundle.message("build.timeout.label"), createWithHelpLabel(timeoutSpinner, timeoutHelp))
         }
 
         private fun createWithHelpLabel(component: JComponent, helpLabel: JComponent) = JPanel().apply {

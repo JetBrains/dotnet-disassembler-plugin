@@ -37,6 +37,9 @@ public static class AsmViewerErrorCodeExtensions
         AsmViewerErrorCode.RuntimePackNotFound => ErrorCode.RuntimePackNotFound,
         AsmViewerErrorCode.CoreClrCheckedNotFound => ErrorCode.CoreClrCheckedNotFound,
 
+        // Timeout errors
+        AsmViewerErrorCode.DisassemblyTimeout => ErrorCode.DisassemblyTimeout,
+
         // Other errors
         AsmViewerErrorCode.UpdateCancelled => ErrorCode.UpdateCancelled,
         AsmViewerErrorCode.UnknownError => ErrorCode.UnknownError,

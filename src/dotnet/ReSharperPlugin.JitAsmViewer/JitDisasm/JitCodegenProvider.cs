@@ -83,7 +83,7 @@ public class JitCodegenProvider(ILogger logger)
                 $"publish {tfmPart} -r {runtimeId} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
             publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null, projectDirPath,
-                LogProcessOutput, cancellationToken);
+                LogProcessOutput, cancellationToken: cancellationToken);
         }
         else
         {
@@ -116,7 +116,7 @@ public class JitCodegenProvider(ILogger logger)
             }
 
             publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetBuildArgs, fasterBuildEnvVars,
-                projectDirPath, LogProcessOutput, cancellationToken);
+                projectDirPath, LogProcessOutput, cancellationToken: cancellationToken);
         }
 
         File.Delete(tmpProps);
@@ -413,7 +413,7 @@ public class JitCodegenProvider(ILogger logger)
                     $" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
                 var publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null,
-                    projectContext.ProjectDirectory, LogProcessOutput, cancellationToken);
+                    projectContext.ProjectDirectory, LogProcessOutput, cancellationToken: cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -477,9 +477,14 @@ public class JitCodegenProvider(ILogger logger)
             logger.LogInformation("Executing process: {0} with args: {1}", executable, command.Length > 100 ? command.Substring(0, 100) + "..." : command);
 
             ProcessResult result = await ProcessUtils.RunProcessAsync(
-                executable, command, envVars, dstFolder, LogProcessOutput, cancellationToken);
+                executable, command, envVars, dstFolder, LogProcessOutput,
+                configuration.DisassemblyTimeout, cancellationToken);
 
-            cancellationToken.ThrowIfCancellationRequested();
+            if (result.IsTimeout)
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.DisassemblyTimeout));
+
+            if (result.IsCancelled)
+                return Result.FailWithValue(new Error(AsmViewerErrorCode.UpdateCancelled));
 
             if (result.IsSuccessful)
             {

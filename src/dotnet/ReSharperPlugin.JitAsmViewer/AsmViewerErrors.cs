@@ -40,6 +40,7 @@ public enum AsmViewerErrorCode
     CoreClrCheckedNotFound,
 
     // Other errors
+    DisassemblyTimeout,
     UpdateCancelled,
     UnknownError
 }

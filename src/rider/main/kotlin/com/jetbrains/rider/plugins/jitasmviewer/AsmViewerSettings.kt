@@ -19,6 +19,7 @@ class JitConfigurationState : BaseState() {
     var useDotnetBuildForReload by property(false)
     var targetFrameworkOverride by string(null)
     var selectedCustomJit by string(null)
+    var disassemblyTimeoutSeconds by property(120)
 }
 
 @Service(Service.Level.PROJECT)
@@ -57,7 +58,8 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         useDotnetPublishForReload = state.jit.useDotnetPublishForReload,
         useDotnetBuildForReload = state.jit.useDotnetBuildForReload,
         targetFrameworkOverride = state.jit.targetFrameworkOverride,
-        selectedCustomJit = state.jit.selectedCustomJit
+        selectedCustomJit = state.jit.selectedCustomJit,
+        disassemblyTimeoutSeconds = state.jit.disassemblyTimeoutSeconds
     )
 
     fun updateFrom(config: JitConfiguration) {
@@ -71,6 +73,7 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         state.jit.useDotnetBuildForReload = config.useDotnetBuildForReload
         state.jit.targetFrameworkOverride = config.targetFrameworkOverride
         state.jit.selectedCustomJit = config.selectedCustomJit
+        state.jit.disassemblyTimeoutSeconds = config.disassemblyTimeoutSeconds
         fireChangeListeners()
     }
 }
