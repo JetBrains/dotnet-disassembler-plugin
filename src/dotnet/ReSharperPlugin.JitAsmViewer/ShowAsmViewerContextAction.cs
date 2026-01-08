@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Application.Progress;
+using JetBrains.Application.UI.Controls.BulbMenu.Anchors;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.Bulbs;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
@@ -24,6 +25,9 @@ namespace ReSharperPlugin.JitAsmViewer;
     Priority = -10)]
 public class ShowAsmViewerContextAction : ContextActionBase
 {
+    private static readonly InvisibleAnchor Anchor =
+        BulbMenuAnchors.PermanentRoslynItems.CreateNext(separate: true);
+
     private readonly ICSharpContextActionDataProvider _dataProvider;
 
     public ShowAsmViewerContextAction(ICSharpContextActionDataProvider dataProvider)
@@ -56,6 +60,6 @@ public class ShowAsmViewerContextAction : ContextActionBase
 
     public override IEnumerable<IntentionAction> CreateBulbItems()
     {
-        return this.ToContextActionIntentions();
+        return new[] { new IntentionAction(this, Text, null, Anchor) };
     }
 }

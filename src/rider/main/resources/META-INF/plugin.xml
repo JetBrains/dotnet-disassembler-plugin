@@ -71,7 +71,7 @@
         <!-- Show ASM Viewer Action -->
         <action id="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction"
                 class="com.jetbrains.rider.plugins.jitasmviewer.ShowAsmViewerAction">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="RiderShowIlViewerAction"/>
         </action>
     </actions>
 </idea-plugin>
