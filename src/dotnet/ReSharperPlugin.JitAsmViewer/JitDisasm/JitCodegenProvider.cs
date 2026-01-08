@@ -470,7 +470,10 @@ public class JitCodegenProvider(ILogger logger)
             {
                 envVars["DOTNET_JitDisasm"] = configuration.OverridenJitDisasm;
             }
-            
+
+            if (!Directory.Exists(dstFolder))
+                Directory.CreateDirectory(dstFolder);
+
             logger.LogInformation("Executing process: {0} with args: {1}", executable, command.Length > 100 ? command.Substring(0, 100) + "..." : command);
 
             ProcessResult result = await ProcessUtils.RunProcessAsync(
