@@ -183,6 +183,13 @@ intellijPlatform {
             recommended()
         }
     }
+
+    pluginConfiguration {
+        version = providers.gradleProperty("PluginVersion")
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        }
+    }
 }
 
 changelog {
