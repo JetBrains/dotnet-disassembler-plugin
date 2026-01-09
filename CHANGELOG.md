@@ -13,7 +13,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - PGO (Profile-Guided Optimization)
   - Diffable output mode
   - Multiple codegen modes: standard JIT, ReadyToRun (crossgen2), NativeAOT (ilc)
-  - Unloadable context support
 - Build configuration options (dotnet build/publish, --no-restore flag)
 - Assembly code syntax highlighting
 - Snapshot and diff view to compare assembly after code changes

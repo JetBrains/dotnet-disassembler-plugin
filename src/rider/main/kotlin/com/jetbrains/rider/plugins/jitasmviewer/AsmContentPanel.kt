@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
@@ -170,7 +171,7 @@ class SingleContentPanel(
 
     init {
         logger.debug("Initializing SingleContentPanel with content length: ${initialContent?.length}")
-        val document = EditorFactory.getInstance().createDocument(initialContent ?: "")
+        val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(initialContent ?: ""))
         editor = EditorFactory.getInstance().createEditor(document, project)
         configureAsmEditor(editor)
         val scrollPane = JBScrollPane(editor.component)
@@ -179,7 +180,7 @@ class SingleContentPanel(
 
     override fun updateContent(current: String, snapshot: String?) {
         ApplicationManager.getApplication().runWriteAction {
-            editor.document.setText(current)
+            editor.document.setText(StringUtil.convertLineSeparators(current))
         }
     }
 
@@ -222,8 +223,8 @@ class DiffContentPanel(
         try {
             logger.debug("Creating diff view")
             val contentFactory = DiffContentFactory.getInstance()
-            val leftContent = contentFactory.create(project, snapshotContent ?: "", AsmFileType)
-            val rightContent = contentFactory.create(project, currentContent ?: "", AsmFileType)
+            val leftContent = contentFactory.create(project, StringUtil.convertLineSeparators(snapshotContent ?: ""), AsmFileType)
+            val rightContent = contentFactory.create(project, StringUtil.convertLineSeparators(currentContent ?: ""), AsmFileType)
 
             val diffRequest = SimpleDiffRequest(
                 AsmViewerBundle.message("diff.title"),

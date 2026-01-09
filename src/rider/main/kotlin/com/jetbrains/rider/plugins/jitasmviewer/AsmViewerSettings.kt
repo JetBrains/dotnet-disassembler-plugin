@@ -10,16 +10,16 @@ import com.jetbrains.rd.ide.model.JitConfiguration
 @Tag("jitConfiguration")
 class JitConfigurationState : BaseState() {
     var showAsmComments by property(true)
-    var diffable by property(false)
+    var diffable by property(true)
     var useTieredJit by property(false)
     var usePGO by property(false)
     var runAppMode by property(false)
     var useNoRestoreFlag by property(false)
     var useDotnetPublishForReload by property(false)
     var useDotnetBuildForReload by property(false)
-    var useUnloadableContext by property(false)
-    var dontGuessTFM by property(false)
+    var targetFrameworkOverride by string(null)
     var selectedCustomJit by string(null)
+    var disassemblyTimeoutSeconds by property(120)
 }
 
 @Service(Service.Level.PROJECT)
@@ -57,9 +57,9 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         useNoRestoreFlag = state.jit.useNoRestoreFlag,
         useDotnetPublishForReload = state.jit.useDotnetPublishForReload,
         useDotnetBuildForReload = state.jit.useDotnetBuildForReload,
-        useUnloadableContext = state.jit.useUnloadableContext,
-        dontGuessTFM = state.jit.dontGuessTFM,
-        selectedCustomJit = state.jit.selectedCustomJit
+        targetFrameworkOverride = state.jit.targetFrameworkOverride,
+        selectedCustomJit = state.jit.selectedCustomJit,
+        disassemblyTimeoutSeconds = state.jit.disassemblyTimeoutSeconds
     )
 
     fun updateFrom(config: JitConfiguration) {
@@ -71,9 +71,9 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         state.jit.useNoRestoreFlag = config.useNoRestoreFlag
         state.jit.useDotnetPublishForReload = config.useDotnetPublishForReload
         state.jit.useDotnetBuildForReload = config.useDotnetBuildForReload
-        state.jit.useUnloadableContext = config.useUnloadableContext
-        state.jit.dontGuessTFM = config.dontGuessTFM
+        state.jit.targetFrameworkOverride = config.targetFrameworkOverride
         state.jit.selectedCustomJit = config.selectedCustomJit
+        state.jit.disassemblyTimeoutSeconds = config.disassemblyTimeoutSeconds
         fireChangeListeners()
     }
 }

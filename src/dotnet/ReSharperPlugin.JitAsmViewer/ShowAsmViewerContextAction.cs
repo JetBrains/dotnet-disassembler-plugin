@@ -1,18 +1,20 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Application.Progress;
+using JetBrains.Application.UI.Controls.BulbMenu.Anchors;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.Bulbs;
 using JetBrains.ReSharper.Feature.Services.ContextActions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Feature.Services.Intentions;
 using JetBrains.ReSharper.Feature.Services.Protocol;
+using JetBrains.ReSharper.Feature.Services.Resources;
 using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.Rider.Model;
 using JetBrains.TextControl;
 using JetBrains.Util;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
-using ReSharperPlugin.JitAsmViewer.Resources;
+using Strings = ReSharperPlugin.JitAsmViewer.Resources.Strings;
 
 namespace ReSharperPlugin.JitAsmViewer;
 
@@ -24,6 +26,9 @@ namespace ReSharperPlugin.JitAsmViewer;
     Priority = -10)]
 public class ShowAsmViewerContextAction : ContextActionBase
 {
+    private static readonly InvisibleAnchor Anchor =
+        BulbMenuAnchors.PermanentRoslynItems.CreateNext(separate: true);
+
     private readonly ICSharpContextActionDataProvider _dataProvider;
 
     public ShowAsmViewerContextAction(ICSharpContextActionDataProvider dataProvider)
@@ -56,6 +61,6 @@ public class ShowAsmViewerContextAction : ContextActionBase
 
     public override IEnumerable<IntentionAction> CreateBulbItems()
     {
-        return this.ToContextActionIntentions();
+        return this.ToContextActionIntentions(Anchor, LocalHistoryThemedIcons.Diff.Id);
     }
 }

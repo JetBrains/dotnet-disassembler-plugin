@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Rider.Model;
 using ReSharperPlugin.JitAsmViewer.JitDisasm;
 
@@ -17,11 +18,14 @@ public static class JitDisasmConfigurationFactory
             UseNoRestoreFlag = config.UseNoRestoreFlag,
             UseDotnetPublishForReload = config.UseDotnetPublishForReload,
             UseDotnetBuildForReload = config.UseDotnetBuildForReload,
-            UseUnloadableContext = config.UseUnloadableContext,
-            DontGuessTfm = config.DontGuessTFM,
             SelectedCustomJit = config.SelectedCustomJit ?? JitDisasmConfiguration.DefaultJit,
+            OverridenTfm = !string.IsNullOrWhiteSpace(config.TargetFrameworkOverride)
+                ? JitDisasmTargetFrameworkFactory.Create(config.TargetFrameworkOverride)
+                : null,
+            DisassemblyTimeout = TimeSpan.FromSeconds(config.DisassemblyTimeoutSeconds),
 
             // Advanced properties use defaults (not exposed in UI)
+            UseUnloadableContext = false,
             JitDumpInsteadOfDisasm = false,
             UseCustomRuntime = false,
             FgEnable = false,
@@ -30,7 +34,7 @@ public static class JitDisasmConfigurationFactory
             IlcArgs = null,
             PathToLocalCoreClr = null,
             OverridenJitDisasm = null,
-            OverridenTfm = null,
+            DontGuessTfm = false,
             Arch = RuntimePlatformUtils.GetCurrentArch()
         };
     }

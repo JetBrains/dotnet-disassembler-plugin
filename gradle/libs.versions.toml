@@ -1,6 +1,7 @@
 [versions]
 kotlin = "2.1.20" # https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
 rdGen = "2025.3.1" # https://github.com/JetBrains/rd/releases
+changelog = "2.5.0" # https://github.com/JetBrains/gradle-changelog-plugin/releases
 
 [libraries]
 kotlinStdLib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
@@ -8,3 +9,4 @@ rdGen = { group = "com.jetbrains.rd", name = "rd-gen", version.ref = "rdGen" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }

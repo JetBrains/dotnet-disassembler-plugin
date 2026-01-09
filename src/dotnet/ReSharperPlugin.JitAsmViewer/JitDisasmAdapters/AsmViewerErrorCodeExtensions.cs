@@ -24,6 +24,7 @@ public static class AsmViewerErrorCodeExtensions
         AsmViewerErrorCode.FlowgraphsForClassNotSupported => ErrorCode.FlowgraphsForClassNotSupported,
         AsmViewerErrorCode.UnsupportedTargetFramework => ErrorCode.UnsupportedTargetFramework,
         AsmViewerErrorCode.CustomRuntimeRequiresNet7 => ErrorCode.CustomRuntimeRequiresNet7,
+        AsmViewerErrorCode.GenericMethodsRequireRunMode => ErrorCode.GenericMethodsRequireRunMode,
 
         // Compilation errors
         AsmViewerErrorCode.CompilationFailed => ErrorCode.CompilationFailed,
@@ -35,6 +36,9 @@ public static class AsmViewerErrorCodeExtensions
         AsmViewerErrorCode.DotNetCliNotFound => ErrorCode.DotNetCliNotFound,
         AsmViewerErrorCode.RuntimePackNotFound => ErrorCode.RuntimePackNotFound,
         AsmViewerErrorCode.CoreClrCheckedNotFound => ErrorCode.CoreClrCheckedNotFound,
+
+        // Timeout errors
+        AsmViewerErrorCode.DisassemblyTimeout => ErrorCode.DisassemblyTimeout,
 
         // Other errors
         AsmViewerErrorCode.UpdateCancelled => ErrorCode.UpdateCancelled,

@@ -31,8 +31,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
     private readonly BooleanEventField _diffableField;
     private readonly BooleanEventField _runAppModeField;
     private readonly BooleanEventField _useNoRestoreField;
-    private readonly BooleanEventField _useUnloadableContextField;
-    private readonly BooleanEventField _dontGuessTfmField;
+    private readonly BooleanEventField _hasTargetFrameworkOverrideField;
     private readonly StringEventField _jitCompilerField;
     private readonly BooleanEventField _useDotnetPublishField;
 
@@ -64,8 +63,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
         _diffableField = EventFields.Boolean("diffable", "Diffable mode");
         _runAppModeField = EventFields.Boolean("run_app_mode", "Run app mode");
         _useNoRestoreField = EventFields.Boolean("use_no_restore", "Use no restore");
-        _useUnloadableContextField = EventFields.Boolean("use_unloadable_context", "Use unloadable context");
-        _dontGuessTfmField = EventFields.Boolean("dont_guess_tfm", "Don't guess TFM");
+        _hasTargetFrameworkOverrideField = EventFields.Boolean("has_target_framework_override", "Has target framework override");
         _jitCompilerField = EventFields.String("jit_compiler", "JIT compiler", Array.Empty<string>());
         _useDotnetPublishField = EventFields.Boolean("use_dotnet_publish", "Use dotnet publish");
         _configurationSaved = _group.RegisterVarargEvent(
@@ -77,8 +75,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
             _diffableField,
             _runAppModeField,
             _useNoRestoreField,
-            _useUnloadableContextField,
-            _dontGuessTfmField,
+            _hasTargetFrameworkOverrideField,
             _jitCompilerField,
             _useDotnetPublishField);
     }
@@ -146,8 +143,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
                 _diffableField.With(config.Diffable),
                 _runAppModeField.With(config.RunAppMode),
                 _useNoRestoreField.With(config.UseNoRestoreFlag),
-                _useUnloadableContextField.With(config.UseUnloadableContext),
-                _dontGuessTfmField.With(config.DontGuessTfm),
+                _hasTargetFrameworkOverrideField.With(config.OverridenTfm != null),
                 _jitCompilerField.With(config.SelectedCustomJit),
                 _useDotnetPublishField.With(config.UseDotnetPublishForReload));
         }

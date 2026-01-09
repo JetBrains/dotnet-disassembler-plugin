@@ -22,6 +22,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         +"FlowgraphsForClassNotSupported"
         +"UnsupportedTargetFramework"
         +"CustomRuntimeRequiresNet7"
+        +"GenericMethodsRequireRunMode"
 
         // Compilation errors
         +"CompilationFailed"
@@ -35,6 +36,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         +"CoreClrCheckedNotFound"
 
         // Other errors
+        +"DisassemblyTimeout"
         +"UpdateCancelled"
         +"UnknownError"
     }
@@ -53,9 +55,9 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("useNoRestoreFlag", bool)
         field("useDotnetPublishForReload", bool)
         field("useDotnetBuildForReload", bool)
-        field("useUnloadableContext", bool)
-        field("dontGuessTFM", bool)
+        field("targetFrameworkOverride", string.nullable)
         field("selectedCustomJit", string.nullable)
+        field("disassemblyTimeoutSeconds", int)
     }
 
     private val CompilationResult = structdef {

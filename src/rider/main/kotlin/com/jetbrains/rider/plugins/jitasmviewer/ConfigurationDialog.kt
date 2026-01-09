@@ -3,9 +3,11 @@ package com.jetbrains.rider.plugins.jitasmviewer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.ide.model.JitConfiguration
@@ -24,6 +26,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     private val generalPanel = GeneralOptionsPanel(currentConfig)
     private val jitPanel = JitOptionsPanel(currentConfig)
     private val buildPanel = BuildOptionsPanel(currentConfig)
+    private val runtimePanel = RuntimeOptionsPanel(currentConfig)
 
     init {
         logger.debug("Opening configuration dialog")
@@ -44,6 +47,10 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
 
         formBuilder.addComponent(createSectionHeader(AsmViewerBundle.message("section.build")))
         buildPanel.addToForm(formBuilder)
+        formBuilder.addSeparator()
+
+        formBuilder.addComponent(createSectionHeader(AsmViewerBundle.message("section.runtime")))
+        runtimePanel.addToForm(formBuilder)
 
         val scrollPane = JBScrollPane(formBuilder.panel).apply {
             preferredSize = Dimension(550, 450)
@@ -64,13 +71,13 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 diffable = generalPanel.diffable,
                 useTieredJit = jitPanel.useTieredJit,
                 usePGO = jitPanel.usePGO,
-                runAppMode = buildPanel.runAppMode,
+                runAppMode = runtimePanel.runAppMode,
                 useNoRestoreFlag = buildPanel.useNoRestoreFlag,
                 useDotnetPublishForReload = buildPanel.useDotnetPublishForReload,
                 useDotnetBuildForReload = buildPanel.useDotnetBuildForReload,
-                useUnloadableContext = jitPanel.useUnloadableContext,
-                dontGuessTFM = buildPanel.dontGuessTFM,
-                selectedCustomJit = jitPanel.selectedCustomJit
+                targetFrameworkOverride = buildPanel.targetFrameworkOverride,
+                selectedCustomJit = jitPanel.selectedCustomJit,
+                disassemblyTimeoutSeconds = runtimePanel.disassemblyTimeoutSeconds
             )
         )
 
@@ -90,6 +97,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     private class GeneralOptionsPanel(config: JitConfiguration) {
         private val showAsmCommentsCheckbox = JBCheckBox(AsmViewerBundle.message("general.show.asm.comments"), config.showAsmComments)
         private val diffableCheckbox = JBCheckBox(AsmViewerBundle.message("general.diffable.output"), config.diffable)
+        private val diffableHelp = ContextHelpLabel.create(AsmViewerBundle.message("general.diffable.help"))
 
         val showAsmComments: Boolean get() = showAsmCommentsCheckbox.isSelected
         val diffable: Boolean get() = diffableCheckbox.isSelected
@@ -97,14 +105,13 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         fun addToForm(formBuilder: FormBuilder) {
             formBuilder
                 .addComponent(showAsmCommentsCheckbox)
-                .addComponent(diffableCheckbox)
+                .addComponent(diffableCheckbox.withHelp(diffableHelp))
         }
     }
 
     private class JitOptionsPanel(config: JitConfiguration) {
         private val useTieredJitCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.tiered"), config.useTieredJit)
         private val usePGOCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.pgo"), config.usePGO)
-        private val useUnloadableContextCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.unloadable.context"), config.useUnloadableContext)
 
         private val jitCompilerCombo = JComboBox(arrayOf("clrjit.dll", "crossgen2.dll (R2R)", "ilc (NativeAOT)")).apply {
             selectedItem = config.selectedCustomJit ?: "clrjit.dll"
@@ -112,7 +119,6 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
 
         val useTieredJit: Boolean get() = useTieredJitCheckbox.isSelected
         val usePGO: Boolean get() = usePGOCheckbox.isSelected
-        val useUnloadableContext: Boolean get() = useUnloadableContextCheckbox.isSelected
         val selectedCustomJit: String? get() = jitCompilerCombo.selectedItem?.toString()
 
         init {
@@ -127,7 +133,6 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
             formBuilder
                 .addComponent(useTieredJitCheckbox)
                 .addComponent(usePGOCheckbox)
-                .addComponent(useUnloadableContextCheckbox)
                 .addVerticalGap(10)
                 .addLabeledComponent(AsmViewerBundle.message("jit.compiler.label"), jitCompilerCombo)
         }
@@ -137,15 +142,15 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         private val useBuildRadio = JRadioButton(AsmViewerBundle.message("build.use.build"), true)
         private val usePublishRadio = JRadioButton(AsmViewerBundle.message("build.use.publish"), config.useDotnetPublishForReload)
         private val noRestoreCheckbox = JBCheckBox(AsmViewerBundle.message("build.no.restore"), config.useNoRestoreFlag)
-
-        private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("build.run.app.mode"), config.runAppMode)
-        private val dontGuessTFMCheckbox = JBCheckBox(AsmViewerBundle.message("build.dont.guess.tfm"), config.dontGuessTFM)
+        private val targetFrameworkField = JBTextField(config.targetFrameworkOverride ?: "").apply {
+            emptyText.text = AsmViewerBundle.message("build.target.framework.placeholder")
+            columns = 15
+        }
 
         val useDotnetBuildForReload: Boolean get() = useBuildRadio.isSelected
         val useDotnetPublishForReload: Boolean get() = usePublishRadio.isSelected
         val useNoRestoreFlag: Boolean get() = noRestoreCheckbox.isSelected && useBuildRadio.isSelected
-        val runAppMode: Boolean get() = runAppModeCheckbox.isSelected
-        val dontGuessTFM: Boolean get() = dontGuessTFMCheckbox.isSelected
+        val targetFrameworkOverride: String? get() = targetFrameworkField.text.takeIf { it.isNotBlank() }
 
         init {
             val buttonGroup = ButtonGroup()
@@ -171,8 +176,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 .addComponent(createIndented(noRestoreCheckbox))
                 .addComponent(usePublishRadio)
                 .addVerticalGap(10)
-                .addComponent(runAppModeCheckbox)
-                .addComponent(dontGuessTFMCheckbox)
+                .addLabeledComponent(AsmViewerBundle.message("build.target.framework.label"), targetFrameworkField)
         }
 
         private fun createIndented(component: JComponent) = JPanel(BorderLayout()).apply {
@@ -180,4 +184,27 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
             add(component, BorderLayout.WEST)
         }
     }
+
+    private class RuntimeOptionsPanel(config: JitConfiguration) {
+        private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("runtime.run.app.mode"), config.runAppMode)
+        private val runAppModeHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.run.project.help"))
+        private val timeoutSpinner = JSpinner(SpinnerNumberModel(config.disassemblyTimeoutSeconds, 0, 3600, 10))
+        private val timeoutHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.timeout.help"))
+
+        val runAppMode: Boolean get() = runAppModeCheckbox.isSelected
+        val disassemblyTimeoutSeconds: Int get() = timeoutSpinner.value as Int
+
+        fun addToForm(formBuilder: FormBuilder) {
+            formBuilder
+                .addComponent(runAppModeCheckbox.withHelp(runAppModeHelp))
+                .addLabeledComponent(AsmViewerBundle.message("runtime.timeout.label"), timeoutSpinner.withHelp(timeoutHelp))
+        }
+    }
+}
+
+private fun JComponent.withHelp(helpLabel: JComponent): JComponent = JPanel().apply {
+    layout = BoxLayout(this, BoxLayout.X_AXIS)
+    add(this@withHelp)
+    add(Box.createHorizontalStrut(JBUI.scale(4)))
+    add(helpLabel)
 }

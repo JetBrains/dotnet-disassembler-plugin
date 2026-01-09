@@ -32,7 +32,7 @@ class CreateSnapshotAction(private val project: Project) : AnAction(
 }
 
 class DiffableModeAction(private val project: Project) : ToggleAction(
-    AsmViewerBundle.messagePointer("action.diffable.mode.text"),
+    AsmViewerBundle.messagePointer("action.diffable.mode.enable.text"),
     AsmViewerBundle.messagePointer("action.diffable.mode.description"),
     AllIcons.Actions.Diff
 ) {
@@ -44,6 +44,16 @@ class DiffableModeAction(private val project: Project) : ToggleAction(
         val settings = AsmViewerSettings.getInstance(project)
         settings.updateFrom(settings.toJitConfiguration().copy(diffable = state))
         AsmViewerStatisticsCollector.logDiffableModeToggled(project, state)
+    }
+
+    override fun update(e: AnActionEvent) {
+        super.update(e)
+        val isEnabled = AsmViewerSettings.getInstance(project).state.jit.diffable
+        e.presentation.text = if (isEnabled) {
+            AsmViewerBundle.message("action.diffable.mode.disable.text")
+        } else {
+            AsmViewerBundle.message("action.diffable.mode.enable.text")
+        }
     }
 }
 

@@ -31,6 +31,7 @@ public record JitDisasmConfiguration
     public bool FgEnable { get; init; }
     public JitDisasmTargetFramework OverridenTfm { get; init; }
     public string Arch { get; init; } = "x64";
+    public TimeSpan DisassemblyTimeout { get; init; } = TimeSpan.FromSeconds(120);
     
     public bool CrossgenIsSelected => SelectedCustomJit?.StartsWith("crossgen") == true;
 

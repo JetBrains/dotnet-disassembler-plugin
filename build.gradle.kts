@@ -1,12 +1,14 @@
 import com.jetbrains.plugin.structure.base.utils.isFile
 import groovy.ant.FileNameFinder
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.Constants
 import java.io.ByteArrayOutputStream
 
 plugins {
     id("java")
     alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.changelog)
     id("org.jetbrains.intellij.platform") version "2.10.4"     // See https://github.com/JetBrains/intellij-platform-gradle-plugin/releases
     id("me.filippov.gradle.jvm.wrapper") version "0.14.0"
 }
@@ -181,6 +183,18 @@ intellijPlatform {
             recommended()
         }
     }
+
+    pluginConfiguration {
+        version = providers.gradleProperty("PluginVersion")
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        }
+    }
+}
+
+changelog {
+    groups.empty()
+    repositoryUrl.set(providers.gradleProperty("PluginRepositoryUrl"))
 }
 
 tasks.runIde {
@@ -196,6 +210,19 @@ tasks.patchPluginXml {
     changeNotes.set(changelogMatches.map {
         it.groups[1]!!.value.replace("(?s)\r?\n".toRegex(), "<br />\n")
     }.take(1).joinToString())
+
+    val descriptionStart = "<!-- Plugin description -->"
+    val descriptionEnd = "<!-- Plugin description end -->"
+    val readmeText = file("${rootDir}/README.md").readText()
+    val readmeLines = readmeText.lines()
+
+    if (readmeLines.containsAll(listOf(descriptionStart, descriptionEnd))) {
+        val descriptionLines = readmeLines.subList(
+            readmeLines.indexOf(descriptionStart) + 1,
+            readmeLines.indexOf(descriptionEnd)
+        )
+        pluginDescription.set(markdownToHTML(descriptionLines.joinToString("\n")))
+    }
 }
 
 tasks.prepareSandbox {
@@ -225,12 +252,13 @@ tasks.prepareSandbox {
 tasks.publishPlugin {
     dependsOn(testDotNet)
     dependsOn(tasks.buildPlugin)
-    token.set("${PublishToken}")
+    token.set(providers.environmentVariable("PUBLISH_TOKEN"))
 
     doLast {
         exec {
             executable("dotnet")
-            args("nuget","push","output/${DotnetPluginId}.${version}.nupkg","--api-key","${PublishToken}","--source","https://plugins.jetbrains.com")
+            val nugetToken = System.getenv("PUBLISH_TOKEN") ?: ""
+            args("nuget","push","output/${DotnetPluginId}.${version}.nupkg","--api-key",nugetToken,"--source","https://plugins.jetbrains.com")
             workingDir(rootDir)
         }
     }
