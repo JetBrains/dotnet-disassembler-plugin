@@ -10,7 +10,7 @@ import com.jetbrains.rd.ide.model.JitConfiguration
 @Tag("jitConfiguration")
 class JitConfigurationState : BaseState() {
     var showAsmComments by property(true)
-    var diffable by property(false)
+    var diffable by property(true)
     var useTieredJit by property(false)
     var usePGO by property(false)
     var runAppMode by property(false)

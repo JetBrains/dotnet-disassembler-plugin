@@ -8,7 +8,7 @@
 ## Features
 
 - View JIT-compiled assembly for any C# method
-- Configurable JIT optimization settings (tiered compilation, PGO, diffable output)
+- Configurable JIT settings (tiered compilation, PGO, diff-friendly output)
 - Multiple codegen modes: standard JIT, ReadyToRun (crossgen2), or NativeAOT (ilc)
 - Snapshot and diff view to compare assembly output after code changes
 - Syntax highlighting for assembly code

@@ -97,6 +97,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     private class GeneralOptionsPanel(config: JitConfiguration) {
         private val showAsmCommentsCheckbox = JBCheckBox(AsmViewerBundle.message("general.show.asm.comments"), config.showAsmComments)
         private val diffableCheckbox = JBCheckBox(AsmViewerBundle.message("general.diffable.output"), config.diffable)
+        private val diffableHelp = ContextHelpLabel.create(AsmViewerBundle.message("general.diffable.help"))
 
         val showAsmComments: Boolean get() = showAsmCommentsCheckbox.isSelected
         val diffable: Boolean get() = diffableCheckbox.isSelected
@@ -104,7 +105,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         fun addToForm(formBuilder: FormBuilder) {
             formBuilder
                 .addComponent(showAsmCommentsCheckbox)
-                .addComponent(diffableCheckbox)
+                .addComponent(diffableCheckbox.withHelp(diffableHelp))
         }
     }
 
@@ -195,15 +196,15 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
 
         fun addToForm(formBuilder: FormBuilder) {
             formBuilder
-                .addComponent(createWithHelpLabel(runAppModeCheckbox, runAppModeHelp))
-                .addLabeledComponent(AsmViewerBundle.message("runtime.timeout.label"), createWithHelpLabel(timeoutSpinner, timeoutHelp))
-        }
-
-        private fun createWithHelpLabel(component: JComponent, helpLabel: JComponent) = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.X_AXIS)
-            add(component)
-            add(Box.createHorizontalStrut(JBUI.scale(4)))
-            add(helpLabel)
+                .addComponent(runAppModeCheckbox.withHelp(runAppModeHelp))
+                .addLabeledComponent(AsmViewerBundle.message("runtime.timeout.label"), timeoutSpinner.withHelp(timeoutHelp))
         }
     }
+}
+
+private fun JComponent.withHelp(helpLabel: JComponent): JComponent = JPanel().apply {
+    layout = BoxLayout(this, BoxLayout.X_AXIS)
+    add(this@withHelp)
+    add(Box.createHorizontalStrut(JBUI.scale(4)))
+    add(helpLabel)
 }
