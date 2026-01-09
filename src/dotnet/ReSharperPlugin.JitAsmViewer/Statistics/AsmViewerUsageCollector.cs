@@ -34,6 +34,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
     private readonly BooleanEventField _hasTargetFrameworkOverrideField;
     private readonly StringEventField _jitCompilerField;
     private readonly BooleanEventField _useDotnetPublishField;
+    private readonly IntEventField _disassemblyTimeoutSecondsField;
 
     public AsmViewerUsageCollector(FeatureUsageLogger featureUsageLogger)
     {
@@ -66,6 +67,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
         _hasTargetFrameworkOverrideField = EventFields.Boolean("has_target_framework_override", "Has target framework override");
         _jitCompilerField = EventFields.String("jit_compiler", "JIT compiler", Array.Empty<string>());
         _useDotnetPublishField = EventFields.Boolean("use_dotnet_publish", "Use dotnet publish");
+        _disassemblyTimeoutSecondsField = EventFields.Int("disassembly_timeout_seconds", "Disassembly timeout seconds");
         _configurationSaved = _group.RegisterVarargEvent(
             "configuration.changed",
             "Configuration changed",
@@ -77,7 +79,8 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
             _useNoRestoreField,
             _hasTargetFrameworkOverrideField,
             _jitCompilerField,
-            _useDotnetPublishField);
+            _useDotnetPublishField,
+            _disassemblyTimeoutSecondsField);
     }
 
     public override EventLogGroup GetGroup()
@@ -145,7 +148,8 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
                 _useNoRestoreField.With(config.UseNoRestoreFlag),
                 _hasTargetFrameworkOverrideField.With(config.OverridenTfm != null),
                 _jitCompilerField.With(config.SelectedCustomJit),
-                _useDotnetPublishField.With(config.UseDotnetPublishForReload));
+                _useDotnetPublishField.With(config.UseDotnetPublishForReload),
+                _disassemblyTimeoutSecondsField.With((int)config.DisassemblyTimeout.TotalSeconds));
         }
         catch (Exception ex)
         {
