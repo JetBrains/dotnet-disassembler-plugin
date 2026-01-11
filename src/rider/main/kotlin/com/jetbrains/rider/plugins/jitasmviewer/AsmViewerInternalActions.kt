@@ -90,6 +90,7 @@ class ForceRecompileAction(private val project: Project) : AnAction(
 ) {
     override fun actionPerformed(e: AnActionEvent) {
         project.solution.asmViewerModel.forceRecompile.fire(Unit)
+        AsmViewerStatisticsCollector.logForceRecompileClicked(project)
     }
 }
 

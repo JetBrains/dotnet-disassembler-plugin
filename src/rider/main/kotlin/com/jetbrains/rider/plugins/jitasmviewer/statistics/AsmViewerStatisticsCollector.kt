@@ -19,7 +19,7 @@ object AsmViewerStatisticsCollector : CounterUsagesCollector() {
     private val TOOL_WINDOW_OPENED = GROUP.registerEvent("tool_window.opened", "Tool window opened")
     private val TOOL_WINDOW_CLOSED = GROUP.registerEvent("tool_window.closed", "Tool window closed")
 
-    private val TOOLS_MENU_USED = GROUP.registerEvent("tools_menu.used", "Tools menu used")
+    private val TOOLS_MENU_OPENED = GROUP.registerEvent("tools_menu.opened", "Tools menu opened")
 
     private val SNAPSHOT_ACTION_PERFORMED = GROUP.registerEvent(
         "snapshot.action",
@@ -33,6 +33,10 @@ object AsmViewerStatisticsCollector : CounterUsagesCollector() {
         "Diffable mode toggled"
     )
 
+    private val SETTINGS_OPENED = GROUP.registerEvent("settings.opened", "Settings opened")
+
+    private val FORCE_RECOMPILE_CLICKED = GROUP.registerEvent("force_recompile.clicked", "Force recompile clicked")
+
     override fun getGroup(): EventLogGroup = GROUP
 
     fun logToolWindowOpened(project: Project) {
@@ -43,11 +47,9 @@ object AsmViewerStatisticsCollector : CounterUsagesCollector() {
         TOOL_WINDOW_CLOSED.log(project)
     }
 
-    fun logToolsMenuUsed(project: Project) {
-        TOOLS_MENU_USED.log(project)
+    fun logToolsMenuOpened(project: Project) {
+        TOOLS_MENU_OPENED.log(project)
     }
-
-    private val SETTINGS_OPENED = GROUP.registerEvent("settings.opened", "Settings opened")
 
     fun logSettingsOpened(project: Project) {
         SETTINGS_OPENED.log(project)
@@ -63,5 +65,9 @@ object AsmViewerStatisticsCollector : CounterUsagesCollector() {
 
     fun logDiffableModeToggled(project: Project, enabled: Boolean) {
         DIFFABLE_MODE_TOGGLED.log(project, enabled)
+    }
+
+    fun logForceRecompileClicked(project: Project) {
+        FORCE_RECOMPILE_CLICKED.log(project)
     }
 }

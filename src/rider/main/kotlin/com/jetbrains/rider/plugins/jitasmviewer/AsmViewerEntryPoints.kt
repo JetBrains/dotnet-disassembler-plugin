@@ -12,7 +12,7 @@ class ShowAsmViewerAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         e.project?.let { project ->
             AsmViewerHostUi.getInstance(project).activateToolwindow()
-            AsmViewerStatisticsCollector.logToolsMenuUsed(project)
+            AsmViewerStatisticsCollector.logToolsMenuOpened(project)
         }
     }
 }
