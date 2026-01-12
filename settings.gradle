@@ -17,6 +17,6 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'ReSharperPlugin.JitAsmViewer'
+rootProject.name = 'ReSharperPlugin.DotNetDisassembler'
 
 include ':protocol'

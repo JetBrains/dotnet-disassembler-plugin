@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>ReSharperPlugin.DotNetDisassembler</AssemblyName>
+    <RootNamespace>ReSharperPlugin.DotNetDisassembler</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);RIDER</DefineConstants>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Rider.SDK" Version="$(SdkVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.3" />
+    <EmbeddedResource Include="Resources\JitDisasmLoader.cs_template" />
+    <EmbeddedResource Include="Resources\JitDisasmLoader.csproj_template" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\JitDisasmLoader.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>JitDisasmLoader.csproj_template</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+  </ItemGroup>
+
+</Project>

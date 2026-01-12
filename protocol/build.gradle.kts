@@ -29,7 +29,7 @@ val RiderPluginId: String by rootProject
 
 rdgen {
     val csOutput = File(rootDir, "src/dotnet/${DotnetPluginId}")
-    val ktOutput = File(rootDir, "src/rider/main/kotlin/com/jetbrains/rider/plugins/jitasmviewer")
+    val ktOutput = File(rootDir, "src/rider/main/kotlin/com/jetbrains/rider/plugins/dotnetdisassembler")
 
     verbose = true
     packages = "model.rider"

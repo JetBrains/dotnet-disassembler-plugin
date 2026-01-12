@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 0.1.0
 ### Added
 - Initial experimental release
-- Display JIT-compiled assembly for C# methods in .NET 6.0+ projects
-- Configurable JIT compilation options:
+- Display assembly code for C# methods in .NET 6.0+ projects
+- Configurable compilation options:
   - Tiered compilation toggle
   - PGO (Profile-Guided Optimization)
   - Diffable output mode

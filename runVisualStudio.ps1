@@ -1,5 +1,5 @@
 Param(
-    $RootSuffix = "JitAsmViewer",
+    $RootSuffix = "DotNetDisassembler",
     $Version = "0.0.1"
 )
 

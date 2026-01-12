@@ -1,5 +1,5 @@
-$PluginId = "ReSharperPlugin.JitAsmViewer"
-$SolutionPath = "$PSScriptRoot\ReSharperPlugin.JitAsmViewer.sln"
+$PluginId = "ReSharperPlugin.DotNetDisassembler"
+$SolutionPath = "$PSScriptRoot\ReSharperPlugin.DotNetDisassembler.sln"
 $SourceBasePath = "$PSScriptRoot\src\dotnet"
 
 $VsWhereOutput = [xml] (& "$PSScriptRoot\tools\vswhere.exe" -format xml -products *)

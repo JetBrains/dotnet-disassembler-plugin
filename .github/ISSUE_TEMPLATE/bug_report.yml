@@ -34,7 +34,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: JitAsmViewer Plugin version
+      label: DotNetDisassembler Plugin version
       placeholder: 0.1.0
     validations:
       required: true
