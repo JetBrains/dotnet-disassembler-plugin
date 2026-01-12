@@ -1,7 +1,14 @@
-<idea-plugin url="https://github.com/JetBrains/JitAsmViewer" require-restart="true">
+<idea-plugin url="https://github.com/JetBrains/dotnet-disassembler-plugin" require-restart="true">
   <id>com.jetbrains.rider.plugins.dotnetdisassembler</id>
   <name>.NET Disassembler</name>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+
+  <description><![CDATA[
+    <hr/><br/>
+    <p>Report issues and suggestions on <a href="https://github.com/JetBrains/dotnet-disassembler-plugin/issues">GitHub</a>.</p>
+    <p>Based on the <a href="https://github.com/EgorBo/Disasmo">Disasmo</a> project by <a href="https://github.com/EgorBo">Egor Bogatov</a>.</p>
+  ]]></description>
+
   <depends>com.intellij.modules.rider</depends>
 
 

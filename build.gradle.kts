@@ -211,17 +211,30 @@ tasks.patchPluginXml {
         it.groups[1]!!.value.replace("(?s)\r?\n".toRegex(), "<br />\n")
     }.take(1).joinToString())
 
-    val descriptionStart = "<!-- Plugin description -->"
-    val descriptionEnd = "<!-- Plugin description end -->"
+    // Extract multiple sections from README.md using markers
     val readmeText = file("${rootDir}/README.md").readText()
-    val readmeLines = readmeText.lines()
+    val sectionRegex = Regex("(?s)<!-- Plugin description(?:: (\\w+))? -->\\s*(.+?)\\s*<!-- Plugin description end(?:: \\w+)? -->")
+    val sections = sectionRegex.findAll(readmeText).map { match ->
+        val sectionName = match.groups[1]?.value ?: "main"
+        val content = match.groups[2]?.value ?: ""
+        sectionName to markdownToHTML(content)
+    }.toList()
+    
+    if (sections.isNotEmpty()) {
+        val readmeDescription = sections.joinToString("\n") { it.second }
 
-    if (readmeLines.containsAll(listOf(descriptionStart, descriptionEnd))) {
-        val descriptionLines = readmeLines.subList(
-            readmeLines.indexOf(descriptionStart) + 1,
-            readmeLines.indexOf(descriptionEnd)
-        )
-        pluginDescription.set(markdownToHTML(descriptionLines.joinToString("\n")))
+        val pluginXmlFile = file("${rootDir}/src/rider/main/resources/META-INF/plugin.xml")
+        val pluginXmlText = pluginXmlFile.readText()
+        val descriptionRegex = Regex("(?s)<description><!\\[CDATA\\[(.+?)]]></description>")
+        val existingDescription = descriptionRegex.find(pluginXmlText)?.groups?.get(1)?.value?.trim() ?: ""
+
+        val combinedDescription = if (existingDescription.isNotEmpty()) {
+            "$readmeDescription\n$existingDescription"
+        } else {
+            readmeDescription
+        }
+        
+        pluginDescription.set(combinedDescription)
     }
 }
 
