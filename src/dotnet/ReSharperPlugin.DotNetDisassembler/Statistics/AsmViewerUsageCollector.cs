@@ -38,7 +38,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
 
     public AsmViewerUsageCollector(FeatureUsageLogger featureUsageLogger)
     {
-        _group = new EventLogGroup("dotnetdisassembler.plugin", "DotNetDisassembler Backend", 1, featureUsageLogger);
+        _group = new EventLogGroup("dotnetdisassembler.plugin.backend", "DotNetDisassembler Backend", 1, featureUsageLogger);
 
         _contextActionInvoked = _group.RegisterEvent("context_action.invoked", "Context action invoked");
 
