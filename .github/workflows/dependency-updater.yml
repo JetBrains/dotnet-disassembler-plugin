@@ -51,6 +51,7 @@ jobs:
         if: steps.update.outputs.has-changes == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.WORKFLOW_PAT }}
           branch: ${{ steps.update.outputs.branch-name }}
           base: main
           commit-message: ${{ steps.update.outputs.commit-message }}
