@@ -1,0 +1,62 @@
+# GitHub Actions Workflow for automatically updating JetBrains Rider SDK dependencies
+# using intellij-updater to track EAP releases
+#
+# All runs create pull requests to main branch
+# TEMPORARY: Also runs on push to any branch for testing
+
+name: Dependency Updater
+
+on:
+  # Run daily at 2 AM UTC (during low activity period)
+  schedule:
+    - cron: '0 2 * * *'
+  # TEMPORARY: Allow manual triggering from any branch - commits directly to that branch
+  workflow_dispatch:
+  # TEMPORARY: Run on push to any branch - commits directly to that branch
+  push:
+
+# Prevent concurrent update checks per branch
+concurrency:
+  group: dependency-updater-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update-dependencies:
+    name: Check and Update Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Required permissions for creating PRs and pushing changes
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Fetch Sources
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # Step 2: Run intellij-updater to check for new versions
+      # This step reads intellij-updater.json and updates files if new versions exist
+      - name: Check for Dependency Updates
+        id: update
+        uses: ForNeVeR/intellij-updater@v1
+        with:
+          config-file: ./intellij-updater.json
+
+      # Step 3: Create PR if changes were detected
+      - name: Create Pull Request
+        if: steps.update.outputs.has-changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ steps.update.outputs.branch-name }}
+          base: main
+          commit-message: ${{ steps.update.outputs.commit-message }}
+          title: ${{ steps.update.outputs.pr-title }}
+          body-path: ${{ steps.update.outputs.pr-body-path }}
+          author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          labels: |
+            dependencies
+            automated-pr
