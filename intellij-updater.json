@@ -4,20 +4,20 @@
       "file": "gradle.properties",
       "field": "ProductVersion",
       "kind": "rider",
-      "versionFlavor": "eap"
+      "versionFlavor": "nightly"
     },
     {
       "file": "gradle.properties",
       "field": "pluginVerificationIdeVersion",
       "kind": "rider",
-      "versionFlavor": "eap"
+      "versionFlavor": "nightly"
     },
     {
       "file": "gradle/libs.versions.toml",
       "field": "rdGen",
       "kind": "rd-gen",
-      "versionFlavor": "eap"
+      "versionFlavor": "nightly"
     }
   ],
-  "prBodyPrefix": "## Dependency Update Notice\n\n> [!WARNING]\n> This PR updates Rider SDK and related dependencies to the latest EAP version.\n> \n> **Action Required**:\n> 1. Close and reopen this PR manually to trigger CI checks (GitHub security restriction)\n> 2. Review the build output and test results carefully\n> 3. Test the plugin against the new Rider version\n> 4. Verify that all existing functionality works as expected\n>\n> **Breaking Changes**: EAP versions may introduce breaking API changes. Check the [Rider Release Notes](https://www.jetbrains.com/rider/whatsnew/) for migration guidance.\n\n"
+  "prBodyPrefix": "## Dependency Update Notice\n\n> [!WARNING]\n> This PR updates Rider SDK and related dependencies to the latest nightly snapshot version.\n> \n> **Action Required**:\n> 1. Close and reopen this PR manually to trigger CI checks (GitHub security restriction)\n> 2. Review the build output and test results carefully\n> 3. Test the plugin against the new Rider version\n> 4. Verify that all existing functionality works as expected\n>\n> **Breaking Changes**: Nightly snapshot versions may be unstable and contain breaking API changes. Check the [Rider Release Notes](https://www.jetbrains.com/rider/whatsnew/) for migration guidance.\n\n"
 }
