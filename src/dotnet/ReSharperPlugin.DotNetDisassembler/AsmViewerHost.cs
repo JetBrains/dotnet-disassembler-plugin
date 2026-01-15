@@ -174,9 +174,10 @@ public class AsmViewerHost
         }
 
         var textControl = _currentTextControl;
-        if (textControl == null)
+        if (textControl == null || !textControl.Lifetime.IsAlive)
         {
-            _logger.Verbose("No text control, skipping");
+            _logger.Verbose("No text control or text control is no longer alive, clearing UI");
+            _model.SendResult(new CompilationResult(null, new ErrorInfo(ErrorCode.SourceFileNotFound, null)));
             return;
         }
 
@@ -188,6 +189,12 @@ public class AsmViewerHost
         if (!compilationLifetime.IsAlive || result.FailValue is { Code: AsmViewerErrorCode.UpdateCancelled })
         {
             _logger.Verbose("Compilation cancelled");
+            return;
+        }
+
+        if (!textControl.Lifetime.IsAlive)
+        {
+            _logger.Verbose("Text control closed during compilation, discarding result");
             return;
         }
 
