@@ -134,12 +134,12 @@ public class AsmViewerHost
                 return;
             }
 
-            // IL Viewer and similar tools open read-only editors with synchronized carets.
+            // IL Viewer, ASM Viewer and similar tools open read-only editors with synchronized carets.
             // We skip these and keep tracking the source editor - caret sync ensures our subscription still works.
             var projectFile = _documentManager.TryGetProjectFile(textControl.Document);
-            if (projectFile != null && _fileLocationsBlacklist.Contains(projectFile.Location))
+            if (projectFile == null || _fileLocationsBlacklist.Contains(projectFile.Location))
             {
-                _logger.Verbose("Ignoring blacklisted file location: {0}", textControl.Document.Moniker);
+                _logger.Verbose("Ignoring text control (virtual document or blacklisted): {0}", textControl.Document.Moniker);
                 return;
             }
 
