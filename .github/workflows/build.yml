@@ -58,12 +58,6 @@ jobs:
         with:
           cache-disabled: true
 
-      # Set up the .NET environment for the next steps
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '8.x'
-
       # Build plugin
       - name: Build plugin
         run: ./gradlew buildPlugin
@@ -116,12 +110,6 @@ jobs:
         with:
           cache-disabled: true
 
-      # Set up the .NET environment for the next steps
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '9.x'
-
       # Run tests
       - name: Run Tests
         run: ./gradlew check
@@ -165,12 +153,6 @@ jobs:
         with:
           cache-disabled: true
 
-      # Set up the .NET environment for the next steps
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '9.x'
-
       # Run .NET tests
       - name: Run .NET Tests
         run: ./gradlew testDotNet
@@ -212,12 +194,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: true
-
-      # Set up the .NET environment for the next steps
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '8.x'
 
       # Run Verify Plugin task and IntelliJ Plugin Verifier tool
       - name: Run Plugin Verification tasks

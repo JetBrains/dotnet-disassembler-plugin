@@ -6,6 +6,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <OutputPath>out</OutputPath>
-	  <AssemblyName>JitDisasmLoader</AssemblyName>
+	<AssemblyName>JitDisasmLoader</AssemblyName>
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 </Project>
