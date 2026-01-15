@@ -29,6 +29,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         +"ProjectPathNotFound"
         +"DotnetBuildFailed"
         +"DotnetPublishFailed"
+        +"EmptyDisassembly"
 
         // Runtime/Path errors
         +"DotNetCliNotFound"

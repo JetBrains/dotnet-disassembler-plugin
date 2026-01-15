@@ -31,6 +31,7 @@ public static class AsmViewerErrorCodeExtensions
         AsmViewerErrorCode.ProjectPathNotFound => ErrorCode.ProjectPathNotFound,
         AsmViewerErrorCode.DotnetBuildFailed => ErrorCode.DotnetBuildFailed,
         AsmViewerErrorCode.DotnetPublishFailed => ErrorCode.DotnetPublishFailed,
+        AsmViewerErrorCode.EmptyDisassembly => ErrorCode.EmptyDisassembly,
 
         // Runtime/Path errors
         AsmViewerErrorCode.DotNetCliNotFound => ErrorCode.DotNetCliNotFound,
