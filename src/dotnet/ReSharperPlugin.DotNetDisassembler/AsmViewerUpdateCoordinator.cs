@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using JetBrains.Application.Parts;
 using JetBrains.Core;
+using JetBrains.DocumentModel.Storage;
 using JetBrains.Lifetimes;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.Protocol;
@@ -28,6 +29,7 @@ public class AsmViewerUpdateCoordinator(
     private static readonly ILogger Logger = GetLogger<AsmViewerUpdateCoordinator>();
 
     private readonly AsmViewerModel _model = solution.GetProtocolSolution().GetAsmViewerModel();
+    private readonly IDocumentStorageHelpers _storageHelpers = solution.GetComponent<IDocumentStorageHelpers>();
 
     private readonly Lazy<MemoryCache> _cache = new(() => new MemoryCache(new MemoryCacheOptions { SizeLimit = CacheSize }));
     private readonly object _cacheLock = new();
@@ -61,6 +63,8 @@ public class AsmViewerUpdateCoordinator(
                 myCacheVersion = ++_cacheVersion;
                 Logger.Info("Cache miss for method: {0}, starting compilation (version: {1})", declarationData.Target.MemberFilter, myCacheVersion);
             }
+
+            _storageHelpers.SaveAllDocuments();
 
             _model.IsLoading.Value = true;
             try
