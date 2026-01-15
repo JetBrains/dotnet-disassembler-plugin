@@ -32,7 +32,8 @@ public class JitCodegenProviderTests
             <Project Sdk=""Microsoft.NET.Sdk"">
               <PropertyGroup>
                 <OutputType>Exe</OutputType>
-                <TargetFramework>net9.0</TargetFramework>
+                <TargetFramework>net8.0</TargetFramework>
+                <UseAppHost>false</UseAppHost>
               </PropertyGroup>
             </Project>");
 
@@ -234,12 +235,12 @@ public class JitCodegenProviderTests
         var result = await _jitCodegenProvider.GetJitCodegenAsync(_mainMethodTarget, projectContext, config, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
+        Assert.True(result.Succeed, $"Error: {result.FailValue?.Code}\nDetails: {result.FailValue?.Details}");
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.Result);
         Assert.IsNotEmpty(result.Value.Result);
-        Assert.True(result.Value.Result.Contains(_mainMethodTarget.ClassName) 
-                    || result.Value.Result.Contains(_mainMethodTarget.MethodName), 
+        Assert.True(result.Value.Result.Contains(_mainMethodTarget.ClassName)
+                    || result.Value.Result.Contains(_mainMethodTarget.MethodName),
             "Output should contain method or class name");
     }
 
@@ -255,15 +256,15 @@ public class JitCodegenProviderTests
         var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
+        Assert.True(result.Succeed, $"Error: {result.FailValue?.Code}\nDetails: {result.FailValue?.Details}");
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.Result);
         Assert.IsNotEmpty(result.Value.Result);
-        Assert.True(result.Value.Result.Contains(_addMethodTarget.ClassName) 
-                    || result.Value.Result.Contains(_addMethodTarget.MethodName), 
+        Assert.True(result.Value.Result.Contains(_addMethodTarget.ClassName)
+                    || result.Value.Result.Contains(_addMethodTarget.MethodName),
             "Output should contain method or class name");
     }
-    
+
     [Test]
     public async Task GetJitCodegen_WithProperty_ShouldReturnAssemblyCode()
     {
@@ -276,15 +277,15 @@ public class JitCodegenProviderTests
         var result = await _jitCodegenProvider.GetJitCodegenAsync(_valuePropertyTarget, projectContext, config, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
+        Assert.True(result.Succeed, $"Error: {result.FailValue?.Code}\nDetails: {result.FailValue?.Details}");
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.Result);
         Assert.IsNotEmpty(result.Value.Result);
-        Assert.True(result.Value.Result.Contains(_valuePropertyTarget.ClassName) 
-                    || result.Value.Result.Contains(_valuePropertyTarget.MethodName), 
+        Assert.True(result.Value.Result.Contains(_valuePropertyTarget.ClassName)
+                    || result.Value.Result.Contains(_valuePropertyTarget.MethodName),
             "Output should contain method or class name");
     }
-    
+
     [Test]
     public async Task GetJitCodegen_WithMissingMethod_ShouldReturnEmptyOrMinimalOutput()
     {
@@ -297,7 +298,7 @@ public class JitCodegenProviderTests
         var result = await _jitCodegenProvider.GetJitCodegenAsync(_missingMethodTarget, projectContext, config, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeed, $"Expected success but got error: {result.FailValue?.Code}");
+        Assert.True(result.Succeed, $"Error: {result.FailValue?.Code}\nDetails: {result.FailValue?.Details}");
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.Result);
         Assert.That(result.Value.Result.Length, Is.Zero,
@@ -306,16 +307,24 @@ public class JitCodegenProviderTests
 
     private JitDisasmProjectContext CreateProjectContext([CanBeNull] JitDisasmTargetFramework tfm = null)
     {
+        var projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", ".."));
+        var dotnetCmd = Path.Combine(projectRoot, "dotnet.cmd");
+        var dotnetExe = File.Exists(dotnetCmd) ? dotnetCmd : "dotnet";
+
+        TestContext.WriteLine($"Project root: {projectRoot}");
+        TestContext.WriteLine($"Using dotnet executable: {dotnetExe}");
+        TestContext.WriteLine($"File exists: {File.Exists(dotnetExe)}");
+
         return new JitDisasmProjectContext(
             Sdk: "Microsoft.NET.Sdk",
             Tfm: tfm ?? new JitDisasmTargetFramework(
-                UniqueString: "net9.0",
-                new Version(9, 0, 0, 0),
+                UniqueString: "net8.0",
+                new Version(8, 0, 0, 0),
                 IsNetCore: true),
             OutputPath: "bin",
             ProjectFilePath: _testProjectFile,
             ProjectDirectory: _testProjectDir,
             AssemblyName: "TestProject",
-            DotNetCliExePath: "dotnet");
+            DotNetCliExePath: dotnetExe);
     }
 }
