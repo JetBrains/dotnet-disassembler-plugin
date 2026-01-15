@@ -4,6 +4,8 @@ import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.Constants
 import java.io.ByteArrayOutputStream
+import kotlin.io.path.absolute
+import kotlin.io.path.isDirectory
 
 plugins {
     id("java")
@@ -28,6 +30,8 @@ val ProductVersion: String by project
 val DotnetPluginId: String by project
 val RiderPluginId: String by project
 val PublishToken: String by project
+
+
 
 allprojects {
     repositories {
@@ -82,6 +86,42 @@ tasks.test {
     useTestNG()
 }
 
+val dotNetSrcDir = File(projectDir, "src/dotnet")
+
+val riderSdkPath by lazy {
+    val path = intellijPlatform.platformPath.resolve("lib/DotNetSdkForRdPlugins").absolute()
+    if (!path.isDirectory()) error("$path does not exist or not a directory")
+
+    println("Rider SDK path: $path")
+    return@lazy path
+}
+
+val generateDotNetSdkProperties by tasks.registering {
+    val dotNetSdkGeneratedPropsFile = file("build/DotNetSdkPath.Generated.props")
+    doLast {
+        dotNetSdkGeneratedPropsFile.writeTextIfChanged("""<Project>
+  <PropertyGroup>
+    <DotNetSdkPath>$riderSdkPath</DotNetSdkPath>
+  </PropertyGroup>
+</Project>
+""")
+    }
+}
+
+val generateNuGetConfig by tasks.registering {
+    val nuGetConfigFile = dotNetSrcDir.resolve("nuget.config")
+    doLast {
+        nuGetConfigFile.writeTextIfChanged("""<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <packageSources>
+        <add key="rider-sdk" value="$riderSdkPath" />
+        <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    </packageSources>
+</configuration>
+""")
+    }
+}
+
 val setBuildTool by tasks.registering {
     doLast {
         extra["executable"] = "dotnet"
@@ -112,7 +152,7 @@ val setBuildTool by tasks.registering {
 }
 
 val compileDotNet by tasks.registering {
-    dependsOn(setBuildTool)
+    dependsOn(setBuildTool, generateDotNetSdkProperties, generateNuGetConfig)
     doLast {
         val executable: String by setBuildTool.get().extra
         val arguments = (setBuildTool.get().extra["args"] as List<String>).toMutableList()
@@ -126,6 +166,7 @@ val compileDotNet by tasks.registering {
 }
 
 val testDotNet by tasks.registering {
+    dependsOn(setBuildTool, generateDotNetSdkProperties, generateNuGetConfig)
     doLast {
         exec {
             executable("dotnet")
@@ -274,6 +315,16 @@ tasks.publishPlugin {
             args("nuget","push","output/${DotnetPluginId}.${version}.nupkg","--api-key",nugetToken,"--source","https://plugins.jetbrains.com")
             workingDir(rootDir)
         }
+    }
+}
+
+fun File.writeTextIfChanged(content: String) {
+    val bytes = content.toByteArray()
+
+    if (!exists() || !readBytes().contentEquals(bytes)) {
+        println("Writing $path")
+        parentFile.mkdirs()
+        writeBytes(bytes)
     }
 }
 

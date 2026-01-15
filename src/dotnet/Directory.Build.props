@@ -1,6 +1,7 @@
 <Project>
 
   <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
     <LangVersion>Latest</LangVersion>
     <NoWarn>MSB3277</NoWarn>
     <NoPackageAnalysis>true</NoPackageAnalysis>
@@ -16,11 +17,21 @@
     <DefineConstants>TRACE;DEBUG;JET_MODE_ASSERT</DefineConstants>
   </PropertyGroup>
 
-  <Import Project="Plugin.props" />
+  <Target BeforeTargets="CoreCompile" Name="CheckForGradlePrepared" Condition="!Exists('$(JetBrainsRiderRdBackendCommonReference)')">
+    <Error Text="Please run `./gradlew compileDotNet`" />
+  </Target>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\..\build\DotNetSdkPath.Generated.props" Condition="Exists('$(MSBuildThisFileDirectory)..\..\build\DotNetSdkPath.Generated.props')" />
 
   <PropertyGroup>
-    <WaveVersion>$(SdkVersion.Substring(2,2))$(SdkVersion.Substring(5,1)).0.0</WaveVersion>
+    <JetBrainsRiderRdBackendCommonReference>$(DotNetSdkPath)\Build\PackageReference.JetBrains.Rider.RdBackend.Common.Props</JetBrainsRiderRdBackendCommonReference>
+    <JetBrainsReSharperSdkReference>$(DotNetSdkPath)\Build\PackageReference.JetBrains.ReSharper.Sdk.Props</JetBrainsReSharperSdkReference>
   </PropertyGroup>
+
+  <Import Project="$(JetBrainsRiderRdBackendCommonReference)" Condition="Exists('$(JetBrainsRiderRdBackendCommonReference)')" />
+  <Import Project="$(JetBrainsReSharperSdkReference)" Condition="Exists('$(JetBrainsReSharperSdkReference)')" />
+
+  <Import Project="Plugin.props" />
 
   <ItemGroup>
     <Reference Include="System.Xaml" />

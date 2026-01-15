@@ -12,6 +12,9 @@ output
 *.tmp
 .nuke
 
+# Generated files
+src/dotnet/nuget.config
+
 # User-specific files
 *.suo
 *.user
