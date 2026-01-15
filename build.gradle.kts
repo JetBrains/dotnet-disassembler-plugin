@@ -1,9 +1,6 @@
 import com.jetbrains.plugin.structure.base.utils.isFile
-import groovy.ant.FileNameFinder
-import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.Constants
-import java.io.ByteArrayOutputStream
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory
 
@@ -20,9 +17,6 @@ java {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
-
-val isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
-extra["isWindows"] = isWindows
 
 val DotnetSolution: String by project
 val BuildConfiguration: String by project
@@ -122,61 +116,30 @@ val generateNuGetConfig by tasks.registering {
     }
 }
 
-val setBuildTool by tasks.registering {
-    doLast {
-        extra["executable"] = "dotnet"
-        var args = mutableListOf("msbuild")
-
-        if (isWindows) {
-            val stdout = ByteArrayOutputStream()
-            exec {
-                executable("${rootDir}\\tools\\vswhere.exe")
-                args("-latest", "-property", "installationPath", "-products", "*")
-                standardOutput = stdout
-                workingDir(rootDir)
-            }
-
-            val directory = stdout.toString().trim()
-            if (directory.isNotEmpty()) {
-                val files = FileNameFinder().getFileNames("${directory}\\MSBuild", "**/MSBuild.exe")
-                extra["executable"] = files.get(0)
-                args = mutableListOf("/v:minimal")
-            }
-        }
-
-        args.add("${DotnetSolution}")
-        args.add("/p:Configuration=${BuildConfiguration}")
-        args.add("/p:HostFullIdentifier=")
-        extra["args"] = args
-    }
-}
-
 val compileDotNet by tasks.registering {
-    dependsOn(setBuildTool, generateDotNetSdkProperties, generateNuGetConfig)
+    dependsOn(generateDotNetSdkProperties, generateNuGetConfig)
     doLast {
-        val executable: String by setBuildTool.get().extra
-        val arguments = (setBuildTool.get().extra["args"] as List<String>).toMutableList()
-        arguments.add("/t:Restore;Rebuild")
         exec {
-            executable(executable)
-            args(arguments)
+            executable(layout.projectDirectory.file("dotnet.cmd"))
+            args("build", "${DotnetSolution}", "--configuration", BuildConfiguration)
             workingDir(rootDir)
         }
     }
 }
 
 val testDotNet by tasks.registering {
-    dependsOn(setBuildTool, generateDotNetSdkProperties, generateNuGetConfig)
+    dependsOn(generateDotNetSdkProperties, generateNuGetConfig)
     doLast {
         exec {
-            executable("dotnet")
-            args("test","${DotnetSolution}","--logger","GitHubActions")
+            executable(layout.projectDirectory.file("dotnet.cmd"))
+            args("test", "${DotnetSolution}", "--logger", "GitHubActions")
             workingDir(rootDir)
         }
     }
 }
 
 tasks.buildPlugin {
+    dependsOn(compileDotNet)
     doLast {
         copy {
             from("${buildDir}/distributions/${rootProject.name}-${version}.zip")
@@ -190,15 +153,9 @@ tasks.buildPlugin {
             it.groups[1]!!.value.replace("(?s)- ".toRegex(), "\u2022 ").replace("`", "").replace(",", "%2C").replace(";", "%3B")
         }.take(1).joinToString()
 
-        val executable: String by setBuildTool.get().extra
-        val arguments = (setBuildTool.get().extra["args"] as List<String>).toMutableList()
-        arguments.add("/t:Pack")
-        arguments.add("/p:PackageOutputPath=${rootDir}/output")
-        arguments.add("/p:PackageReleaseNotes=${changeNotes}")
-        arguments.add("/p:PackageVersion=${version}")
         exec {
-            executable(executable)
-            args(arguments)
+            executable(layout.projectDirectory.file("dotnet.cmd"))
+            args("pack", "${DotnetSolution}", "--configuration", BuildConfiguration, "--output", "${rootDir}/output", "/p:PackageReleaseNotes=${changeNotes}", "/p:PackageVersion=${version}")
             workingDir(rootDir)
         }
     }
@@ -310,9 +267,9 @@ tasks.publishPlugin {
 
     doLast {
         exec {
-            executable("dotnet")
+            executable(layout.projectDirectory.file("dotnet.cmd"))
             val nugetToken = System.getenv("PUBLISH_TOKEN") ?: ""
-            args("nuget","push","output/${DotnetPluginId}.${version}.nupkg","--api-key",nugetToken,"--source","https://plugins.jetbrains.com")
+            args("nuget", "push", "output/${DotnetPluginId}.${version}.nupkg", "--api-key", nugetToken, "--source", "https://plugins.jetbrains.com")
             workingDir(rootDir)
         }
     }
