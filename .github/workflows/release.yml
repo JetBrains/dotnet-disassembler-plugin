@@ -16,6 +16,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      packages: write
     steps:
 
       # Free GitHub Actions Environment Disk Space
@@ -75,6 +76,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} ./build/distributions/*
+
+      # Publish to GitHub Packages
+      - name: Publish to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          ARTIFACT_PATH="./build/distributions"
+          
+          for file in $ARTIFACT_PATH/*.zip; do
+            if [ -f "$file" ]; then
+              echo "Publishing $file to GitHub Packages"
+              gh release upload $VERSION "$file" --clobber
+              
+              PACKAGE_NAME=$(basename "$file")
+              echo "Uploaded: $PACKAGE_NAME"
+            fi
+          done
 
       # Create a pull request
       - name: Create Pull Request
