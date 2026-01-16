@@ -132,7 +132,7 @@ val testDotNet by tasks.registering {
     doLast {
         exec {
             executable(layout.projectDirectory.file("dotnet.cmd"))
-            args("test", "${DotnetSolution}", "--logger", "GitHubActions")
+            args("test", "${DotnetSolution}", "--logger", "GitHubActions", "--logger", "trx")
             workingDir(rootDir)
         }
     }
