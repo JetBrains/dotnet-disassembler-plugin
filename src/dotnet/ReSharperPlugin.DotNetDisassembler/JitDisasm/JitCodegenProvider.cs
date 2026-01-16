@@ -47,8 +47,9 @@ public class JitCodegenProvider(ILogger logger)
             clrCheckedFilesDir = result.Value;
         }
 
-        var resultOutDir = Path.Combine(projectContext.OutputPath!,
-            "DotNetDisassembler" + (configuration.UseDotnetPublishForReload ? "_published" : ""), tfm.UniqueString);
+        var resultOutDir = configuration.UseDotnetPublishForReload
+            ? Path.Combine(projectContext.OutputPath!, "DotNetDisassembler_published", tfm.UniqueString, runtimeId)
+            : Path.Combine(projectContext.OutputPath!, "DotNetDisassembler", tfm.UniqueString);
 
         var dotnetCliExePath = projectContext.DotNetCliExePath!;
         var projectFilePath = projectContext.ProjectFilePath!;
