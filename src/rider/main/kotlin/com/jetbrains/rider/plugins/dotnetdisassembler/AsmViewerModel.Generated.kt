@@ -33,6 +33,7 @@ class AsmViewerModel private constructor(
         
         override fun registerSerializersCore(serializers: ISerializers)  {
             val classLoader = javaClass.classLoader
+            serializers.register(LazyCompanionMarshaller(RdId(-1684824059527079892), classLoader, "com.jetbrains.rd.ide.model.CompilerType"))
             serializers.register(LazyCompanionMarshaller(RdId(564443201287490), classLoader, "com.jetbrains.rd.ide.model.ErrorCode"))
             serializers.register(LazyCompanionMarshaller(RdId(564443201465347), classLoader, "com.jetbrains.rd.ide.model.ErrorInfo"))
             serializers.register(LazyCompanionMarshaller(RdId(3780635925811704340), classLoader, "com.jetbrains.rd.ide.model.JitConfiguration"))
@@ -43,7 +44,7 @@ class AsmViewerModel private constructor(
         
         
         
-        const val serializationHash = 8187543730662674558L
+        const val serializationHash = -8744739113612796705L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -124,7 +125,7 @@ val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::Asm
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:64]
+ * #### Generated from [AsmViewerModel.kt:70]
  */
 data class CompilationResult (
     val content: String?,
@@ -191,6 +192,32 @@ data class CompilationResult (
 /**
  * #### Generated from [AsmViewerModel.kt:10]
  */
+enum class CompilerType {
+    Clrjit, 
+    Crossgen2, 
+    Ilc;
+    
+    companion object : IMarshaller<CompilerType> {
+        val marshaller = FrameworkMarshallers.enum<CompilerType>()
+        
+        
+        override val _type: KClass<CompilerType> = CompilerType::class
+        override val id: RdId get() = RdId(-1684824059527079892)
+        
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): CompilerType {
+            return marshaller.read(ctx, buffer)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: CompilerType)  {
+            marshaller.write(ctx, buffer, value)
+        }
+    }
+}
+
+
+/**
+ * #### Generated from [AsmViewerModel.kt:16]
+ */
 enum class ErrorCode {
     SourceFileNotFound, 
     PsiSourceFileUnavailable, 
@@ -235,7 +262,7 @@ enum class ErrorCode {
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:45]
+ * #### Generated from [AsmViewerModel.kt:51]
  */
 data class ErrorInfo (
     val code: ErrorCode,
@@ -300,7 +327,7 @@ data class ErrorInfo (
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:50]
+ * #### Generated from [AsmViewerModel.kt:56]
  */
 data class JitConfiguration (
     val showAsmComments: Boolean,
@@ -312,7 +339,7 @@ data class JitConfiguration (
     val useDotnetPublishForReload: Boolean,
     val useDotnetBuildForReload: Boolean,
     val targetFrameworkOverride: String?,
-    val selectedCustomJit: String?,
+    val selectedCompiler: CompilerType,
     val disassemblyTimeoutSeconds: Int
 ) : IPrintable {
     //companion
@@ -332,9 +359,9 @@ data class JitConfiguration (
             val useDotnetPublishForReload = buffer.readBool()
             val useDotnetBuildForReload = buffer.readBool()
             val targetFrameworkOverride = buffer.readNullable { buffer.readString() }
-            val selectedCustomJit = buffer.readNullable { buffer.readString() }
+            val selectedCompiler = buffer.readEnum<CompilerType>()
             val disassemblyTimeoutSeconds = buffer.readInt()
-            return JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCustomJit, disassemblyTimeoutSeconds)
+            return JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCompiler, disassemblyTimeoutSeconds)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: JitConfiguration)  {
@@ -347,7 +374,7 @@ data class JitConfiguration (
             buffer.writeBool(value.useDotnetPublishForReload)
             buffer.writeBool(value.useDotnetBuildForReload)
             buffer.writeNullable(value.targetFrameworkOverride) { buffer.writeString(it) }
-            buffer.writeNullable(value.selectedCustomJit) { buffer.writeString(it) }
+            buffer.writeEnum(value.selectedCompiler)
             buffer.writeInt(value.disassemblyTimeoutSeconds)
         }
         
@@ -373,7 +400,7 @@ data class JitConfiguration (
         if (useDotnetPublishForReload != other.useDotnetPublishForReload) return false
         if (useDotnetBuildForReload != other.useDotnetBuildForReload) return false
         if (targetFrameworkOverride != other.targetFrameworkOverride) return false
-        if (selectedCustomJit != other.selectedCustomJit) return false
+        if (selectedCompiler != other.selectedCompiler) return false
         if (disassemblyTimeoutSeconds != other.disassemblyTimeoutSeconds) return false
         
         return true
@@ -390,7 +417,7 @@ data class JitConfiguration (
         __r = __r*31 + useDotnetPublishForReload.hashCode()
         __r = __r*31 + useDotnetBuildForReload.hashCode()
         __r = __r*31 + if (targetFrameworkOverride != null) targetFrameworkOverride.hashCode() else 0
-        __r = __r*31 + if (selectedCustomJit != null) selectedCustomJit.hashCode() else 0
+        __r = __r*31 + selectedCompiler.hashCode()
         __r = __r*31 + disassemblyTimeoutSeconds.hashCode()
         return __r
     }
@@ -407,7 +434,7 @@ data class JitConfiguration (
             print("useDotnetPublishForReload = "); useDotnetPublishForReload.print(printer); println()
             print("useDotnetBuildForReload = "); useDotnetBuildForReload.print(printer); println()
             print("targetFrameworkOverride = "); targetFrameworkOverride.print(printer); println()
-            print("selectedCustomJit = "); selectedCustomJit.print(printer); println()
+            print("selectedCompiler = "); selectedCompiler.print(printer); println()
             print("disassemblyTimeoutSeconds = "); disassemblyTimeoutSeconds.print(printer); println()
         }
         printer.print(")")

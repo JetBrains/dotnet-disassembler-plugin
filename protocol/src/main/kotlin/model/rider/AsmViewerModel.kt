@@ -7,6 +7,12 @@ import com.jetbrains.rider.model.nova.ide.SolutionModel
 @Suppress("unused")
 class AsmViewerModel : Ext(SolutionModel.Solution) {
 
+    private val CompilerType = enum {
+        +"Clrjit"
+        +"Crossgen2"
+        +"Ilc"
+    }
+
     private val ErrorCode = enum {
         // PSI/Navigation errors
         +"SourceFileNotFound"
@@ -57,7 +63,7 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("useDotnetPublishForReload", bool)
         field("useDotnetBuildForReload", bool)
         field("targetFrameworkOverride", string.nullable)
-        field("selectedCustomJit", string.nullable)
+        field("selectedCompiler", CompilerType)
         field("disassemblyTimeoutSeconds", int)
     }
 

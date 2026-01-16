@@ -32,7 +32,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
     private readonly BooleanEventField _runAppModeField;
     private readonly BooleanEventField _useNoRestoreField;
     private readonly BooleanEventField _hasTargetFrameworkOverrideField;
-    private readonly StringEventField _jitCompilerField;
+    private readonly StringEventField _compilerField;
     private readonly BooleanEventField _useDotnetPublishField;
     private readonly IntEventField _disassemblyTimeoutSecondsField;
 
@@ -44,8 +44,8 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
 
         _disassemblySucceeded = _group.RegisterEvent("disassembly.succeeded", "Disassembly succeeded");
 
-        _sdkTypeField = EventFields.String("sdk_type", "Project SDK type", Array.Empty<string>());
-        _targetFrameworkField = EventFields.String("target_framework", "Target framework", Array.Empty<string>());
+        _sdkTypeField = EventFields.StringValidatedByInlineRegexp("sdk_type", "Project SDK type", FusValidationPatterns.SdkType);
+        _targetFrameworkField = EventFields.StringValidatedByInlineRegexp("target_framework", "Target framework", FusValidationPatterns.TargetFramework);
         _projectInfoCollected = _group.RegisterVarargEvent(
             "project.info",
             "Project information",
@@ -59,13 +59,13 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
             errorCodeField);
 
         _showAsmCommentsField = EventFields.Boolean("show_asm_comments", "Show ASM comments");
-        _useTieredJitField = EventFields.Boolean("use_tiered_jit", "Use tiered JIT");
+        _useTieredJitField = EventFields.Boolean("use_tiered_compilation", "Use tiered compilation");
         _usePgoField = EventFields.Boolean("use_pgo", "Use PGO");
         _diffableField = EventFields.Boolean("diffable", "Diffable mode");
         _runAppModeField = EventFields.Boolean("run_app_mode", "Run app mode");
         _useNoRestoreField = EventFields.Boolean("use_no_restore", "Use no restore");
         _hasTargetFrameworkOverrideField = EventFields.Boolean("has_target_framework_override", "Has target framework override");
-        _jitCompilerField = EventFields.String("jit_compiler", "JIT compiler", Array.Empty<string>());
+        _compilerField = EventFields.String("compiler", "Compiler", JitCompilerTypes.All);
         _useDotnetPublishField = EventFields.Boolean("use_dotnet_publish", "Use dotnet publish");
         _disassemblyTimeoutSecondsField = EventFields.Int("disassembly_timeout_seconds", "Disassembly timeout seconds");
         _configurationSaved = _group.RegisterVarargEvent(
@@ -78,7 +78,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
             _runAppModeField,
             _useNoRestoreField,
             _hasTargetFrameworkOverrideField,
-            _jitCompilerField,
+            _compilerField,
             _useDotnetPublishField,
             _disassemblyTimeoutSecondsField);
     }
@@ -147,7 +147,7 @@ public class AsmViewerUsageCollector : CounterUsagesCollector
                 _runAppModeField.With(config.RunAppMode),
                 _useNoRestoreField.With(config.UseNoRestoreFlag),
                 _hasTargetFrameworkOverrideField.With(config.OverridenTfm != null),
-                _jitCompilerField.With(config.SelectedCustomJit),
+                _compilerField.With(config.SelectedCustomJit),
                 _useDotnetPublishField.With(config.UseDotnetPublishForReload),
                 _disassemblyTimeoutSecondsField.With((int)config.DisassemblyTimeout.TotalSeconds));
         }

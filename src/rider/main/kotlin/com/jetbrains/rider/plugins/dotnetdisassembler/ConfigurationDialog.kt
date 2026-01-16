@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.JBUI
+import com.jetbrains.rd.ide.model.CompilerType
 import com.jetbrains.rd.ide.model.JitConfiguration
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -76,7 +77,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 useDotnetPublishForReload = buildPanel.useDotnetPublishForReload,
                 useDotnetBuildForReload = buildPanel.useDotnetBuildForReload,
                 targetFrameworkOverride = buildPanel.targetFrameworkOverride,
-                selectedCustomJit = jitPanel.selectedCustomJit,
+                selectedCompiler = jitPanel.selectedCompiler,
                 disassemblyTimeoutSeconds = runtimePanel.disassemblyTimeoutSeconds
             )
         )
@@ -113,13 +114,19 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         private val useTieredJitCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.tiered"), config.useTieredJit)
         private val usePGOCheckbox = JBCheckBox(AsmViewerBundle.message("jit.use.pgo"), config.usePGO)
 
-        private val jitCompilerCombo = JComboBox(arrayOf("clrjit.dll", "crossgen2.dll (R2R)", "ilc (NativeAOT)")).apply {
-            selectedItem = config.selectedCustomJit ?: "clrjit.dll"
+        private val compilerItems = arrayOf(
+            CompilerItem(CompilerType.Clrjit, "clrjit.dll"),
+            CompilerItem(CompilerType.Crossgen2, "crossgen2.dll (R2R)"),
+            CompilerItem(CompilerType.Ilc, "ilc (NativeAOT)")
+        )
+
+        private val jitCompilerCombo = JComboBox(compilerItems).apply {
+            selectedItem = compilerItems.find { it.type == config.selectedCompiler }
         }
 
         val useTieredJit: Boolean get() = useTieredJitCheckbox.isSelected
         val usePGO: Boolean get() = usePGOCheckbox.isSelected
-        val selectedCustomJit: String? get() = jitCompilerCombo.selectedItem?.toString()
+        val selectedCompiler: CompilerType get() = (jitCompilerCombo.selectedItem as CompilerItem).type
 
         init {
             usePGOCheckbox.addItemListener { e ->
@@ -135,6 +142,10 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 .addComponent(usePGOCheckbox)
                 .addVerticalGap(10)
                 .addLabeledComponent(AsmViewerBundle.message("jit.compiler.label"), jitCompilerCombo)
+        }
+        
+        private data class CompilerItem(val type: CompilerType, val displayName: String) {
+            override fun toString() = displayName
         }
     }
 
