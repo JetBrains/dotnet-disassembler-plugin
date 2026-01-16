@@ -54,9 +54,17 @@ public static class JitDisasmTargetUtils
                 methodName = "*";
                 hostType = containingType.ShortName;
                 break;
-            case IConstructor:
-                target = prefix + ":.ctor";
-                methodName = "*";
+            case IConstructor constructor:
+                if (constructor.IsStatic)
+                {
+                    target = prefix + ":.cctor";
+                    methodName = ".cctor";
+                }
+                else
+                {
+                    target = prefix + ":.ctor";
+                    methodName = "*";
+                }
                 hostType = containingType.ShortName;
                 break;
             case IFunction function:
