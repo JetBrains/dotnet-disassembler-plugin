@@ -32,7 +32,7 @@ public class JitCodegenProviderTests
             <Project Sdk=""Microsoft.NET.Sdk"">
               <PropertyGroup>
                 <OutputType>Exe</OutputType>
-                <TargetFramework>net8.0</TargetFramework>
+                <TargetFramework>net9.0</TargetFramework>
                 <UseAppHost>false</UseAppHost>
               </PropertyGroup>
             </Project>");
@@ -318,8 +318,8 @@ public class JitCodegenProviderTests
         return new JitDisasmProjectContext(
             Sdk: "Microsoft.NET.Sdk",
             Tfm: tfm ?? new JitDisasmTargetFramework(
-                UniqueString: "net8.0",
-                new Version(8, 0, 0, 0),
+                UniqueString: "net9.0",
+                new Version(9, 0, 0, 0),
                 IsNetCore: true),
             OutputPath: "bin",
             ProjectFilePath: _testProjectFile,
