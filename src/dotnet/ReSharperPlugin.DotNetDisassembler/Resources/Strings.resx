@@ -4,7 +4,7 @@
     <value>Show ASM Viewer</value>
   </data>
   <data name="ShowAsmViewerContextAction_Description">
-    <value>Opens the ASM Viewer window to display assembly code for the selected method, property, constructor, or type declaration</value>
+    <value>Opens the ASM Viewer window to display JIT or native assembly code for the selected method, property, constructor, or type declaration</value>
   </data>
   <data name="ShowAsmViewerContextAction_Text">
     <value>Show in ASM Viewer</value>
