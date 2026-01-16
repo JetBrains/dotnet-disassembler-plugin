@@ -134,12 +134,12 @@ public class AsmViewerHost
                 return;
             }
 
-            // IL Viewer and similar tools open read-only editors with synchronized carets.
+            // IL Viewer, ASM Viewer and similar tools open read-only editors with synchronized carets.
             // We skip these and keep tracking the source editor - caret sync ensures our subscription still works.
             var projectFile = _documentManager.TryGetProjectFile(textControl.Document);
-            if (projectFile != null && _fileLocationsBlacklist.Contains(projectFile.Location))
+            if (projectFile == null || _fileLocationsBlacklist.Contains(projectFile.Location))
             {
-                _logger.Verbose("Ignoring blacklisted file location: {0}", textControl.Document.Moniker);
+                _logger.Verbose("Ignoring text control (virtual document or blacklisted): {0}", textControl.Document.Moniker);
                 return;
             }
 
@@ -174,9 +174,10 @@ public class AsmViewerHost
         }
 
         var textControl = _currentTextControl;
-        if (textControl == null)
+        if (textControl == null || !textControl.Lifetime.IsAlive)
         {
-            _logger.Verbose("No text control, skipping");
+            _logger.Verbose("No text control or text control is no longer alive, clearing UI");
+            _model.SendResult(new CompilationResult(null, new ErrorInfo(ErrorCode.SourceFileNotFound, null)));
             return;
         }
 
@@ -188,6 +189,12 @@ public class AsmViewerHost
         if (!compilationLifetime.IsAlive || result.FailValue is { Code: AsmViewerErrorCode.UpdateCancelled })
         {
             _logger.Verbose("Compilation cancelled");
+            return;
+        }
+
+        if (!textControl.Lifetime.IsAlive)
+        {
+            _logger.Verbose("Text control closed during compilation, discarding result");
             return;
         }
 

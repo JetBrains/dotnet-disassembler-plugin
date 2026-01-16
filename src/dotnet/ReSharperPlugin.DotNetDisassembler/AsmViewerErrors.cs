@@ -33,6 +33,7 @@ public enum AsmViewerErrorCode
     ProjectPathNotFound,
     DotnetBuildFailed,
     DotnetPublishFailed,
+    EmptyDisassembly,
 
     // Runtime/Path errors
     DotNetCliNotFound,

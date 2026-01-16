@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 0.1.1
 
 ### Fixed
-- Fixed statistics collection
-- Updated plugin description
+- Minor fixes and improvements
+- Improved plugin description
 
 ## 0.1.0
 

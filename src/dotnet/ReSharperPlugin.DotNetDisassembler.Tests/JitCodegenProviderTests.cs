@@ -96,7 +96,7 @@ public class JitCodegenProviderTests
 
         var config = new JitDisasmConfiguration
         {
-            SelectedCustomJit = JitDisasmConfiguration.Crossgen,
+            SelectedCustomJit = JitCompilerTypes.Crossgen,
             UsePgo = true
         };
 
@@ -158,8 +158,8 @@ public class JitCodegenProviderTests
     }
 
     [Test]
-    [TestCase(JitDisasmConfiguration.Crossgen, true, AsmViewerErrorCode.RunModeNotSupportedForAot)]
-    [TestCase(JitDisasmConfiguration.Ilc, true, AsmViewerErrorCode.RunModeNotSupportedForAot)]
+    [TestCase(JitCompilerTypes.Crossgen, true, AsmViewerErrorCode.RunModeNotSupportedForAot)]
+    [TestCase(JitCompilerTypes.Ilc, true, AsmViewerErrorCode.RunModeNotSupportedForAot)]
     public async Task GetJitCodegen_WithRunAppMode_ShouldReturnError(
         string customJit, bool runAppMode, AsmViewerErrorCode expectedError)
     {
@@ -181,8 +181,8 @@ public class JitCodegenProviderTests
     }
 
     [Test]
-    [TestCase(JitDisasmConfiguration.Crossgen, true, AsmViewerErrorCode.TieredJitNotSupportedForAot)]
-    [TestCase(JitDisasmConfiguration.Ilc, true, AsmViewerErrorCode.TieredJitNotSupportedForAot)]
+    [TestCase(JitCompilerTypes.Crossgen, true, AsmViewerErrorCode.TieredJitNotSupportedForAot)]
+    [TestCase(JitCompilerTypes.Ilc, true, AsmViewerErrorCode.TieredJitNotSupportedForAot)]
     public async Task GetJitCodegen_WithTieredJit_ShouldReturnError(
         string customJit, bool useTieredJit, AsmViewerErrorCode expectedError)
     {
@@ -211,7 +211,7 @@ public class JitCodegenProviderTests
 
         var config = new JitDisasmConfiguration
         {
-            SelectedCustomJit = JitDisasmConfiguration.Crossgen,
+            SelectedCustomJit = JitCompilerTypes.Crossgen,
             FgEnable = true
         };
 

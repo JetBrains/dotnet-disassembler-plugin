@@ -18,7 +18,7 @@ public static class JitDisasmConfigurationFactory
             UseNoRestoreFlag = config.UseNoRestoreFlag,
             UseDotnetPublishForReload = config.UseDotnetPublishForReload,
             UseDotnetBuildForReload = config.UseDotnetBuildForReload,
-            SelectedCustomJit = config.SelectedCustomJit ?? JitDisasmConfiguration.DefaultJit,
+            SelectedCustomJit = MapCompilerType(config.SelectedCompiler),
             OverridenTfm = !string.IsNullOrWhiteSpace(config.TargetFrameworkOverride)
                 ? JitDisasmTargetFrameworkFactory.Create(config.TargetFrameworkOverride)
                 : null,
@@ -36,6 +36,17 @@ public static class JitDisasmConfigurationFactory
             OverridenJitDisasm = null,
             DontGuessTfm = false,
             Arch = RuntimePlatformUtils.GetCurrentArch()
+        };
+    }
+
+    private static string MapCompilerType(CompilerType compilerType)
+    {
+        return compilerType switch
+        {
+            CompilerType.Clrjit => JitCompilerTypes.DefaultJit,
+            CompilerType.Crossgen2 => JitCompilerTypes.Crossgen,
+            CompilerType.Ilc => JitCompilerTypes.Ilc,
+            _ => JitCompilerTypes.DefaultJit
         };
     }
 }

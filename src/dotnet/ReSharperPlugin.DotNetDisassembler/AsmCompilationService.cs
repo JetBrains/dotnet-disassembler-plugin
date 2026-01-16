@@ -36,6 +36,9 @@ public class AsmCompilationService(AsmViewerUsageCollector usageCollector)
         if (!result.Succeed || result.Value == null)
             return Result.FailWithValue(result.FailValue);
 
+        if (string.IsNullOrWhiteSpace(result.Value.Result))
+            return Result.FailWithValue(new Error(AsmViewerErrorCode.EmptyDisassembly));
+
         return Result.Success(result.Value.Result);
     }
 }

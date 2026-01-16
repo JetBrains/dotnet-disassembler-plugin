@@ -32,14 +32,10 @@ public record JitDisasmConfiguration
     public JitDisasmTargetFramework OverridenTfm { get; init; }
     public string Arch { get; init; } = "x64";
     public TimeSpan DisassemblyTimeout { get; init; } = TimeSpan.FromSeconds(120);
-    
-    public bool CrossgenIsSelected => SelectedCustomJit?.StartsWith("crossgen") == true;
 
-    public bool NativeAotIsSelected => SelectedCustomJit?.StartsWith("ilc") == true;
-    
-    public const string DefaultJit = "clrjit.dll";
-    public const string Crossgen = "crossgen2.dll (R2R)";
-    public const string Ilc = "ilc (NativeAOT)";
+    public bool CrossgenIsSelected => SelectedCustomJit == JitCompilerTypes.Crossgen;
+
+    public bool NativeAotIsSelected => SelectedCustomJit == JitCompilerTypes.Ilc;
 
     public Result<JitDisasmConfiguration, Error> Validate()
     {
@@ -64,12 +60,12 @@ public record JitDisasmConfiguration
     public bool IsNonCustomDotnetAotMode()
     {
         return !UseCustomRuntime &&
-               (SelectedCustomJit == Crossgen || SelectedCustomJit == Ilc);
+               (SelectedCustomJit == JitCompilerTypes.Crossgen || SelectedCustomJit == JitCompilerTypes.Ilc);
     }
 
     public bool IsNonCustomNativeAotMode()
     {
-        return !UseCustomRuntime && SelectedCustomJit == Ilc;
+        return !UseCustomRuntime && SelectedCustomJit == JitCompilerTypes.Ilc;
     }
     
     public void FillWithUserVars(Dictionary<string, string> dictionary)

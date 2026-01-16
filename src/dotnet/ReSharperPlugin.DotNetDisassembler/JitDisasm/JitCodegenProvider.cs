@@ -208,7 +208,7 @@ public class JitCodegenProvider(ILogger logger)
 
             if (!string.IsNullOrWhiteSpace(configuration.SelectedCustomJit) && !configuration.CrossgenIsSelected &&
                 !configuration.NativeAotIsSelected &&
-                !configuration.SelectedCustomJit.Equals(JitDisasmConfiguration.DefaultJit,
+                !configuration.SelectedCustomJit.Equals(JitCompilerTypes.DefaultJit,
                     StringComparison.InvariantCultureIgnoreCase) && configuration.UseCustomRuntime)
             {
                 envVars["DOTNET_AltJitName"] = configuration.SelectedCustomJit;

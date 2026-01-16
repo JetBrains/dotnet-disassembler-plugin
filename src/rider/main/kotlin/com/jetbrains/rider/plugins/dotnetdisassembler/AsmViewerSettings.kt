@@ -5,6 +5,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.xmlb.annotations.Tag
+import com.jetbrains.rd.ide.model.CompilerType
 import com.jetbrains.rd.ide.model.JitConfiguration
 
 @Tag("jitConfiguration")
@@ -18,7 +19,7 @@ class JitConfigurationState : BaseState() {
     var useDotnetPublishForReload by property(false)
     var useDotnetBuildForReload by property(false)
     var targetFrameworkOverride by string(null)
-    var selectedCustomJit by string(null)
+    var selectedCompiler by enum(CompilerType.Clrjit)
     var disassemblyTimeoutSeconds by property(120)
 }
 
@@ -58,7 +59,7 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         useDotnetPublishForReload = state.jit.useDotnetPublishForReload,
         useDotnetBuildForReload = state.jit.useDotnetBuildForReload,
         targetFrameworkOverride = state.jit.targetFrameworkOverride,
-        selectedCustomJit = state.jit.selectedCustomJit,
+        selectedCompiler = state.jit.selectedCompiler,
         disassemblyTimeoutSeconds = state.jit.disassemblyTimeoutSeconds
     )
 
@@ -72,7 +73,7 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         state.jit.useDotnetPublishForReload = config.useDotnetPublishForReload
         state.jit.useDotnetBuildForReload = config.useDotnetBuildForReload
         state.jit.targetFrameworkOverride = config.targetFrameworkOverride
-        state.jit.selectedCustomJit = config.selectedCustomJit
+        state.jit.selectedCompiler = config.selectedCompiler
         state.jit.disassemblyTimeoutSeconds = config.disassemblyTimeoutSeconds
         fireChangeListeners()
     }
