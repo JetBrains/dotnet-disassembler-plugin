@@ -129,11 +129,11 @@ jobs:
           files: ${{ github.workspace }}/build/reports/kover/report.xml
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  # Run .NET tests on Windows (net472 requires Windows/.NET Framework)
+  # Run .NET tests on Linux (net472 runs via Mono)
   testDotNet:
     name: Test .NET
     needs: [ build ]
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
 
       # Check out the current repository
@@ -152,6 +152,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: true
+
+      # Install Mono for .NET Framework tests
+      - name: Setup Mono
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mono-complete
 
       # Run .NET tests
       - name: Run .NET Tests
