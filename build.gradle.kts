@@ -1,6 +1,7 @@
 import com.jetbrains.plugin.structure.base.utils.isFile
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.Constants
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory
 
@@ -182,7 +183,7 @@ dependencies {
 intellijPlatform {
     pluginVerification {
         ides {
-            recommended()
+            create(IntelliJPlatformType.Rider, ProductVersion)
         }
     }
 
