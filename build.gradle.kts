@@ -1,6 +1,7 @@
 import com.jetbrains.plugin.structure.base.utils.isFile
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.Constants
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory
 
@@ -69,11 +70,15 @@ sourceSets {
 }
 
 tasks.compileKotlin {
-    kotlinOptions { jvmTarget = "21" }
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
 }
 
 tasks.compileTestKotlin {
-    kotlinOptions { jvmTarget = "21" }
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
 }
 
 tasks.test {
@@ -178,7 +183,7 @@ dependencies {
 intellijPlatform {
     pluginVerification {
         ides {
-            recommended()
+            create(IntelliJPlatformType.Rider, ProductVersion)
         }
     }
 

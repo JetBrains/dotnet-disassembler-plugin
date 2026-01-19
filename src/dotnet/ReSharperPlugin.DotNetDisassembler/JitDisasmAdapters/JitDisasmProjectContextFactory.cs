@@ -36,6 +36,6 @@ public static class JitDisasmProjectContextFactory
         var protocolSolution = solution.GetProtocolSolution();
         var runtimeModel = protocolSolution.GetDotNetActiveRuntimeModel();
         var activeRuntime = runtimeModel.ActiveRuntime.Maybe.ValueOrDefault;
-        return activeRuntime?.DotNetCliExePath;
+        return activeRuntime?.DotNetCliExePath?.Value ?? "dotnet";
     }
 }
