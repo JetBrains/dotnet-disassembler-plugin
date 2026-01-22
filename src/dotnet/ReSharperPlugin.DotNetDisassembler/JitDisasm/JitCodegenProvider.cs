@@ -81,7 +81,7 @@ public class JitCodegenProvider(ILogger logger)
             logger.LogInformation("Running dotnet publish for reload");
 
             string dotnetPublishArgs =
-                $"publish {tfmPart} -r {runtimeId} -c Release -o {resultOutDir} --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
+                $"publish {tfmPart} -r {runtimeId} -c Release -o \"{resultOutDir}\" --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
             publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null, projectDirPath,
                 LogProcessOutput, cancellationToken: cancellationToken);
@@ -97,7 +97,7 @@ public class JitCodegenProvider(ILogger logger)
                     return Result.FailWithValue(new Error(AsmViewerErrorCode.RuntimePackNotFound, result.FailMessage));
             }
 
-            string dotnetBuildArgs = $"build {tfmPart} -c Release -o {resultOutDir} --no-self-contained " +
+            string dotnetBuildArgs = $"build {tfmPart} -c Release -o \"{resultOutDir}\" --no-self-contained " +
                                      "/p:RuntimeIdentifier=\"\" " +
                                      "/p:RuntimeIdentifiers=\"\" " +
                                      "/p:WarningLevel=0 " +
