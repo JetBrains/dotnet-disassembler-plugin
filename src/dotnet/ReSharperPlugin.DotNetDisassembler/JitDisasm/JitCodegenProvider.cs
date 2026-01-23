@@ -576,6 +576,6 @@ public class JitCodegenProvider(ILogger logger)
         if (isError)
             logger.LogWarning(message);
         else
-            logger.LogDebug(message);
+            logger.LogTrace(message);
     }
 }
