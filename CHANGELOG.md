@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fixed path handling issues during disassembly generation
 - Fixed editor scroll in ASM viewer
+- Improved disassembly stability
 
 ## 0.2.0
 
