@@ -174,8 +174,7 @@ class SingleContentPanel(
         val document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(initialContent ?: ""))
         editor = EditorFactory.getInstance().createEditor(document, project)
         configureAsmEditor(editor)
-        val scrollPane = JBScrollPane(editor.component)
-        contentPanel.add(scrollPane, BorderLayout.CENTER)
+        contentPanel.add(editor.component, BorderLayout.CENTER)
     }
 
     override fun updateContent(current: String, snapshot: String?) {
