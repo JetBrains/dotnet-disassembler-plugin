@@ -34,6 +34,8 @@
     <statistics.counterUsagesCollector
         implementationClass="com.jetbrains.rider.plugins.dotnetdisassembler.statistics.AsmViewerStatisticsCollector"/>
 
+    <iconMapper mappingFile="disassemblerIconMappings.json"/>
+
   </extensions>
     <actions resource-bundle="messages.AsmViewerBundle">
         <!-- Show ASM Viewer Action -->
