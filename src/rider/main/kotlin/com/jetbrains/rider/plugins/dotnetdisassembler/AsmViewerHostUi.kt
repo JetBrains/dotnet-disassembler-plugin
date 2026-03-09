@@ -68,6 +68,7 @@ class AsmViewerHostUi(private val project: Project) : LifetimedService() {
         }
 
         val content = contentManager.factory.createContent(wrapper, "", false)
+        content.preferredFocusableComponent = contentContainer
         contentManager.addContent(content)
 
         val newPanel = AsmContentPanelFactory.create(project, null, null)
