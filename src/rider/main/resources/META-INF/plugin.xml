@@ -24,7 +24,7 @@
 
     <toolWindow id="AsmViewer"
                 canCloseContents="false"
-                icon="AllIcons.Debugger.Db_primitive"
+                icon="com.jetbrains.rider.plugins.dotnetdisassembler.AsmViewerIcons.ToolWindow"
                 anchor="right"
                 factoryClass="com.jetbrains.rider.plugins.dotnetdisassembler.AsmViewerToolWindowFactory"/>
 
