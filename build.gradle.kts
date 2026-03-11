@@ -2,6 +2,7 @@ import com.jetbrains.plugin.structure.base.utils.isFile
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.Constants
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import java.util.zip.ZipFile
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory
 
@@ -47,13 +48,42 @@ tasks.wrapper {
     distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
 
+dependencies {
+    intellijPlatform {
+        rider(ProductVersion, useInstaller = false)
+        jetbrainsRuntime()
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Bundled)
+
+        // TODO: add plugins
+        // bundledPlugin("uml")
+        // bundledPlugin("com.jetbrains.ChooseRuntime:1.0.9")
+    }
+
+    testImplementation("org.testng:testng:7.10.2")
+}
+
+intellijPlatform {
+    pluginVerification {
+        ides {
+            create(IntelliJPlatformType.Rider, ProductVersion)
+        }
+    }
+
+    pluginConfiguration {
+        version = providers.gradleProperty("PluginVersion")
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        }
+    }
+}
+
 version = extra["PluginVersion"] as String
 
 
 // ============ Plugin File Definitions ==============
 
 val pluginStagingDir = layout.buildDirectory.dir("plugin-staging").get().asFile
-val pluginContentDir = file("${pluginStagingDir}/${rootProject.name}")
+val pluginStagingContentDir = file("${pluginStagingDir}/${rootProject.name}")
 val signingManifestFile = file("${pluginStagingDir}/files-to-sign.txt")
 
 val dotNetSrcDir = File(projectDir, "src/dotnet")
@@ -72,11 +102,13 @@ val dotNetFilesToSign = listOf(
     "${DotnetPluginId}.dll",
 )
 
-// JAR files that need signing (only our own code, not third-party dependencies)
-val jarFilesToSign = listOf(
-    "${rootProject.name}-${version}.jar",
-    "${rootProject.name}-${version}-searchableOptions.jar",
-)
+// JAR files that need signing (only our own code)
+val jarFilesToSign = mutableListOf<String>().apply {
+    add("${rootProject.name}-${version}.jar")
+    if (intellijPlatform.buildSearchableOptions.get()) {
+        add("${rootProject.name}-${version}-searchableOptions.jar")
+    }
+}.toList()
 
 
 tasks.processResources {
@@ -174,8 +206,8 @@ val testDotNet by tasks.registering {
 
 // ========= Two-Phase Build for Signing Support ================
 
-// Preparation for signing. Build all dll's and jar's and puts them into ${pluginStagingDir}
-val preparePluginForSigning by tasks.registering(Sync::class) {
+// Preparation for plugin internals signing. Build all dll's and jar's and puts them into ${pluginStagingDir}
+val preparePluginInternalsForSigning by tasks.registering(Sync::class) {
     description = "Prepares plugin files for signing and generates signing manifest"
     group = "build"
 
@@ -190,7 +222,14 @@ val preparePluginForSigning by tasks.registering(Sync::class) {
     }
 
     // Destination: the plugin content directory inside staging
-    into(pluginContentDir)
+    into(pluginStagingContentDir)
+
+    // Capture script-level vals into locals to avoid error with gradle task cache
+    val signingManifestFile = signingManifestFile
+    val pluginStagingDir = pluginStagingDir
+    val jarFilesToSign = jarFilesToSign
+    val dotNetFilesToSign = dotNetFilesToSign
+    val projectName = rootProject.name
 
     // After syncing, generate the signing manifest
     doLast {
@@ -198,12 +237,12 @@ val preparePluginForSigning by tasks.registering(Sync::class) {
 
         // Add JAR files that need signing (only our own code)
         jarFilesToSign.forEach { jarName ->
-            filesToSign.add("${rootProject.name}/lib/${jarName}")
+            filesToSign.add("${projectName}/lib/${jarName}")
         }
 
         // Add .NET files that need signing
         dotNetFilesToSign.forEach { fileName ->
-            filesToSign.add("${rootProject.name}/dotnet/${fileName}")
+            filesToSign.add("${projectName}/dotnet/${fileName}")
         }
 
         // Write manifest
@@ -222,117 +261,77 @@ val validatePluginStaging by tasks.registering {
     description = "Validates that plugin staging directory exists and contains required files"
     group = "build"
 
+    // Capture script-level vals into locals to avoid error with gradle task cache
+    val pluginStagingContentDir = pluginStagingContentDir
+    val dotNetOutputFiles = dotNetOutputFiles
+    val jarFilesToSign = jarFilesToSign
+
     doLast {
-        if (!pluginContentDir.exists()) {
+        if (!pluginStagingContentDir.exists()) {
             throw RuntimeException(
-                "Plugin staging directory not found: ${pluginContentDir}\n" +
-                "Run './gradlew preparePluginForSigning' first."
+                "Plugin staging directory not found: ${pluginStagingContentDir}\n" +
+                "Run './gradlew preparePluginInternalsForSigning' first."
             )
         }
 
         // Validate expected .NET output files exist
         dotNetOutputFiles.forEach { fileName ->
-            val file = file("${pluginContentDir}/dotnet/${fileName}")
+            val file = pluginStagingContentDir.resolve("dotnet/${fileName}")
             if (!file.exists()) throw RuntimeException("Expected .NET file not found: ${file}")
         }
 
         // Validate expected JAR files exist
         jarFilesToSign.forEach { jarName ->
-            val file = file("${pluginContentDir}/lib/${jarName}")
+            val file = pluginStagingContentDir.resolve("lib/${jarName}")
             if (!file.exists()) throw RuntimeException("Expected JAR file not found: ${file}")
         }
     }
 }
 
-// Assembles the final zip-archive by taking the files from ${pluginStagingDir}
+// Assembles the final zip-archive from staged (potentially externally signed) files.
+// Produces a ZIP with "-from-staging" suffix by default (override with -PoutputPluginFileSuffix=<value>)
+// Can be used in pipeline: preparePluginInternalsForSigning -> external sign -> assemblePlugin
 val assemblePlugin by tasks.registering(Zip::class) {
-    description = "Assembles the final plugin ZIP from staged files"
+    description = "Assembles the plugin ZIP from staged files with '-from-staging' classifier"
     group = "build"
 
     dependsOn(validatePluginStaging)
 
-    from(pluginStagingDir) {
-        // Include plugin content directory
-        include("${rootProject.name}/**")
-        // Exclude signing manifest from final ZIP
-        exclude("files-to-sign.txt")
-    }
+    from(pluginStagingDir)
+    include("${rootProject.name}/**")
+    exclude("files-to-sign.txt")
 
-    // Use same naming convention as original BuildPluginTask:
-    // archiveBaseName comes from plugin.xml (via IntelliJ plugin extension)
     archiveBaseName.convention(intellijPlatform.projectName)
+    archiveClassifier.set(providers.gradleProperty("outputPluginFileSuffix").orElse("from-staging"))
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+}
 
-    // Register artifact to INTELLIJ_PLATFORM_DISTRIBUTION configuration (same as original BuildPluginTask)
-    // This ensures publishPlugin and other dependent tasks can find the archive
-    val intellijPlatformDistributionConfiguration = configurations[Constants.Configurations.INTELLIJ_PLATFORM_DISTRIBUTION]
-    artifacts.add(intellijPlatformDistributionConfiguration.name, this)
+// ==============================================================
+
+// buildPlugin keeps its default Zip behavior (sources from prepareSandbox + jarSearchableOptions).
+// We add dependsOn(preparePluginInternalsForSigning) to ensure the staging directory is populated,
+// then verify the archive matches the staging directory.
+tasks.buildPlugin {
+    // Ensure that the staging directory is populated
+    dependsOn(preparePluginInternalsForSigning)
+
+    val pluginStagingContentDir = pluginStagingContentDir
+    val projectName = rootProject.name
 
     doLast {
-        // Copy to output directory
-        copy {
-            from(archiveFile)
-            into("${rootDir}/output")
+        // Verify the archive matches the staging directory to be sure that
+        // buildPlugin and preparePluginInternalsForSigning+assemblePlugin produces the same results
+        val zipFiles = ZipFile(archiveFile.get().asFile).use {
+            it.entries().asSequence().filterNot { e -> e.isDirectory }.map { e -> e.name }.sorted().toList()
         }
+        val stagingFiles = pluginStagingContentDir.walkTopDown().filter { it.isFile }
+            .map { "${projectName}/${it.relativeTo(pluginStagingContentDir).path.replace('\\', '/')}" }
+            .sorted().toList()
 
-        // TODO: See also org.jetbrains.changelog: https://github.com/JetBrains/gradle-changelog-plugin
-        val changelogText = file("${rootDir}/CHANGELOG.md").readText()
-        val changelogMatches = Regex("(?s)(-.+?)(?=##|$)").findAll(changelogText)
-        val changeNotes = changelogMatches.map {
-            it.groups[1]!!.value.replace("(?s)- ".toRegex(), "\u2022 ").replace("`", "").replace(",", "%2C").replace(";", "%3B")
-        }.take(1).joinToString()
-
-        exec {
-            executable(layout.projectDirectory.file("dotnet.cmd"))
-            args("pack", "${DotnetSolution}", "--configuration", BuildConfiguration, "--output", "${rootDir}/output", "/p:PackageReleaseNotes=${changeNotes}", "/p:PackageVersion=${version}")
-            workingDir(rootDir)
-        }
-
-        println("Plugin assembled: output/${rootProject.name}-${version}.zip")
-    }
-}
-
-tasks.buildPlugin {
-    // Disable the IntelliJ plugin's default buildPlugin behavior for ZIP creation
-    // and make it use our two-phase approach instead
-    actions.clear()
-
-    // Make it depend on our assembly task
-    dependsOn(preparePluginForSigning)
-    dependsOn(assemblePlugin)
-
-    // Phase 2 (assemblePlugin + all its dependencies) must run after Phase 1
-    assemblePlugin.get().mustRunAfter(preparePluginForSigning)
-    assemblePlugin.get().taskDependencies.getDependencies(assemblePlugin.get()).forEach { task ->
-        task.mustRunAfter(preparePluginForSigning)
-    }
-}
-
-dependencies {
-    intellijPlatform {
-        rider(ProductVersion, useInstaller = false)
-        jetbrainsRuntime()
-        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Bundled)
-
-        // TODO: add plugins
-        // bundledPlugin("uml")
-        // bundledPlugin("com.jetbrains.ChooseRuntime:1.0.9")
-    }
-
-    testImplementation("org.testng:testng:7.10.2")
-}
-
-intellijPlatform {
-    pluginVerification {
-        ides {
-            create(IntelliJPlatformType.Rider, ProductVersion)
-        }
-    }
-
-    pluginConfiguration {
-        version = providers.gradleProperty("PluginVersion")
-        ideaVersion {
-            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        check(zipFiles == stagingFiles) {
+            "Plugin archive and staging directory are out of sync!\n" +
+            "  Only in archive: ${zipFiles - stagingFiles.toSet()}\n" +
+            "  Only in staging: ${stagingFiles - zipFiles.toSet()}"
         }
     }
 }
@@ -398,6 +397,16 @@ tasks.prepareSandbox {
         dotNetOutputFiles.forEach { fileName ->
             val file = file("${dotNetOutputDir}/${fileName}")
             if (!file.exists()) throw RuntimeException("File ${file} does not exist")
+        }
+    }
+}
+
+tasks.prepareTestSandbox {
+    dependsOn(compileDotNet)
+
+    dotNetOutputFiles.forEach { fileName ->
+        from("${dotNetOutputDir}/${fileName}") {
+            into("${rootProject.name}/dotnet")
         }
     }
 }
