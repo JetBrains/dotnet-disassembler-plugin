@@ -7,35 +7,35 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-class AsmViewerBundle : DynamicBundle(BUNDLE) {
-    companion object {
-        @NonNls
-        private const val BUNDLE = "messages.AsmViewerBundle"
-        private val INSTANCE = AsmViewerBundle()
+internal object AsmViewerBundle {
+    @NonNls
+    private const val BUNDLE: String = "messages.AsmViewerBundle"
 
-        @Nls
-        fun message(
-            @PropertyKey(resourceBundle = BUNDLE) key: String,
-            vararg params: Any
-        ): String = INSTANCE.getMessage(key, *params)
+    private val INSTANCE = DynamicBundle(AsmViewerBundle::class.java, BUNDLE)
 
-        fun messagePointer(
-            @PropertyKey(resourceBundle = BUNDLE) key: String,
-            vararg params: Any
-        ): Supplier<String> = INSTANCE.getLazyMessage(key, *params)
+    @Nls
+    fun message(
+        @PropertyKey(resourceBundle = BUNDLE) key: String,
+        vararg params: Any
+    ): String =
+        INSTANCE.getMessage(key, *params)
 
-        @Nls
-        fun errorMessage(errorCode: ErrorCode?): String {
-            if (errorCode == null) {
-                return INSTANCE.getMessage("error.UnknownError")
-            }
+    fun messagePointer(
+        @PropertyKey(resourceBundle = BUNDLE) key: String,
+        vararg params: Any
+    ): Supplier<String> =
+        INSTANCE.getLazyMessage(key, *params)
 
-            val key = "error.$errorCode"
-            return if (INSTANCE.containsKey(key)) {
-                INSTANCE.getMessage(key)
-            } else {
-                INSTANCE.getMessage("error.UnknownError")
-            }
+    @Nls
+    fun errorMessage(errorCode: ErrorCode?): String {
+        if (errorCode == null) {
+            return message("error.UnknownError")
+        }
+        val key = "error.$errorCode"
+        return if (INSTANCE.containsKey(key)) {
+            message(key)
+        } else {
+            message("error.UnknownError")
         }
     }
 }
