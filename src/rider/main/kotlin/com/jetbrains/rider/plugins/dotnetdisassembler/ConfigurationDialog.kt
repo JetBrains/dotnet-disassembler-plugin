@@ -198,7 +198,9 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
 
     private class RuntimeOptionsPanel(config: JitConfiguration) {
         private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("runtime.run.app.mode"), config.runAppMode)
-        private val runAppModeHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.run.project.help"))
+        private val runAppModeHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.run.project.help")).apply {
+            icon = com.intellij.icons.AllIcons.General.Warning
+        }
         private val timeoutSpinner = JSpinner(SpinnerNumberModel(config.disassemblyTimeoutSeconds, 0, 3600, 10))
         private val timeoutHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.timeout.help"))
 
