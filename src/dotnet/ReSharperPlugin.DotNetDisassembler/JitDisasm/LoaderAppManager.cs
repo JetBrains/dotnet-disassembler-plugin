@@ -30,6 +30,12 @@ public static class LoaderAppManager
         if (!Directory.Exists(dest))
             throw new InvalidOperationException($"ERROR: dest dir was not found: {dest}");
 
+        string outDllDest = Path.Combine(dest, JitDisasmLoaderName + ".dll");
+        string outJsonDest = Path.Combine(dest, JitDisasmLoaderName + ".runtimeconfig.json");
+
+        if (File.Exists(outDllDest) && File.Exists(outJsonDest))
+            return;
+
         string dir;
         try
         {
@@ -45,8 +51,6 @@ public static class LoaderAppManager
         string csfile = Path.Combine(dir, $"{JitDisasmLoaderName}.cs");
         string outDll = Path.Combine(dir, "out", $"{JitDisasmLoaderName}.dll");
         string outJson = Path.Combine(dir, "out", $"{JitDisasmLoaderName}.runtimeconfig.json");
-        string outDllDest = Path.Combine(dest, JitDisasmLoaderName + ".dll");
-        string outJsonDest = Path.Combine(dest, JitDisasmLoaderName + ".runtimeconfig.json");
 
         if (!Directory.Exists(dir))
         {
