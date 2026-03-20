@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.2.3
+
+### Fixed
+- Fixed ReflectionTypeLoadException when disassembling projects with unresolvable transitive dependencies
+- Fixed loader cache not invalidating on plugin update
+- Fixed localization fallback when Language Pack is installed
+
+### Changed
+- Replaced help icon with warning icon for Run Project mode setting
+
 ## 0.2.2
 
 ### Fixed
