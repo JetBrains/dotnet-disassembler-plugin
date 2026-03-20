@@ -26,8 +26,24 @@ public class DisasmoLoader
         if (typeName.Contains('_') && typeName.Contains('.'))
             typeName = typeName.Substring(typeName.LastIndexOf('.') + 1);
 
+        var assemblyPath = Path.Combine(Environment.CurrentDirectory, assemblyName);
         var alc = new AssemblyLoadContext("DisasmoALC", unloadable == "True");
-        Assembly asm = alc.LoadFromAssemblyPath(Path.Combine(Environment.CurrentDirectory, assemblyName));
+
+        var resolver = new AssemblyDependencyResolver(assemblyPath);
+        alc.Resolving += (context, name) =>
+        {
+            var path = resolver.ResolveAssemblyToPath(name);
+            if (path != null)
+                return context.LoadFromAssemblyPath(path);
+
+            var candidate = Path.Combine(Environment.CurrentDirectory, name.Name + ".dll");
+            if (File.Exists(candidate))
+                return context.LoadFromAssemblyPath(candidate);
+
+            return null;
+        };
+
+        Assembly asm = alc.LoadFromAssemblyPath(assemblyPath);
         Type fastType = asm.GetType(typeName);
         if (fastType != null)
         {
@@ -36,7 +52,20 @@ public class DisasmoLoader
             return;
         }
 
-        foreach (Type type in asm.GetTypes())
+        Type[] types;
+        ReflectionTypeLoadException loadException = null;
+        try
+        {
+            types = asm.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            loadException = ex;
+            types = ex.Types.Where(t => t != null).ToArray();
+        }
+
+        bool found = false;
+        foreach (Type type in types)
         {
             // We replace pluses with dots because 'typeName' is a C#'y name of the type
             // Unfortunately, Roslyn doesn't have a display option to output the runtime name of the type
@@ -44,10 +73,15 @@ public class DisasmoLoader
             // This is the easiest solution to that problem
             if (type.FullName?.Replace('+', '.').Contains(typeName) == true)
             {
+                found = true;
                 PrecompileMethods(type, methodName);
                 PrecompileProperties(type, methodName);
             }
         }
+
+        // If the target type was not found and we had loading errors, rethrow so the user sees the real cause
+        if (!found && loadException != null)
+            throw loadException;
     }
 
     private static void PrecompileProperties(Type type, string propertyName)
