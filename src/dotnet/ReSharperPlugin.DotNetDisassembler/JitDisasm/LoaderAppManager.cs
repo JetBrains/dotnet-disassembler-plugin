@@ -21,7 +21,7 @@ public static class LoaderAppManager
             // Something went wrong, use a random to proceed
             version = Guid.NewGuid().ToString("N");
         }
-        string folderName = $"{addinVersion}_{tf}_{version}";
+        string folderName = $"v{addinVersion}_{tf}_{version}";
         return Path.Combine(Path.GetTempPath(), JitDisasmLoaderName, folderName);
     }
 
@@ -47,11 +47,6 @@ public static class LoaderAppManager
         string outJson = Path.Combine(dir, "out", $"{JitDisasmLoaderName}.runtimeconfig.json");
         string outDllDest = Path.Combine(dest, JitDisasmLoaderName + ".dll");
         string outJsonDest = Path.Combine(dest, JitDisasmLoaderName + ".runtimeconfig.json");
-
-        if (File.Exists(outDllDest) && File.Exists(outJsonDest))
-        {
-            return;
-        }
 
         if (!Directory.Exists(dir))
         {

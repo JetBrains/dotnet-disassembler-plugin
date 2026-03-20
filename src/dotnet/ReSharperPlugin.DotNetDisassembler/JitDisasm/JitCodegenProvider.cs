@@ -195,7 +195,7 @@ public class JitCodegenProvider(ILogger logger)
 
             if (!configuration.RunAppMode && !configuration.CrossgenIsSelected && !configuration.NativeAotIsSelected)
             {
-                var addinVersion = new Version();
+                var addinVersion = typeof(JitCodegenProvider).Assembly.GetName().Version ?? new Version();
                 await LoaderAppManager.InitLoaderAndCopyToAsync(dotnetCliExePath, tfm.UniqueString, dstFolder, _ => { }, addinVersion, cancellationToken);
             }
 

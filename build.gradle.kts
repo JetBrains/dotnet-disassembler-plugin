@@ -155,7 +155,7 @@ val compileDotNet by tasks.registering {
     doLast {
         exec {
             executable(layout.projectDirectory.file("dotnet.cmd"))
-            args("build", "${DotnetSolution}", "--configuration", BuildConfiguration)
+            args("build", "${DotnetSolution}", "--configuration", BuildConfiguration, "/p:Version=${version}")
             workingDir(rootDir)
         }
     }

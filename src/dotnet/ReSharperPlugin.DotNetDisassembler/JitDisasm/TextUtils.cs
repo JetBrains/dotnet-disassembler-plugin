@@ -5,7 +5,7 @@ namespace ReSharperPlugin.DotNetDisassembler.JitDisasm;
 
 public static class TextUtils
 {
-    public static void SaveEmbeddedResourceTo(string resource, string folder, 
+    public static void SaveEmbeddedResourceTo(string resource, string folder,
         Func<string, string> contentProcessor = null)
     {
         string filePath = Path.Combine(folder, resource.Replace("_template", ""));
