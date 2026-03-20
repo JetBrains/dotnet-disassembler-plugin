@@ -29,10 +29,12 @@ public class DisasmoLoader
         var assemblyPath = Path.Combine(Environment.CurrentDirectory, assemblyName);
         var alc = new AssemblyLoadContext("DisasmoALC", unloadable == "True");
 
-        var resolver = new AssemblyDependencyResolver(assemblyPath);
+        AssemblyDependencyResolver resolver = null;
+        try { resolver = new AssemblyDependencyResolver(assemblyPath); } catch { }
+
         alc.Resolving += (context, name) =>
         {
-            var path = resolver.ResolveAssemblyToPath(name);
+            var path = resolver?.ResolveAssemblyToPath(name);
             if (path != null)
                 return context.LoadFromAssemblyPath(path);
 
