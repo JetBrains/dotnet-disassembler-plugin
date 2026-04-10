@@ -1,5 +1,7 @@
 using JetBrains.Application.Threading;
 using JetBrains.ProjectModel;
+using JetBrains.ProjectModel.MSBuild;
+using JetBrains.ProjectModel.Properties;
 using JetBrains.ReSharper.Feature.Services.Protocol;
 using JetBrains.Rider.Model;
 using JetBrains.Util;
@@ -19,6 +21,7 @@ public static class JitDisasmProjectContextFactory
             var outputDirectory = tfmId != null ? project.GetOutputDirectory(tfmId) : null;
             var assemblyName = tfmId != null ? project.GetOutputAssemblyName(tfmId) : null;
             var dotNetCliExePath = GetDotNetCliExePath(solution);
+            var platform = project.GetUniqueRequestedProjectProperty(MSBuildProjectUtil.PlatformTargetProperty);
 
             return new JitDisasmProjectContext(
                 Sdk: sdk,
@@ -27,7 +30,8 @@ public static class JitDisasmProjectContextFactory
                 ProjectFilePath: project.ProjectFileLocation?.FullPath,
                 ProjectDirectory: project.Location?.FullPath,
                 AssemblyName: assemblyName,
-                DotNetCliExePath: dotNetCliExePath);
+                DotNetCliExePath: dotNetCliExePath,
+                Platform: platform);
         });
     }
 

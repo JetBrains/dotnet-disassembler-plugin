@@ -286,6 +286,60 @@ public class JitCodegenProviderTests
             "Output should contain method or class name");
     }
 
+    // https://github.com/JetBrains/dotnet-disassembler-plugin/issues/13
+    // dotnet build ignores MSBuild properties in platform-conditional PropertyGroups
+    [Test]
+    public async Task GetJitCodegen_WithPlatformConditionalProperties_ShouldBuildSuccessfully()
+    {
+        // Arrange
+        var arch = RuntimePlatformUtils.GetCurrentArch();
+
+        File.WriteAllText(_testProjectFile, $@"
+            <Project Sdk=""Microsoft.NET.Sdk"">
+              <PropertyGroup>
+                <OutputType>Exe</OutputType>
+                <TargetFramework>net9.0</TargetFramework>
+                <UseAppHost>false</UseAppHost>
+                <Configurations>Release;Debug</Configurations>
+                <Platforms>{arch}</Platforms>
+              </PropertyGroup>
+              <PropertyGroup Condition="" '$(Configuration)|$(Platform)' == 'Debug|{arch}' "">
+                <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+              </PropertyGroup>
+              <PropertyGroup Condition="" '$(Configuration)|$(Platform)' == 'Release|{arch}' "">
+                <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+              </PropertyGroup>
+            </Project>");
+
+        var programFile = Path.Combine(_testProjectDir, "Program.cs");
+        File.WriteAllText(programFile, @"
+            using System;
+
+            public class TestClass
+            {
+                public static void Main()
+                {
+                    Console.WriteLine(Add(2, 3));
+                }
+
+                public static unsafe int Add(int a, int b)
+                {
+                    int result = a + b;
+                    int* p = &result;
+                    return *p;
+                }
+            }");
+
+        var projectContext = CreateProjectContext(platform: arch);
+        var config = new JitDisasmConfiguration();
+
+        // Act
+        var result = await _jitCodegenProvider.GetJitCodegenAsync(_addMethodTarget, projectContext, config, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeed, $"Error: {result.FailValue?.Code}\nDetails: {result.FailValue?.Details}");
+    }
+
     [Test]
     public async Task GetJitCodegen_WithMissingMethod_ShouldReturnEmptyOrMinimalOutput()
     {
@@ -305,7 +359,7 @@ public class JitCodegenProviderTests
             "Expected empty or minimal output for missing method");
     }
 
-    private JitDisasmProjectContext CreateProjectContext([CanBeNull] JitDisasmTargetFramework tfm = null)
+    private JitDisasmProjectContext CreateProjectContext([CanBeNull] JitDisasmTargetFramework tfm = null, [CanBeNull] string platform = null)
     {
         var projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", ".."));
         var dotnetCmd = Path.Combine(projectRoot, "dotnet.cmd");
@@ -325,6 +379,7 @@ public class JitCodegenProviderTests
             ProjectFilePath: _testProjectFile,
             ProjectDirectory: _testProjectDir,
             AssemblyName: "TestProject",
-            DotNetCliExePath: dotnetExe);
+            DotNetCliExePath: dotnetExe,
+            Platform: platform);
     }
 }
