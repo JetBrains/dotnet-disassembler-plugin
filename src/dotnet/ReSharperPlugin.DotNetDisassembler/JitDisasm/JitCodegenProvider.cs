@@ -65,6 +65,8 @@ public class JitCodegenProvider(ILogger logger)
             ? ""
             : $"-f {tfm}";
 
+        string platformPart = GetPlatformArg(projectContext);
+
         // Some things can't be set in CLI e.g. appending to DefineConstants
         var tmpProps = Path.GetTempFileName() + ".props";
         File.WriteAllText(tmpProps, $"""
@@ -81,7 +83,7 @@ public class JitCodegenProvider(ILogger logger)
             logger.LogInformation("Running dotnet publish for reload");
 
             string dotnetPublishArgs =
-                $"publish {tfmPart} -r {runtimeId} -c Release -o \"{resultOutDir}\" --self-contained true /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
+                $"publish {tfmPart} -r {runtimeId} -c Release -o \"{resultOutDir}\" --self-contained true {platformPart} /p:PublishTrimmed=false /p:PublishSingleFile=false /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
             publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null, projectDirPath,
                 LogProcessOutput, cancellationToken: cancellationToken);
@@ -98,6 +100,7 @@ public class JitCodegenProvider(ILogger logger)
             }
 
             string dotnetBuildArgs = $"build {tfmPart} -c Release -o \"{resultOutDir}\" --no-self-contained " +
+                                     $"{platformPart} " +
                                      "/p:RuntimeIdentifier=\"\" " +
                                      "/p:RuntimeIdentifiers=\"\" " +
                                      "/p:WarningLevel=0 " +
@@ -364,7 +367,9 @@ public class JitCodegenProvider(ILogger logger)
             else if (configuration.IsNonCustomNativeAotMode())
             {
                 logger.LogDebug("Compiling for NativeAOT (.NET 8.0+ is required) ...");
-                
+
+                string platformPart = GetPlatformArg(projectContext);
+
                 // For non-custom NativeAOT we need to use dotnet publish + with custom IlcArgs
                 // namely, we need to re-direct jit's output to a file (JitStdOutFile).
 
@@ -410,7 +415,7 @@ public class JitCodegenProvider(ILogger logger)
                 // NOTE: CustomBeforeDirectoryBuildProps is probably not a good idea to overwrite, but we need to pass IlcArgs somehow
                 string dotnetPublishArgs =
                     $"publish {tfmPart} -r {runtimeId} -c Release" +
-                    $" /p:PublishAot=true /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\"" +
+                    $" {platformPart} /p:PublishAot=true /p:CustomBeforeDirectoryBuildProps=\"{tmpProps}\"" +
                     $" /p:WarningLevel=0 /p:TreatWarningsAsErrors=false -v:q";
 
                 var publishResult = await ProcessUtils.RunProcessAsync(dotnetCliExePath, dotnetPublishArgs, null,
@@ -570,6 +575,9 @@ public class JitCodegenProvider(ILogger logger)
             return Result.FailWithValue(new Error(AsmViewerErrorCode.UnknownError, e.Message));
         }
     }
+
+    private static string GetPlatformArg(JitDisasmProjectContext projectContext) =>
+        string.IsNullOrEmpty(projectContext.Platform) ? "" : $"/p:Platform=\"{projectContext.Platform}\"";
 
     private void LogProcessOutput(bool isError, string message)
     {

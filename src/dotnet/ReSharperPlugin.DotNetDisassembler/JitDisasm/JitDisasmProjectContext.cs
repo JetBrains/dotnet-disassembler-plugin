@@ -10,7 +10,8 @@ public record JitDisasmProjectContext(
     string ProjectFilePath,
     string ProjectDirectory,
     [CanBeNull] string AssemblyName,
-    string DotNetCliExePath)
+    string DotNetCliExePath,
+    [CanBeNull] string Platform = null)
 {
     public Result<JitDisasmProjectContext, Error> Validate()
     {
