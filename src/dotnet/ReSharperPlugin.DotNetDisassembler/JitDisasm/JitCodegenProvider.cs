@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
@@ -276,7 +277,9 @@ public class JitCodegenProvider(ILogger logger)
                 if (!runtimePackPath.Succeed)
                     return Result.FailWithValue(new Error(AsmViewerErrorCode.RuntimePackNotFound, runtimePackPath.FailMessage));
 
-                executable = Path.Combine(configuration.PathToLocalCoreClr, "dotnet.cmd");
+                var dotnetScript = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                    ? "dotnet.cmd" : "dotnet.sh";
+                executable = Path.Combine(configuration.PathToLocalCoreClr, dotnetScript);
                 command = $"{Path.Combine(pathToCoreClrChecked.Value, "crossgen2", "crossgen2.dll")} --out aot ";
 
                 foreach (var envVar in envVars)
@@ -476,7 +479,7 @@ public class JitCodegenProvider(ILogger logger)
                 if (!pathToCoreClrChecked.Succeed)
                     return Result.FailWithValue(new Error(AsmViewerErrorCode.CoreClrCheckedNotFound, pathToCoreClrChecked.FailMessage));
 
-                executable = Path.Combine(pathToCoreClrChecked.Value, "CoreRun.exe");
+                executable = Path.Combine(pathToCoreClrChecked.Value, JitPathUtils.CoreRunExecutable);
             }
 
             if ((configuration.RunAppMode) &&

@@ -27,12 +27,12 @@ public static class JitDisasmConfigurationFactory
             // Advanced properties use defaults (not exposed in UI)
             UseUnloadableContext = false,
             JitDumpInsteadOfDisasm = false,
-            UseCustomRuntime = false,
+            UseCustomRuntime = config.UseCustomRuntime,
             FgEnable = false,
             CustomEnvVars = null,
             Crossgen2Args = null,
             IlcArgs = null,
-            PathToLocalCoreClr = null,
+            PathToLocalCoreClr = config.PathToLocalCoreClr,
             OverridenJitDisasm = null,
             DontGuessTfm = false,
             Arch = RuntimePlatformUtils.GetCurrentArch()

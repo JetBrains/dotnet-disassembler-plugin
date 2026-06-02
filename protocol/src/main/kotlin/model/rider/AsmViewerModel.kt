@@ -65,6 +65,8 @@ class AsmViewerModel : Ext(SolutionModel.Solution) {
         field("targetFrameworkOverride", string.nullable)
         field("selectedCompiler", CompilerType)
         field("disassemblyTimeoutSeconds", int)
+        field("useCustomRuntime", bool)
+        field("pathToLocalCoreClr", string.nullable)
     }
 
     private val CompilationResult = structdef {

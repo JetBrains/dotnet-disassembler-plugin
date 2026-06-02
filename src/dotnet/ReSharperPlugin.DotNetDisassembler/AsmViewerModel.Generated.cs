@@ -36,7 +36,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:8</p>
+  /// <p>Generated from: AsmViewerModel.kt:7</p>
   /// </summary>
   public class AsmViewerModel : RdExtBase
   {
@@ -112,7 +112,7 @@ namespace JetBrains.Rider.Model
     
     
     
-    protected override long SerializationHash => -8744739113612796705L;
+    protected override long SerializationHash => 4503471233995481963L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -161,7 +161,7 @@ namespace JetBrains.Rider.Model
   
   
   /// <summary>
-  /// <p>Generated from: AsmViewerModel.kt:70</p>
+  /// <p>Generated from: AsmViewerModel.kt:72</p>
   /// </summary>
   public sealed class CompilationResult : IPrintable, IEquatable<CompilationResult>
   {
@@ -406,6 +406,8 @@ namespace JetBrains.Rider.Model
     [CanBeNull] public string TargetFrameworkOverride {get; private set;}
     public CompilerType SelectedCompiler {get; private set;}
     public int DisassemblyTimeoutSeconds {get; private set;}
+    public bool UseCustomRuntime {get; private set;}
+    [CanBeNull] public string PathToLocalCoreClr {get; private set;}
     
     //private fields
     //primary constructor
@@ -420,7 +422,9 @@ namespace JetBrains.Rider.Model
       bool useDotnetBuildForReload,
       [CanBeNull] string targetFrameworkOverride,
       CompilerType selectedCompiler,
-      int disassemblyTimeoutSeconds
+      int disassemblyTimeoutSeconds,
+      bool useCustomRuntime,
+      [CanBeNull] string pathToLocalCoreClr
     )
     {
       ShowAsmComments = showAsmComments;
@@ -434,10 +438,12 @@ namespace JetBrains.Rider.Model
       TargetFrameworkOverride = targetFrameworkOverride;
       SelectedCompiler = selectedCompiler;
       DisassemblyTimeoutSeconds = disassemblyTimeoutSeconds;
+      UseCustomRuntime = useCustomRuntime;
+      PathToLocalCoreClr = pathToLocalCoreClr;
     }
     //secondary constructor
     //deconstruct trait
-    public void Deconstruct(out bool showAsmComments, out bool diffable, out bool useTieredJit, out bool usePGO, out bool runAppMode, out bool useNoRestoreFlag, out bool useDotnetPublishForReload, out bool useDotnetBuildForReload, [CanBeNull] out string targetFrameworkOverride, out CompilerType selectedCompiler, out int disassemblyTimeoutSeconds)
+    public void Deconstruct(out bool showAsmComments, out bool diffable, out bool useTieredJit, out bool usePGO, out bool runAppMode, out bool useNoRestoreFlag, out bool useDotnetPublishForReload, out bool useDotnetBuildForReload, [CanBeNull] out string targetFrameworkOverride, out CompilerType selectedCompiler, out int disassemblyTimeoutSeconds, out bool useCustomRuntime, [CanBeNull] out string pathToLocalCoreClr)
     {
       showAsmComments = ShowAsmComments;
       diffable = Diffable;
@@ -450,6 +456,8 @@ namespace JetBrains.Rider.Model
       targetFrameworkOverride = TargetFrameworkOverride;
       selectedCompiler = SelectedCompiler;
       disassemblyTimeoutSeconds = DisassemblyTimeoutSeconds;
+      useCustomRuntime = UseCustomRuntime;
+      pathToLocalCoreClr = PathToLocalCoreClr;
     }
     //statics
     
@@ -466,7 +474,9 @@ namespace JetBrains.Rider.Model
       var targetFrameworkOverride = ReadStringNullable(ctx, reader);
       var selectedCompiler = (CompilerType)reader.ReadInt();
       var disassemblyTimeoutSeconds = reader.ReadInt();
-      var _result = new JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCompiler, disassemblyTimeoutSeconds);
+      var useCustomRuntime = reader.ReadBool();
+      var pathToLocalCoreClr = ReadStringNullable(ctx, reader);
+      var _result = new JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCompiler, disassemblyTimeoutSeconds, useCustomRuntime, pathToLocalCoreClr);
       return _result;
     };
     public static CtxReadDelegate<string> ReadStringNullable = JetBrains.Rd.Impl.Serializers.ReadString.NullableClass();
@@ -484,6 +494,8 @@ namespace JetBrains.Rider.Model
       WriteStringNullable(ctx, writer, value.TargetFrameworkOverride);
       writer.Write((int)value.SelectedCompiler);
       writer.Write(value.DisassemblyTimeoutSeconds);
+      writer.Write(value.UseCustomRuntime);
+      WriteStringNullable(ctx, writer, value.PathToLocalCoreClr);
     };
     public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
     
@@ -503,7 +515,7 @@ namespace JetBrains.Rider.Model
     {
       if (ReferenceEquals(null, other)) return false;
       if (ReferenceEquals(this, other)) return true;
-      return ShowAsmComments == other.ShowAsmComments && Diffable == other.Diffable && UseTieredJit == other.UseTieredJit && UsePGO == other.UsePGO && RunAppMode == other.RunAppMode && UseNoRestoreFlag == other.UseNoRestoreFlag && UseDotnetPublishForReload == other.UseDotnetPublishForReload && UseDotnetBuildForReload == other.UseDotnetBuildForReload && Equals(TargetFrameworkOverride, other.TargetFrameworkOverride) && SelectedCompiler == other.SelectedCompiler && DisassemblyTimeoutSeconds == other.DisassemblyTimeoutSeconds;
+      return ShowAsmComments == other.ShowAsmComments && Diffable == other.Diffable && UseTieredJit == other.UseTieredJit && UsePGO == other.UsePGO && RunAppMode == other.RunAppMode && UseNoRestoreFlag == other.UseNoRestoreFlag && UseDotnetPublishForReload == other.UseDotnetPublishForReload && UseDotnetBuildForReload == other.UseDotnetBuildForReload && Equals(TargetFrameworkOverride, other.TargetFrameworkOverride) && SelectedCompiler == other.SelectedCompiler && DisassemblyTimeoutSeconds == other.DisassemblyTimeoutSeconds && UseCustomRuntime == other.UseCustomRuntime && Equals(PathToLocalCoreClr, other.PathToLocalCoreClr);
     }
     //hash code trait
     public override int GetHashCode()
@@ -521,6 +533,8 @@ namespace JetBrains.Rider.Model
         hash = hash * 31 + (TargetFrameworkOverride != null ? TargetFrameworkOverride.GetHashCode() : 0);
         hash = hash * 31 + (int) SelectedCompiler;
         hash = hash * 31 + DisassemblyTimeoutSeconds.GetHashCode();
+        hash = hash * 31 + UseCustomRuntime.GetHashCode();
+        hash = hash * 31 + (PathToLocalCoreClr != null ? PathToLocalCoreClr.GetHashCode() : 0);
         return hash;
       }
     }
@@ -540,6 +554,8 @@ namespace JetBrains.Rider.Model
         printer.Print("targetFrameworkOverride = "); TargetFrameworkOverride.PrintEx(printer); printer.Println();
         printer.Print("selectedCompiler = "); SelectedCompiler.PrintEx(printer); printer.Println();
         printer.Print("disassemblyTimeoutSeconds = "); DisassemblyTimeoutSeconds.PrintEx(printer); printer.Println();
+        printer.Print("useCustomRuntime = "); UseCustomRuntime.PrintEx(printer); printer.Println();
+        printer.Print("pathToLocalCoreClr = "); PathToLocalCoreClr.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }

@@ -16,7 +16,7 @@ import kotlin.jvm.JvmStatic
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:8]
+ * #### Generated from [AsmViewerModel.kt:7]
  */
 class AsmViewerModel private constructor(
     private val _show: RdSignal<Unit>,
@@ -44,7 +44,7 @@ class AsmViewerModel private constructor(
         
         
         
-        const val serializationHash = -8744739113612796705L
+        const val serializationHash = 4503471233995481963L
         
     }
     override val serializersOwner: ISerializersOwner get() = AsmViewerModel
@@ -125,7 +125,7 @@ val Solution.asmViewerModel get() = getOrCreateExtension("asmViewerModel", ::Asm
 
 
 /**
- * #### Generated from [AsmViewerModel.kt:70]
+ * #### Generated from [AsmViewerModel.kt:72]
  */
 data class CompilationResult (
     val content: String?,
@@ -340,7 +340,9 @@ data class JitConfiguration (
     val useDotnetBuildForReload: Boolean,
     val targetFrameworkOverride: String?,
     val selectedCompiler: CompilerType,
-    val disassemblyTimeoutSeconds: Int
+    val disassemblyTimeoutSeconds: Int,
+    val useCustomRuntime: Boolean,
+    val pathToLocalCoreClr: String?
 ) : IPrintable {
     //companion
     
@@ -361,7 +363,9 @@ data class JitConfiguration (
             val targetFrameworkOverride = buffer.readNullable { buffer.readString() }
             val selectedCompiler = buffer.readEnum<CompilerType>()
             val disassemblyTimeoutSeconds = buffer.readInt()
-            return JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCompiler, disassemblyTimeoutSeconds)
+            val useCustomRuntime = buffer.readBool()
+            val pathToLocalCoreClr = buffer.readNullable { buffer.readString() }
+            return JitConfiguration(showAsmComments, diffable, useTieredJit, usePGO, runAppMode, useNoRestoreFlag, useDotnetPublishForReload, useDotnetBuildForReload, targetFrameworkOverride, selectedCompiler, disassemblyTimeoutSeconds, useCustomRuntime, pathToLocalCoreClr)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: JitConfiguration)  {
@@ -376,6 +380,8 @@ data class JitConfiguration (
             buffer.writeNullable(value.targetFrameworkOverride) { buffer.writeString(it) }
             buffer.writeEnum(value.selectedCompiler)
             buffer.writeInt(value.disassemblyTimeoutSeconds)
+            buffer.writeBool(value.useCustomRuntime)
+            buffer.writeNullable(value.pathToLocalCoreClr) { buffer.writeString(it) }
         }
         
         
@@ -402,6 +408,8 @@ data class JitConfiguration (
         if (targetFrameworkOverride != other.targetFrameworkOverride) return false
         if (selectedCompiler != other.selectedCompiler) return false
         if (disassemblyTimeoutSeconds != other.disassemblyTimeoutSeconds) return false
+        if (useCustomRuntime != other.useCustomRuntime) return false
+        if (pathToLocalCoreClr != other.pathToLocalCoreClr) return false
         
         return true
     }
@@ -419,6 +427,8 @@ data class JitConfiguration (
         __r = __r*31 + if (targetFrameworkOverride != null) targetFrameworkOverride.hashCode() else 0
         __r = __r*31 + selectedCompiler.hashCode()
         __r = __r*31 + disassemblyTimeoutSeconds.hashCode()
+        __r = __r*31 + useCustomRuntime.hashCode()
+        __r = __r*31 + if (pathToLocalCoreClr != null) pathToLocalCoreClr.hashCode() else 0
         return __r
     }
     //pretty print
@@ -436,6 +446,8 @@ data class JitConfiguration (
             print("targetFrameworkOverride = "); targetFrameworkOverride.print(printer); println()
             print("selectedCompiler = "); selectedCompiler.print(printer); println()
             print("disassemblyTimeoutSeconds = "); disassemblyTimeoutSeconds.print(printer); println()
+            print("useCustomRuntime = "); useCustomRuntime.print(printer); println()
+            print("pathToLocalCoreClr = "); pathToLocalCoreClr.print(printer); println()
         }
         printer.print(")")
     }

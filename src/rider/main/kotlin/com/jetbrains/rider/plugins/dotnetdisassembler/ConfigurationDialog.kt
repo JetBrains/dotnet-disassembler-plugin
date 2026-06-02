@@ -1,8 +1,11 @@
 package com.jetbrains.rider.plugins.dotnetdisassembler
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
@@ -16,7 +19,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.*
 
-class ConfigurationDialog(project: Project) : DialogWrapper(project) {
+class ConfigurationDialog(private val project: Project) : DialogWrapper(project) {
 
     companion object {
         private val logger = Logger.getInstance(ConfigurationDialog::class.java)
@@ -27,7 +30,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
     private val generalPanel = GeneralOptionsPanel(currentConfig)
     private val jitPanel = JitOptionsPanel(currentConfig)
     private val buildPanel = BuildOptionsPanel(currentConfig)
-    private val runtimePanel = RuntimeOptionsPanel(currentConfig)
+    private val runtimePanel = RuntimeOptionsPanel(project, currentConfig)
 
     init {
         logger.debug("Opening configuration dialog")
@@ -78,12 +81,16 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
                 useDotnetBuildForReload = buildPanel.useDotnetBuildForReload,
                 targetFrameworkOverride = buildPanel.targetFrameworkOverride,
                 selectedCompiler = jitPanel.selectedCompiler,
-                disassemblyTimeoutSeconds = runtimePanel.disassemblyTimeoutSeconds
+                disassemblyTimeoutSeconds = runtimePanel.disassemblyTimeoutSeconds,
+                useCustomRuntime = runtimePanel.useCustomRuntime,
+                pathToLocalCoreClr = runtimePanel.pathToLocalCoreClr
             )
         )
 
         super.doOKAction()
     }
+
+    override fun doValidate(): ValidationInfo? = runtimePanel.validate()
 
     override fun doCancelAction() {
         logger.debug("Cancelling configuration dialog")
@@ -196,7 +203,7 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         }
     }
 
-    private class RuntimeOptionsPanel(config: JitConfiguration) {
+    private class RuntimeOptionsPanel(project: Project, config: JitConfiguration) {
         private val runAppModeCheckbox = JBCheckBox(AsmViewerBundle.message("runtime.run.app.mode"), config.runAppMode)
         private val runAppModeHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.run.project.help")).apply {
             icon = com.intellij.icons.AllIcons.General.Warning
@@ -204,13 +211,58 @@ class ConfigurationDialog(project: Project) : DialogWrapper(project) {
         private val timeoutSpinner = JSpinner(SpinnerNumberModel(config.disassemblyTimeoutSeconds, 0, 3600, 10))
         private val timeoutHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.timeout.help"))
 
+        private val useCustomRuntimeCheckbox = JBCheckBox(
+            AsmViewerBundle.message("runtime.custom.runtime"), config.useCustomRuntime
+        )
+        private val customRuntimeHelp = ContextHelpLabel.create(AsmViewerBundle.message("runtime.custom.runtime.help"))
+        private val pathField = TextFieldWithBrowseButton().apply {
+            val fieldSize = Dimension(JBUI.scale(360), preferredSize.height)
+            preferredSize = fieldSize
+            maximumSize = fieldSize
+            text = config.pathToLocalCoreClr ?: ""
+            isEnabled = config.useCustomRuntime
+            addBrowseFolderListener(
+                project,
+                FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                    .withTitle(AsmViewerBundle.message("runtime.custom.runtime.path.label"))
+            )
+        }
+
+        init {
+            useCustomRuntimeCheckbox.addItemListener {
+                pathField.isEnabled = useCustomRuntimeCheckbox.isSelected
+            }
+        }
+
         val runAppMode: Boolean get() = runAppModeCheckbox.isSelected
         val disassemblyTimeoutSeconds: Int get() = timeoutSpinner.value as Int
+        val useCustomRuntime: Boolean get() = useCustomRuntimeCheckbox.isSelected
+        val pathToLocalCoreClr: String? get() = pathField.text.takeIf { it.isNotBlank() && useCustomRuntime }
+
+        fun validate(): ValidationInfo? {
+            if (useCustomRuntime && pathField.text.isBlank()) {
+                return ValidationInfo(AsmViewerBundle.message("runtime.custom.runtime.path.required"), pathField)
+            }
+
+            return null
+        }
 
         fun addToForm(formBuilder: FormBuilder) {
             formBuilder
                 .addComponent(runAppModeCheckbox.withHelp(runAppModeHelp))
                 .addLabeledComponent(AsmViewerBundle.message("runtime.timeout.label"), timeoutSpinner.withHelp(timeoutHelp))
+                .addVerticalGap(10)
+                .addComponent(useCustomRuntimeCheckbox.withHelp(customRuntimeHelp))
+                .addComponent(createIndentedPathField())
+        }
+
+        private fun createIndentedPathField() = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.X_AXIS)
+            border = JBUI.Borders.emptyLeft(20)
+            add(JBLabel(AsmViewerBundle.message("runtime.custom.runtime.path.label")))
+            add(Box.createHorizontalStrut(JBUI.scale(6)))
+            add(pathField)
+            add(Box.createHorizontalGlue())
         }
     }
 }

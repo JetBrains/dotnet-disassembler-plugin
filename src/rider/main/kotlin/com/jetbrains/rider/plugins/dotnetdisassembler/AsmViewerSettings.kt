@@ -21,6 +21,8 @@ class JitConfigurationState : BaseState() {
     var targetFrameworkOverride by string(null)
     var selectedCompiler by enum(CompilerType.Clrjit)
     var disassemblyTimeoutSeconds by property(120)
+    var useCustomRuntime by property(false)
+    var pathToLocalCoreClr by string(null)
 }
 
 @Service(Service.Level.PROJECT)
@@ -60,7 +62,9 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         useDotnetBuildForReload = state.jit.useDotnetBuildForReload,
         targetFrameworkOverride = state.jit.targetFrameworkOverride,
         selectedCompiler = state.jit.selectedCompiler,
-        disassemblyTimeoutSeconds = state.jit.disassemblyTimeoutSeconds
+        disassemblyTimeoutSeconds = state.jit.disassemblyTimeoutSeconds,
+        useCustomRuntime = state.jit.useCustomRuntime,
+        pathToLocalCoreClr = state.jit.pathToLocalCoreClr
     )
 
     fun updateFrom(config: JitConfiguration) {
@@ -75,6 +79,8 @@ class AsmViewerSettings : SimplePersistentStateComponent<AsmViewerSettings.State
         state.jit.targetFrameworkOverride = config.targetFrameworkOverride
         state.jit.selectedCompiler = config.selectedCompiler
         state.jit.disassemblyTimeoutSeconds = config.disassemblyTimeoutSeconds
+        state.jit.useCustomRuntime = config.useCustomRuntime
+        state.jit.pathToLocalCoreClr = config.pathToLocalCoreClr
         fireChangeListeners()
     }
 }
